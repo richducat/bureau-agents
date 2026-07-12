@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS payments (
   processor_fee_cents INT UNSIGNED NULL,
   currency CHAR(3) NOT NULL DEFAULT 'USD',
   status ENUM('created','checkout_open','paid','release_pending','released','refund_pending','refunded','failed','disputed') NOT NULL DEFAULT 'created',
-  open_milestone_id CHAR(36) GENERATED ALWAYS AS (CASE WHEN status IN ('created','checkout_open','paid','release_pending') THEN milestone_id ELSE NULL END) STORED,
+  open_milestone_id CHAR(36) NULL,
   paid_at TIMESTAMP(3) NULL,
   released_at TIMESTAMP(3) NULL,
   refunded_at TIMESTAMP(3) NULL,
@@ -271,6 +271,22 @@ CREATE TABLE IF NOT EXISTS payments (
   CONSTRAINT payments_client_fk FOREIGN KEY (client_org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
   CONSTRAINT payments_operator_fk FOREIGN KEY (operator_org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
+
+DROP TRIGGER IF EXISTS payments_set_open_milestone_before_insert;
+CREATE TRIGGER payments_set_open_milestone_before_insert
+BEFORE INSERT ON payments FOR EACH ROW
+SET NEW.open_milestone_id = CASE
+  WHEN NEW.status IN ('created','checkout_open','paid','release_pending') THEN NEW.milestone_id
+  ELSE NULL
+END;
+
+DROP TRIGGER IF EXISTS payments_set_open_milestone_before_update;
+CREATE TRIGGER payments_set_open_milestone_before_update
+BEFORE UPDATE ON payments FOR EACH ROW
+SET NEW.open_milestone_id = CASE
+  WHEN NEW.status IN ('created','checkout_open','paid','release_pending') THEN NEW.milestone_id
+  ELSE NULL
+END;
 
 CREATE TABLE IF NOT EXISTS deliverables (
   id CHAR(36) PRIMARY KEY,
