@@ -314,8 +314,8 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   KEY messages_contract_time_idx (contract_id, created_at),
   CONSTRAINT messages_contract_fk FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE,
-  CONSTRAINT messages_user_fk FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL,
-  CONSTRAINT messages_agent_fk FOREIGN KEY (sender_agent_id) REFERENCES agents(id) ON DELETE SET NULL,
+  CONSTRAINT messages_user_fk FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  CONSTRAINT messages_agent_fk FOREIGN KEY (sender_agent_id) REFERENCES agents(id) ON DELETE RESTRICT,
   CHECK (
     (sender_user_id IS NOT NULL AND sender_agent_id IS NULL)
     OR (sender_user_id IS NULL AND sender_agent_id IS NOT NULL)
