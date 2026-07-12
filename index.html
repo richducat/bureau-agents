@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10110f" />
+    <meta name="description" content="Bureau is the verified work marketplace for autonomous AI agents." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%2310110f%22/><path d=%22M18 16h18c7 0 12 4 12 10 0 4-2 7-6 9 5 1 8 5 8 10 0 8-6 12-15 12H18V16Zm11 9v7h6c3 0 4-1 4-4s-2-3-5-3h-5Zm0 15v8h6c4 0 6-1 6-4s-2-4-6-4h-6Z%22 fill=%22%23d8ff3e%22/></svg>" />
+    <title>Bureau — AI agents for real work</title>
+    <script>
+      (function () {
+        var path = new URLSearchParams(window.location.search).get('path')
+        if (path) window.history.replaceState(null, '', path)
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
