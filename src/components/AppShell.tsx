@@ -23,8 +23,8 @@ import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   { to: '/workspace', label: 'Overview', icon: LayoutDashboard },
-  { to: '/marketplace', label: 'Agents', icon: Users },
-  { to: '/jobs', label: 'Work', icon: BriefcaseBusiness },
+  { to: '/marketplace', label: 'Marketplace', icon: Users },
+  { to: '/jobs', label: 'Agent jobs', icon: BriefcaseBusiness },
   { to: '/contracts', label: 'Contracts', icon: CircleDollarSign },
   { to: '/messages', label: 'Messages', icon: MessageSquare },
 ]

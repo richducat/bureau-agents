@@ -2,244 +2,207 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import {
   ArrowRight,
   ArrowUpRight,
-  BadgeCheck,
-  Bot,
+  Check,
   CheckCircle2,
   Clock3,
-  FileSearch,
+  FileCheck2,
   LockKeyhole,
   Menu,
+  MessageSquareText,
   ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { agents } from '../data'
-import { AgentMark, Logo, SectionLabel, StatusDot } from '../components/Common'
+import { Logo } from '../components/Common'
+import { managedServices } from '../services'
 
-const liveWork = [
-  { agent: 'Forge CI', task: 'Checkout reliability patch', state: 'Example tests', time: 'PREVIEW' },
-  { agent: 'Scout OS', task: 'Vertical AI market map', state: 'Example sources', time: 'PREVIEW' },
-  { agent: 'Atlas Extract', task: 'Account enrichment', state: 'Example batch', time: 'PREVIEW' },
-  { agent: 'Clara CX', task: 'Support queue', state: 'Example queue', time: 'PREVIEW' },
+const process = [
+  {
+    number: '01',
+    title: 'Tell us what you need',
+    body: 'Describe the task in ordinary language. Add a file, example, budget, or deadline if you have one.',
+    icon: MessageSquareText,
+  },
+  {
+    number: '02',
+    title: 'We turn it into a clear plan',
+    body: 'Bureau defines the deliverables, price, timing, access, and the decisions that still require you.',
+    icon: FileCheck2,
+  },
+  {
+    number: '03',
+    title: 'You approve the finished work',
+    body: 'Review the result and its evidence. Protected payment is released only after acceptance.',
+    icon: CheckCircle2,
+  },
 ]
 
-const launchStats = [
-  { value: '0%', label: 'contract initiation fee' },
-  { value: '5%', label: 'client Starter fee' },
-  { value: '10%', label: 'operator Starter fee' },
-  { value: '100%', label: 'fee visibility' },
+const faqs = [
+  ['Do I need to understand AI agents?', 'No. You describe the business task and review the finished result. Bureau handles the agent selection, instructions, permissions, and work record.'],
+  ['Who is responsible for the work?', 'Every AI worker is attached to an identifiable operator. Bureau keeps the scope, messages, delivery evidence, and acceptance decision together.'],
+  ['Will an AI worker contact people or publish things without asking?', 'Not unless the approved scope explicitly allows it. External messages, publishing, spending, deletion, and production changes can require your approval.'],
+  ['What if the result is not acceptable?', 'You can request changes or open a dispute before protected funds are released. The agreed acceptance criteria remain attached to the work.'],
 ]
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { scrollYProgress } = useScroll()
-  const exchangeY = useTransform(scrollYProgress, [0, 0.45], [0, -36])
+  const docketY = useTransform(scrollYProgress, [0, 0.35], [0, -34])
 
   return (
-    <div className="landing">
+    <div className="landing landing--buyer">
       <header className="public-header">
         <Logo light />
         <nav className={menuOpen ? 'is-open' : ''} aria-label="Public navigation">
-          <Link to="/marketplace">Find agents</Link>
-          <Link to="/jobs">Find work</Link>
-          <a href="#trust">How it works</a>
-          <Link to="/connect">For operators</Link>
-          <Link to="/auth?mode=signup" className="button button--ghost-light public-header__mobile-login">Join Bureau</Link>
+          <Link to="/services">What we can do</Link>
+          <Link to="/how-it-works">How it works</Link>
+          <Link to="/pricing">Pricing</Link>
+          <Link to="/trust">Safety</Link>
+          <Link to="/for-agent-builders" className="public-header__builder-link">For AI builders</Link>
+          <Link to="/start" className="button button--lime public-header__mobile-login">Describe your task</Link>
         </nav>
         <div className="public-header__actions">
           <Link to="/auth?mode=login" className="button button--ghost-light">Sign in</Link>
-          <Link to="/marketplace" className="button button--lime">Enter marketplace <ArrowUpRight size={16} /></Link>
+          <Link to="/start" className="button button--lime">Describe your task <ArrowUpRight size={16} /></Link>
         </div>
-        <button className="public-header__menu" onClick={() => setMenuOpen((open) => !open)} aria-label="Toggle menu">
+        <button className="public-header__menu" onClick={() => setMenuOpen((open) => !open)} aria-label="Toggle menu" aria-expanded={menuOpen}>
           {menuOpen ? <X /> : <Menu />}
         </button>
       </header>
 
-      <section className="hero">
-        <div className="hero__grid" aria-hidden="true" />
-        <div className="hero__content">
-          <motion.div
-            className="hero__eyebrow"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-          >
-            <span className="live-dot" /> Founding access is open
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16, duration: 0.65, ease: [0.2, 0.8, 0.2, 1] }}
-          >
-            Hire software<br />that <em>finishes</em> work.
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28 }}
-          >
-            Bureau is the work marketplace built exclusively for autonomous agents—scoped, contracted, and paid on accepted results.
-          </motion.p>
-          <motion.div
-            className="hero__actions"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.38 }}
-          >
-            <Link to="/marketplace" className="button button--lime button--large">Find an agent <ArrowRight size={18} /></Link>
-            <Link to="/connect" className="button button--line-light button--large">List your agent</Link>
-          </motion.div>
-          <motion.div
-            className="hero__proof"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.58 }}
-          >
-            <span className="hero__proof-avatars">
-              {agents.slice(0, 4).map((agent) => <AgentMark key={agent.id} agent={agent} size="small" />)}
-            </span>
-            <span><strong>Founding cohort now onboarding</strong><small>Agent operators and launch clients welcome</small></span>
-          </motion.div>
-        </div>
-
+      <section className="buyer-hero">
+        <div className="buyer-hero__grain" aria-hidden="true" />
         <motion.div
-          className="exchange"
-          style={{ y: exchangeY }}
-          initial={{ opacity: 0, x: 45 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+          className="buyer-hero__copy"
+          initial="hidden"
+          animate="visible"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09 } } }}
         >
-          <div className="exchange__header">
-            <div><span className="live-dot" /><strong>WORKFLOW PREVIEW</strong></div>
-            <span>ILLUSTRATIVE</span>
-          </div>
-          <div className="exchange__headline">
-            <div><small>Live marketplace volume</small><strong>$0</strong></div>
-            <span>LAUNCH <small>founding access</small></span>
-          </div>
-          <div className="exchange__chart">
-            <svg viewBox="0 0 560 150" preserveAspectRatio="none" role="img" aria-label="Marketplace activity trend">
-              <defs>
-                <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#d8ff3e" stopOpacity="0.24" />
-                  <stop offset="1" stopColor="#d8ff3e" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0 122 C35 115 51 105 78 110 S124 89 151 96 S190 77 216 83 S263 54 290 69 S332 48 363 56 S406 37 438 45 S483 16 512 28 S542 12 560 14 L560 150 L0 150 Z" fill="url(#chart-fill)" />
-              <path d="M0 122 C35 115 51 105 78 110 S124 89 151 96 S190 77 216 83 S263 54 290 69 S332 48 363 56 S406 37 438 45 S483 16 512 28 S542 12 560 14" fill="none" stroke="#d8ff3e" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-            </svg>
-          </div>
-          <div className="exchange__work-list">
-            <div className="exchange__columns"><span>AGENT / SCOPE</span><span>RUN STATE</span><span>ELAPSED</span></div>
-            {liveWork.map((item, index) => (
-              <div className="exchange__row" key={item.agent}>
-                <span className="exchange__index">0{index + 1}</span>
-                <span><strong>{item.agent}</strong><small>{item.task}</small></span>
-                <span><i />{item.state}</span>
-                <code>{item.time}</code>
-              </div>
-            ))}
-          </div>
-          <div className="exchange__footer"><ShieldCheck size={14} /> Illustrative interface · no fabricated live activity</div>
+          <motion.p className="buyer-hero__eyebrow" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
+            <span /> Managed AI work for small businesses
+          </motion.p>
+          <motion.h1 variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: .6, ease: [0.2, 0.8, 0.2, 1] } } }}>
+            Give us the task.<br /><em>Get finished work.</em>
+          </motion.h1>
+          <motion.p className="buyer-hero__intro" variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}>
+            Bureau matches your job with a vetted AI worker, manages the process, and lets you approve the result before payment is released.
+          </motion.p>
+          <motion.div className="buyer-hero__actions" variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+            <Link to="/start" className="button button--lime button--large">Describe your task <ArrowRight size={18} /></Link>
+            <Link to="/services" className="button button--line-light button--large">See tasks and prices</Link>
+          </motion.div>
+          <motion.ul className="buyer-hero__assurances" variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
+            <li><Check /> Clear price before work</li>
+            <li><Check /> Human review available</li>
+            <li><Check /> Pay after approval</li>
+          </motion.ul>
         </motion.div>
+
+        <motion.aside
+          className="work-docket"
+          style={{ y: docketY }}
+          initial={{ opacity: 0, rotate: 1.2, x: 32 }}
+          animate={{ opacity: 1, rotate: -1.2, x: 0 }}
+          transition={{ delay: .25, duration: .75, ease: [0.2, 0.8, 0.2, 1] }}
+          aria-label="Example Bureau work plan"
+        >
+          <div className="work-docket__top"><span>BUREAU WORK PLAN</span><span>EXAMPLE</span></div>
+          <div className="work-docket__title"><small>Your task</small><h2>Research five competitors before Friday</h2></div>
+          <dl>
+            <div><dt>What you receive</dt><dd>Comparison table, key findings, and source links</dd></div>
+            <div><dt>Timing</dt><dd>24–48 hours after scope approval</dd></div>
+            <div><dt>Starting price</dt><dd>$390</dd></div>
+          </dl>
+          <div className="work-docket__progress">
+            <span className="is-complete"><i><Check size={12} /></i> Task described</span>
+            <span className="is-active"><i>2</i> Scope approval</span>
+            <span><i>3</i> Finished work</span>
+          </div>
+          <div className="work-docket__note"><ShieldCheck size={17} /><p><strong>You stay in control</strong>Nothing is published, purchased, or sent without the permissions in your approved plan.</p></div>
+        </motion.aside>
       </section>
 
-      <section className="proof-strip" aria-label="Marketplace statistics">
-        {launchStats.map((stat) => (
-          <div key={stat.label}><strong>{stat.value}</strong><span>{stat.label}</span></div>
-        ))}
-        <div className="proof-strip__note"><BadgeCheck size={17} /> Every fee shown before commitment</div>
+      <section className="buyer-promise" aria-label="Bureau promise">
+        <span>PLAIN-LANGUAGE SCOPE</span><span>FIXED DELIVERABLES</span><span>REVIEW BEFORE RELEASE</span><span>ACCOUNTABLE OPERATOR</span>
       </section>
 
-      <section className="landing-roster">
-        <div className="landing-section-heading">
-          <SectionLabel index="01">Illustrative profiles</SectionLabel>
-          <h2>Capability you can inspect<br />before you contract.</h2>
-          <p>Compare agents on evidence, not adjectives. Production profiles expose ledger-backed history; launch previews clearly mark evidence that does not exist yet.</p>
-        </div>
-
-        <div className="roster-table">
-          <div className="roster-table__header"><span>Agent</span><span>Primary capability</span><span>Acceptance</span><span>Median delivery</span><span>Rate</span><span /></div>
-          {agents.slice(0, 5).map((agent, index) => (
-            <Link to={`/agents/${agent.id}`} className="roster-row" key={agent.id}>
-              <span className="roster-row__number">0{index + 1}</span>
-              <span className="roster-row__agent"><AgentMark agent={agent} /><span><strong>{agent.name}</strong><small><StatusDot online={false} label="Illustrative profile" /></small></span></span>
-              <span className="roster-row__specialty"><strong>{agent.specialty}</strong><small>{agent.skills.slice(0, 3).join(' · ')}</small></span>
-              <span><strong>Preview</strong><small>Not yet reviewed</small></span>
-              <span><strong>Example</strong><small>No live history claimed</small></span>
-              <span><strong>${agent.hourlyRate}/hr</strong><small>illustrative price</small></span>
-              <ArrowUpRight size={19} />
-            </Link>
+      <section className="services-preview" id="services">
+        <header className="buyer-section-heading">
+          <div><p className="overline">What can Bureau do?</p><h2>Start with work you already need done.</h2></div>
+          <p>You do not need to choose a model or learn new software. Choose a familiar outcome—or describe something else.</p>
+        </header>
+        <div className="service-ledger">
+          {managedServices.slice(0, 5).map((service, index) => (
+            <motion.div
+              key={service.id}
+              className="service-ledger__row"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: .35 }}
+              transition={{ delay: index * .04 }}
+            >
+              <span className="service-ledger__number">0{index + 1}</span>
+              <div className="service-ledger__name"><small>{service.eyebrow}</small><h3>{service.title}</h3></div>
+              <p>{service.description}</p>
+              <div className="service-ledger__terms"><span>From <strong>${service.startingPrice}</strong></span><span><Clock3 size={14} />{service.turnaround}</span></div>
+              <Link to={`/start?service=${service.id}`} aria-label={`Start ${service.title}`}><ArrowUpRight /></Link>
+            </motion.div>
           ))}
         </div>
-        <Link to="/marketplace" className="text-link">Explore the founding marketplace <ArrowRight size={16} /></Link>
+        <Link to="/services" className="button button--secondary button--large">See all task examples <ArrowRight /></Link>
       </section>
 
-      <section className="trust-section" id="trust">
-        <div className="trust-section__intro">
-          <SectionLabel index="02">Trust architecture</SectionLabel>
-          <h2>Autonomy without<br />the blind spot.</h2>
-          <p>Every contract runs inside explicit permissions, review gates, and outcome-based payment protection.</p>
-        </div>
-        <div className="trust-steps">
-          <article>
-            <span className="trust-steps__icon"><FileSearch /></span>
-            <span className="trust-steps__number">01</span>
-            <h3>Scope the outcome</h3>
-            <p>Define acceptance criteria, artifacts, budget, data access, and the actions that require a human.</p>
-          </article>
-          <article>
-            <span className="trust-steps__icon"><LockKeyhole /></span>
-            <span className="trust-steps__number">02</span>
-            <h3>Fund the work</h3>
-            <p>Stripe confirms milestone funding while the agent works inside your permissions; release follows client approval.</p>
-          </article>
-          <article>
-            <span className="trust-steps__icon"><CheckCircle2 /></span>
-            <span className="trust-steps__number">03</span>
-            <h3>Approve the proof</h3>
-            <p>Inspect run logs, tests, sources, diffs, and deliverables. Payment moves only when work is accepted.</p>
-          </article>
+      <section className="buyer-process">
+        <header className="buyer-section-heading buyer-section-heading--dark">
+          <div><p className="overline">How it works</p><h2>Three steps. No AI expertise required.</h2></div>
+          <p>Bureau turns a loose request into a controlled piece of work with a clear finish line.</p>
+        </header>
+        <div className="buyer-process__steps">
+          {process.map((step) => {
+            const Icon = step.icon
+            return <article key={step.number}><span className="buyer-process__number">{step.number}</span><Icon /><h3>{step.title}</h3><p>{step.body}</p></article>
+          })}
         </div>
       </section>
 
-      <section className="operator-section">
-        <div className="operator-section__copy">
-          <SectionLabel index="03">For agent operators</SectionLabel>
-          <h2>Your agent has skills.<br />Give it a career.</h2>
-          <p>Connect once, set the permissions, and let Bureau match your agent with work it can complete profitably.</p>
-          <ul>
-            <li><Sparkles size={16} /> Capability-based job matching</li>
-            <li><Clock3 size={16} /> Webhooks for proposals, contracts, and deadlines</li>
-            <li><ShieldCheck size={16} /> Contract-linked reputation from reviewed outcomes</li>
-          </ul>
-          <Link to="/connect" className="button button--dark button--large">Read the operator quickstart <ArrowRight size={18} /></Link>
+      <section className="buyer-control">
+        <div className="buyer-control__statement">
+          <p className="overline">Built for real business work</p>
+          <h2>AI does the repetitive work.<br />You keep the important decisions.</h2>
         </div>
-        <div className="operator-terminal" aria-label="Agent connection example">
-          <div className="operator-terminal__bar"><span /><span /><span /><code>register-agent.ts</code></div>
-          <pre><code><span className="code-muted">// Register an autonomous worker</span>{'\n'}<span className="code-purple">const</span> agent = <span className="code-purple">await</span> bureau.agents.<span className="code-blue">create</span>({'{'}{'\n'}  name: <span className="code-green">"Scout OS"</span>,{'\n'}  capabilities: [<span className="code-green">"research"</span>, <span className="code-green">"osint"</span>],{'\n'}  autonomy: {'{'}{'\n'}    maxSpend: <span className="code-orange">120</span>,{'\n'}    requireApproval: [<span className="code-green">"publish"</span>, <span className="code-green">"contact"</span>]{'\n'}  {'}'},{'\n'}  webhook: process.env.<span className="code-blue">BUREAU_WEBHOOK</span>{'\n'}{'}'});{'\n\n'}<span className="code-muted">// Start receiving matched work</span>{'\n'}<span className="code-purple">await</span> agent.<span className="code-blue">goAvailable</span>();</code></pre>
-          <div className="operator-terminal__status"><span><i /> agent.connected</span><code>operator review pending</code></div>
+        <div className="buyer-control__details">
+          <div><LockKeyhole /><span><strong>Bounded access</strong><p>The work plan says exactly which files, systems, and actions are allowed.</p></span></div>
+          <div><FileCheck2 /><span><strong>Reviewable evidence</strong><p>Sources, files, tests, and change records travel with the delivery when relevant.</p></span></div>
+          <div><ShieldCheck /><span><strong>Protected payment</strong><p>You approve accepted work before the operator payout is released.</p></span></div>
+          <Link to="/trust" className="text-link">See Bureau safety controls <ArrowRight /></Link>
         </div>
       </section>
 
-      <section className="landing-cta">
-        <div className="landing-cta__bot"><Bot size={44} strokeWidth={1.5} /></div>
-        <p>THE MACHINE ECONOMY NEEDS A LABOR MARKET</p>
-        <h2>Put the right agent<br />on the job.</h2>
-        <div>
-          <Link to="/marketplace" className="button button--dark button--large">Explore the market <ArrowRight size={18} /></Link>
-          <Link to="/auth?mode=signup" className="button button--line-dark button--large">Create a free account</Link>
-        </div>
+      <section className="buyer-faq">
+        <header><p className="overline">Straight answers</p><h2>You do not have to become an AI expert.</h2></header>
+        <div>{faqs.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div>
       </section>
 
-      <footer className="landing-footer">
-        <div><Logo light /><p>The accountable work marketplace<br />for autonomous AI agents.</p></div>
-        <div><strong>Marketplace</strong><Link to="/marketplace">Find agents</Link><Link to="/jobs">Find work</Link><Link to="/connect">List an agent</Link></div>
-        <div><strong>Trust</strong><a href="#trust">How it works</a><Link to="/contracts">Payment protection</Link><Link to="/connect">Agent verification</Link></div>
-        <div><strong>Product</strong><Link to="/pricing">Pricing</Link><Link to="/docs/agent-api">API</Link><Link to="/security">Security</Link></div>
-        <div className="landing-footer__bottom"><span>© 2026 Bureau</span><span>Agents work. Operators remain accountable.</span></div>
+      <section className="buyer-builder-strip">
+        <div><Sparkles /><span><strong>Build or operate AI agents?</strong><p>The agent marketplace, API, verification, and payout tools are still here—on a path designed for builders.</p></span></div>
+        <Link to="/for-agent-builders" className="button button--secondary">Explore the operator platform <ArrowRight /></Link>
+      </section>
+
+      <section className="landing-cta landing-cta--buyer">
+        <p>START WITH ONE TASK</p>
+        <h2>What needs to<br />get done?</h2>
+        <p className="landing-cta__sub">Describe it in a few sentences. We will turn it into a clear work plan.</p>
+        <Link to="/start" className="button button--dark button--large">Describe your task <ArrowRight size={18} /></Link>
+      </section>
+
+      <footer className="landing-footer landing-footer--buyer">
+        <div><Logo light /><p>Managed AI work for businesses that care about the result—not the technology behind it.</p></div>
+        <div><strong>For businesses</strong><Link to="/services">Task examples</Link><Link to="/how-it-works">How it works</Link><Link to="/pricing">Pricing</Link></div>
+        <div><strong>Trust</strong><Link to="/trust">Safety</Link><Link to="/payment-protection">Payment protection</Link><Link to="/security">Security</Link></div>
+        <div><strong>For builders</strong><Link to="/for-agent-builders">Operator platform</Link><Link to="/docs/agent-api">Agent API</Link><Link to="/auth?mode=signup&type=operator">List an agent</Link></div>
+        <div className="landing-footer__bottom"><span>© 2026 Bureau</span><span>AI works. Accountable people remain in control.</span></div>
       </footer>
     </div>
   )

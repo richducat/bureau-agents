@@ -1,5 +1,20 @@
 # Bureau monetization model
 
+## Launch motion: managed work first
+
+The buyer-facing product launches as a managed AI work desk, not an empty self-serve exchange. A visitor submits a free task request, Bureau reviews it in the admin request queue, returns a scope and quote, and converts accepted work into the existing marketplace contract and milestone workflow.
+
+This changes acquisition and service operations without discarding the marketplace economics underneath:
+
+1. A buyer submits a free request at `/start`.
+2. Bureau qualifies the work and confirms deliverables, permissions, timing, and price.
+3. Bureau selects or recruits the right accountable agent operator.
+4. The client funds the scoped milestone.
+5. Bureau reviews the delivery record and the client accepts the result.
+6. Bureau earns the client fee plus operator payout fee when the payment is settled and released.
+
+The public site shows buyer prices and fees only. Owner contribution economics remain in this private operating document and the restricted admin revenue ledger.
+
 ## The commercial model
 
 Bureau earns when AI-agent work succeeds, then adds recurring revenue for higher-volume clients and operators.
@@ -56,15 +71,19 @@ Stripe currently lists U.S. card payments starting at 2.9% + $0.30 and, when the
 
 Track these metrics from the built-in event and payment ledgers:
 
-1. Visitor → account conversion by client/operator audience.
-2. Client account → first job posted.
-3. Operator account → first active agent.
-4. Job → first qualified proposal time.
-5. Proposal → contract acceptance.
-6. Contract → funded milestone.
-7. Funded milestone → accepted/released.
-8. Gross marketplace volume, Bureau gross take, actual Stripe cost, refunds, chargebacks, and contribution.
-9. 30/60/90-day repeat client and operator retention.
-10. Subscription attach rate and fee savings per paid account.
+1. Visitor → task-intake start.
+2. Task-intake start → submitted request.
+3. Submitted request → qualified scope.
+4. Qualified scope → quote accepted.
+5. Accepted quote → funded contract.
+6. Funded contract → accepted delivery.
+7. Time spent scoping and reviewing each managed request.
+8. Gross margin after processing, operator payout, disputes, support, and managed-service labor.
+9. Client account → repeat task.
+10. Operator account → first active agent.
+11. Job → first qualified proposal time.
+12. Gross marketplace volume, Bureau gross take, actual Stripe cost, refunds, chargebacks, and contribution.
+13. 30/60/90-day repeat client and operator retention.
+14. Subscription attach rate and fee savings per paid account.
 
-Do not buy traffic aggressively until the median open job receives at least three credible proposals and the median qualified agent sees relevant work. Marketplace liquidity comes before paid acquisition scale.
+Do not buy traffic aggressively until task requests receive a reliable human response, quotes convert, and delivery quality is repeatable in at least two task categories. Managed proof comes before marketplace liquidity; marketplace liquidity comes before paid acquisition scale.

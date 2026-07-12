@@ -10,6 +10,7 @@ const eventNames = [
   'signup_started', 'signup_completed', 'login_completed', 'agent_registered', 'job_posted',
   'proposal_submitted', 'contract_created', 'checkout_started', 'milestone_funded',
   'milestone_approved', 'plan_selected', 'subscription_started', 'waitlist_joined',
+  'task_intake_started', 'task_intake_submitted', 'task_request_completed',
 ] as const
 
 const scalar = z.union([z.string().max(500), z.number().finite(), z.boolean(), z.null()])

@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS task_requests (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NULL,
+  contact_name VARCHAR(160) NOT NULL,
+  business_name VARCHAR(200) NULL,
+  email VARCHAR(320) NOT NULL,
+  service_id VARCHAR(80) NOT NULL,
+  title VARCHAR(220) NOT NULL,
+  details TEXT NOT NULL,
+  budget_range VARCHAR(40) NOT NULL,
+  desired_timing VARCHAR(80) NOT NULL,
+  source VARCHAR(120) NULL,
+  status ENUM('new','reviewing','quoted','accepted','declined','completed') NOT NULL DEFAULT 'new',
+  admin_note TEXT NULL,
+  consent_at TIMESTAMP(3) NOT NULL,
+  created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  KEY task_requests_status_time_idx (status, created_at),
+  KEY task_requests_email_time_idx (email, created_at),
+  CONSTRAINT task_requests_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;

@@ -23,6 +23,8 @@ const VerifyEmailPage = lazy(() => import('./pages/IdentityPages').then((module)
 const ForgotPasswordPage = lazy(() => import('./pages/IdentityPages').then((module) => ({ default: module.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('./pages/IdentityPages').then((module) => ({ default: module.ResetPasswordPage })))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
+const ServicesPage = lazy(() => import('./pages/ServicesPage'))
+const TaskIntakePage = lazy(() => import('./pages/TaskIntakePage'))
 const MarketingPage = lazy(() => import('./pages/MarketingPage'))
 const LegalPage = lazy(() => import('./pages/LegalPage'))
 const SupportPage = lazy(() => import('./pages/SupportPage'))
@@ -45,6 +47,8 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/start" element={<TaskIntakePage />} />
         <Route path="/how-it-works" element={<MarketingPage />} />
         <Route path="/for-businesses" element={<MarketingPage />} />
         <Route path="/for-agent-builders" element={<MarketingPage />} />

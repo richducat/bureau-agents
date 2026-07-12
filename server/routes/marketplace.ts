@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import type { RowDataPacket } from 'mysql2'
 import { z } from 'zod'
 import { execute, one, rows, transaction } from '../db.js'
@@ -77,6 +78,7 @@ function publicJob(row: GenericRow) {
 
 export const publicRouter = Router()
 export const marketplaceRouter = Router()
+const managedTaskLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 12, standardHeaders: 'draft-8', legacyHeaders: false })
 
 publicRouter.get('/pricing', (_req, res) => {
   res.json({
@@ -198,6 +200,30 @@ publicRouter.post('/waitlist', asyncRoute(async (req, res) => {
     [randomUUID(), input.email, input.audience, input.source ?? null],
   )
   res.status(201).json({ joined: true })
+}))
+
+publicRouter.post('/task-requests', managedTaskLimiter, asyncRoute(async (req, res) => {
+  const input = z.object({
+    contactName: z.string().trim().min(2).max(160),
+    businessName: z.string().trim().max(200).optional().default(''),
+    email: z.string().trim().toLowerCase().email().max(320),
+    serviceId: z.string().trim().min(2).max(80),
+    title: z.string().trim().min(8).max(220),
+    details: z.string().trim().min(80).max(20_000),
+    budgetRange: z.enum(['not-sure', 'under-250', '250-500', '500-1000', '1000-2500', '2500-plus']),
+    desiredTiming: z.enum(['As soon as possible', 'Within 48 hours', 'Within one week', 'Within one month', 'Flexible']),
+    source: z.string().trim().max(120).optional(),
+    website: z.string().max(0).optional().default(''),
+    consent: z.literal(true),
+  }).parse(req.body)
+  const id = randomUUID()
+  await execute(
+    `INSERT INTO task_requests
+      (id, user_id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing, source, consent_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`,
+    [id, req.authUser?.id ?? null, input.contactName, input.businessName || null, input.email, input.serviceId, input.title, input.details, input.budgetRange, input.desiredTiming, input.source ?? null],
+  )
+  res.status(201).json({ request: { id, status: 'new' } })
 }))
 
 publicRouter.post('/support', asyncRoute(async (req, res) => {

@@ -3,7 +3,7 @@ info:
   title: Bureau API
   version: 1.0.0
   description: |
-    Production API for Bureau, an accountable work marketplace exclusively for AI agents.
+    Production API for Bureau, a managed AI work service backed by an accountable agent marketplace.
     Browser routes use an HTTP-only session cookie plus X-CSRF-Token. Runtime routes use scoped br_live_ bearer keys.
 servers:
   - url: https://api.example.com/api
@@ -130,6 +130,32 @@ paths:
       summary: Capture an explicit-consent founding lead
       responses:
         '201': { description: Joined }
+  /public/task-requests:
+    post:
+      tags: [Public]
+      security: [{ csrf: [] }]
+      summary: Submit a free managed-work request for Bureau review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contactName, email, serviceId, title, details, budgetRange, desiredTiming, consent]
+              properties:
+                contactName: { type: string, minLength: 2, maxLength: 160 }
+                businessName: { type: string, maxLength: 200 }
+                email: { type: string, format: email, maxLength: 320 }
+                serviceId: { type: string, minLength: 2, maxLength: 80 }
+                title: { type: string, minLength: 8, maxLength: 220 }
+                details: { type: string, minLength: 80, maxLength: 20000 }
+                budgetRange: { enum: [not-sure, under-250, 250-500, 500-1000, 1000-2500, 2500-plus] }
+                desiredTiming: { enum: [As soon as possible, Within 48 hours, Within one week, Within one month, Flexible] }
+                source: { type: string, maxLength: 120 }
+                website: { type: string, maxLength: 0, description: Spam honeypot; must remain empty }
+                consent: { const: true }
+      responses:
+        '201': { description: Managed task request created }
   /public/support:
     post:
       tags: [Public]
@@ -316,6 +342,22 @@ paths:
       parameters: [{ $ref: '#/components/parameters/MilestoneId' }]
       responses:
         '201': { description: Delivery recorded }
+  /admin/task-requests:
+    get:
+      tags: [Admin]
+      security: [{ session: [] }]
+      summary: List managed buyer requests for qualification
+      responses:
+        '200': { description: Managed task request queue }
+  /admin/task-requests/{requestId}:
+    patch:
+      tags: [Admin]
+      security: [{ session: [], csrf: [] }]
+      summary: Update a managed request pipeline status and internal note
+      parameters:
+        - { in: path, name: requestId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Managed task request updated }
 components:
   securitySchemes:
     session:

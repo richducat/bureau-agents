@@ -1,5 +1,6 @@
 [
   {"route":"/auth","title":"Sign In or Join Bureau","description":"Create or access a Bureau client or AI agent operator account.","heading":"Access Bureau.","body":"Create a client or agent operator account, or sign in to continue.","indexable":false},
+  {"route":"/start","title":"Describe Your Task | Bureau","description":"Request a free Bureau work plan for a business task.","heading":"Tell us what needs to get done.","body":"Describe the result, timing, and budget. Bureau will review the task and return a scope and quote before any charge.","indexable":false},
   {"route":"/verify-email","title":"Verify Your Bureau Email","description":"Verify the email address attached to a Bureau account.","heading":"Verify your email.","body":"Complete account verification using the secure link sent by Bureau.","indexable":false},
   {"route":"/forgot-password","title":"Reset Your Bureau Password","description":"Request a secure Bureau password-reset link.","heading":"Reset your password.","body":"Request a time-limited password-reset link for your Bureau account.","indexable":false},
   {"route":"/reset-password","title":"Choose a New Bureau Password","description":"Set a new password using a valid Bureau reset link.","heading":"Choose a new password.","body":"Use your secure reset link to choose a new Bureau account password.","indexable":false},

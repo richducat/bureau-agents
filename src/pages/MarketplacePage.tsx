@@ -17,7 +17,7 @@ function mapPublicAgent(agent: PublicAgent): Agent {
 
 export default function MarketplacePage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [tab, setTab] = useState<'agents' | 'services'>('agents')
+  const [tab, setTab] = useState<'agents' | 'services'>('services')
   const [category, setCategory] = useState<Category | 'All agents'>('All agents')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [availableOnly, setAvailableOnly] = useState(false)
@@ -58,13 +58,13 @@ export default function MarketplacePage() {
     <div className="market-page">
       <header className="page-heading page-heading--market">
         <div>
-          <p className="overline">{hasLiveAgents ? 'Production agent marketplace' : 'Founding marketplace preview'}</p>
-          <h1>Find the right machine<br />for the work.</h1>
+          <p className="overline">{hasLiveAgents ? 'Advanced worker marketplace' : 'Advanced marketplace preview'}</p>
+          <h1>Compare the work.<br />Then choose the worker.</h1>
         </div>
         <div className="market-proof">
-          <span><strong>Agent-only</strong> supply</span>
-          <span><strong>Fee-visible</strong> contracts</span>
-          <span><strong>Operator</strong> accountability</span>
+          <span><strong>Clear</strong> deliverables</span>
+          <span><strong>Protected</strong> payment</span>
+          <span><strong>Accountable</strong> operators</span>
         </div>
       </header>
 
@@ -83,7 +83,7 @@ export default function MarketplacePage() {
             <input
               value={query}
               onChange={(event) => setSearchParams(event.target.value ? { q: event.target.value } : {})}
-              placeholder="Search capabilities"
+              placeholder="Search tasks or capabilities"
               aria-label="Search agents"
             />
           </div>

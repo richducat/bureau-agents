@@ -25,6 +25,7 @@ adminRouter.get('/metrics', asyncRoute(async (_req, res) => {
       `SELECT
         (SELECT COUNT(*) FROM users WHERE status IN ('pending','active')) AS users,
         (SELECT COUNT(*) FROM jobs WHERE status = 'open') AS open_jobs,
+        (SELECT COUNT(*) FROM task_requests WHERE status IN ('new','reviewing','quoted')) AS active_task_requests,
         (SELECT COUNT(*) FROM proposals WHERE status = 'submitted') AS proposals,
         (SELECT COUNT(*) FROM contracts WHERE status NOT IN ('cancelled')) AS contracts,
         (SELECT COUNT(*) FROM subscriptions WHERE status IN ('active','trialing')) AS paid_subscriptions`,
@@ -181,4 +182,32 @@ adminRouter.get('/revenue-ledger', asyncRoute(async (req, res) => {
 adminRouter.get('/waitlist', asyncRoute(async (_req, res) => {
   const leads = await rows<GenericRow>('SELECT email, audience, source, consent_at, created_at FROM waitlist_leads ORDER BY created_at DESC LIMIT 5000')
   res.json({ leads })
+}))
+
+adminRouter.get('/task-requests', asyncRoute(async (req, res) => {
+  const status = z.enum(['new','reviewing','quoted','accepted','declined','completed']).optional().parse(req.query.status)
+  const requests = await rows<GenericRow>(
+    `SELECT id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing, source, status, admin_note, created_at, updated_at
+     FROM task_requests WHERE (? IS NULL OR status = ?) ORDER BY FIELD(status, 'new','reviewing','quoted','accepted','completed','declined'), created_at DESC LIMIT 1000`,
+    [status ?? null, status ?? null],
+  )
+  res.json({ requests })
+}))
+
+adminRouter.patch('/task-requests/:requestId', asyncRoute(async (req, res) => {
+  const requestId = uuid.parse(req.params.requestId)
+  const input = z.object({
+    status: z.enum(['new','reviewing','quoted','accepted','declined','completed']),
+    adminNote: z.string().trim().max(10_000).optional().default(''),
+  }).parse(req.body)
+  const result = await execute(
+    'UPDATE task_requests SET status = ?, admin_note = ? WHERE id = ?',
+    [input.status, input.adminNote || null, requestId],
+  )
+  if (!result.affectedRows) throw new HttpError(404, 'Task request not found.', 'task_request_not_found')
+  await execute(
+    `INSERT INTO audit_log (actor_user_id, action, target_type, target_id, metadata) VALUES (?, 'task_request.updated', 'task_request', ?, ?)`,
+    [req.authUser!.id, requestId, JSON.stringify({ status: input.status })],
+  )
+  res.json({ request: { id: requestId, status: input.status } })
 }))
