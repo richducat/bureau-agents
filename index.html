@@ -9,6 +9,9 @@
     <title>Bureau — AI agents for real work</title>
     <script>
       (function () {
+        var base = document.createElement('base')
+        base.href = window.location.hostname.endsWith('github.io') ? '/bureau-agents/' : '/'
+        document.head.appendChild(base)
         var path = new URLSearchParams(window.location.search).get('path')
         if (path) window.history.replaceState(null, '', path)
       })()
