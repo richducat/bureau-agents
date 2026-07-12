@@ -1,35 +1,18 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bot,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  CircleDollarSign,
-  Clock3,
-  FileCheck2,
-  LockKeyhole,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, LockKeyhole, ShieldCheck, Sparkles, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { categories } from '../data'
 import { useApp } from '../context/AppContext'
-import type { Agent, Category, Contract, Job } from '../types'
-import { AgentMark, Rating, Tag } from './Common'
+import { useAuth, type AuthUser } from '../context/AuthContext'
+import { categories } from '../data'
+import { apiFetch, ApiError, jsonBody } from '../lib/api'
+import { track } from '../lib/analytics'
+import type { Agent, Category, Job } from '../types'
+import { AgentMark, Tag } from './Common'
 
 export default function GlobalModals() {
   const { modal, setModal } = useApp()
-  return (
-    <AnimatePresence>
-      {modal?.type === 'post-job' && <PostJobModal onClose={() => setModal(null)} />}
-      {modal?.type === 'hire-agent' && <HireAgentModal agent={modal.agent} onClose={() => setModal(null)} />}
-      {modal?.type === 'submit-proposal' && <ProposalModal job={modal.job} onClose={() => setModal(null)} />}
-    </AnimatePresence>
-  )
+  return <AnimatePresence>{modal?.type === 'post-job' && <PostJobModal onClose={() => setModal(null)} />}{modal?.type === 'hire-agent' && <HireAgentModal agent={modal.agent} onClose={() => setModal(null)} />}{modal?.type === 'submit-proposal' && <ProposalModal job={modal.job} onClose={() => setModal(null)} />}</AnimatePresence>
 }
 
 function Modal({ children, title, onClose, wide = false }: { children: ReactNode; title: string; onClose: () => void; wide?: boolean }) {
@@ -38,30 +21,13 @@ function Modal({ children, title, onClose, wide = false }: { children: ReactNode
     document.addEventListener('keydown', close)
     return () => document.removeEventListener('keydown', close)
   }, [onClose])
-
-  return (
-    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}>
-      <motion.div
-        className={`modal ${wide ? 'modal--wide' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        initial={{ opacity: 0, y: 28, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 14, scale: 0.99 }}
-        transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button className="modal__close icon-button" onClick={onClose} aria-label="Close"><X size={19} /></button>
-        {children}
-      </motion.div>
-    </motion.div>
-  )
+  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}><motion.div className={`modal ${wide ? 'modal--wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} initial={{ opacity: 0, y: 28, scale: .985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 14, scale: .99 }} transition={{ duration: .22, ease: [.2, .8, .2, 1] }} onMouseDown={(event) => event.stopPropagation()}><button className="modal__close icon-button" onClick={onClose} aria-label="Close"><X /></button>{children}</motion.div></motion.div>
 }
 
 function PostJobModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const { addJob, showToast } = useApp()
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<Category>('Engineering')
@@ -72,153 +38,90 @@ function PostJobModal({ onClose }: { onClose: () => void }) {
   const [duration, setDuration] = useState('2–3 days')
   const [skills, setSkills] = useState('')
   const [deliverables, setDeliverables] = useState('Evidence-backed result\nSource or test record\nExecutive summary')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (step < 3) {
-      setStep((current) => current + 1)
-      return
-    }
-    const id = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 42) || 'new-work'}-${Date.now().toString().slice(-4)}`
-    const job: Job = {
-      id,
-      title,
-      category,
-      description,
-      budgetMin,
-      budgetMax,
-      pricing,
-      posted: 'Just now',
-      proposals: 0,
-      duration,
-      experience: 'Proven',
-      client: { name: 'Meridian Labs', initials: 'ML', verified: true, spend: '$26k', hires: 12, rating: 5, location: 'Melbourne, FL' },
-      skills: skills.split(',').map((item) => item.trim()).filter(Boolean).slice(0, 6),
-      deliverables: deliverables.split('\n').map((item) => item.trim()).filter(Boolean),
-      access: ['Client-supplied files', 'Approved sandbox only'],
-      risk: 'Moderate',
-      featured: false,
-    }
-    addJob(job)
-    onClose()
-    showToast('Work request published — matching verified agents now')
-    navigate(`/jobs/${id}`)
+    if (step < 3) { setStep((current) => current + 1); return }
+    if (!user) { onClose(); navigate('/auth?mode=signup&type=client'); return }
+    const client = user.organizations.find((organization) => organization.kind === 'client')
+    if (!client) { setError('A client organization is required to publish work.'); return }
+    const parsedSkills = skills.split(',').map((item) => item.trim()).filter(Boolean).slice(0, 30)
+    const parsedDeliverables = deliverables.split('\n').map((item) => item.trim()).filter(Boolean)
+    setSubmitting(true); setError('')
+    try {
+      const response = await apiFetch<{ job: { id: string; slug: string } }>('/marketplace/jobs', { method: 'POST', body: jsonBody({ organizationId: client.id, title, summary: description.slice(0, 300), description, category, deliverables: parsedDeliverables, requiredCapabilities: parsedSkills.length ? parsedSkills : [category], autonomyLevel: 'supervised', budgetMinCents: Math.round(budgetMin * 100), budgetMaxCents: Math.round(budgetMax * 100), deadlineAt: null, visibility: 'public', publish: true }) })
+      const job: Job = { id: response.job.id, title, category, description, budgetMin, budgetMax, pricing, posted: 'Just now', proposals: 0, duration, experience: 'Proven', client: { name: client.name, initials: client.name.slice(0, 2).toUpperCase(), verified: true, spend: '$0', hires: 0, rating: 0, location: 'Bureau client' }, skills: parsedSkills.slice(0, 6), deliverables: parsedDeliverables, access: ['Client-supplied files', 'Approved sandbox only'], risk: 'Moderate', featured: false }
+      addJob(job); onClose(); track('job_posted', { category, pricing }); showToast('Work request published to the production marketplace'); navigate(`/jobs/${response.job.slug}`)
+    } catch (caught) { setError(caught instanceof ApiError ? caught.message : 'Work request could not be published.') }
+    finally { setSubmitting(false) }
   }
+  const valid = step === 1 ? title.trim().length > 8 && description.trim().length >= 100 : step === 2 ? budgetMin >= 5 && budgetMax >= budgetMin : true
 
-  const valid = step === 1 ? title.trim().length > 8 && description.trim().length > 20 : step === 2 ? budgetMin > 0 && budgetMax >= budgetMin : true
-
-  return (
-    <Modal title="Post a work request" onClose={onClose} wide>
-      <form className="post-modal" onSubmit={submit}>
-        <header className="modal-heading"><p className="overline">Create work</p><h2>What outcome do you need?</h2><p>Specific acceptance criteria attract better agents and safer proposals.</p></header>
-        <div className="modal-progress">{[1, 2, 3].map((item) => <span key={item} className={`${step === item ? 'is-active' : ''} ${step > item ? 'is-complete' : ''}`}><i>{step > item ? <Check size={12} /> : item}</i>{item === 1 ? 'Scope' : item === 2 ? 'Terms' : 'Review'}</span>)}</div>
-
-        {step === 1 && <div className="modal-fields">
-          <label className="field field--full"><span>Work title</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Audit 1,800 invoices for duplicates" /><small>Describe the result, not the role.</small></label>
-          <label className="field"><span>Primary capability</span><div className="select-wrap select-wrap--field"><select value={category} onChange={(event) => setCategory(event.target.value as Category)}>{categories.slice(1).map((item) => <option key={item.name}>{item.name}</option>)}</select><ChevronDown size={15} /></div></label>
-          <label className="field"><span>Required skills</span><input value={skills} onChange={(event) => setSkills(event.target.value)} placeholder="React, Playwright, accessibility" /><small>Separate with commas.</small></label>
-          <label className="field field--full"><span>Scope description</span><textarea rows={5} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe the source material, desired result, constraints, and what a successful delivery looks like." /></label>
-        </div>}
-
-        {step === 2 && <div className="modal-fields">
-          <fieldset className="field field--full pricing-choice"><legend>Payment structure</legend><label className={pricing === 'Fixed' ? 'is-selected' : ''}><input type="radio" name="pricing" checked={pricing === 'Fixed'} onChange={() => setPricing('Fixed')} /><CircleDollarSign size={19} /><span><strong>Fixed price</strong><small>Pay by accepted milestone</small></span></label><label className={pricing === 'Hourly' ? 'is-selected' : ''}><input type="radio" name="pricing" checked={pricing === 'Hourly'} onChange={() => setPricing('Hourly')} /><Clock3 size={19} /><span><strong>Hourly</strong><small>Pay for verified runtime</small></span></label></fieldset>
-          <label className="field"><span>Minimum {pricing === 'Fixed' ? 'budget' : 'rate'}</span><div className="prefix-input"><span>$</span><input type="number" value={budgetMin} onChange={(event) => setBudgetMin(Number(event.target.value))} /></div></label>
-          <label className="field"><span>Maximum {pricing === 'Fixed' ? 'budget' : 'rate'}</span><div className="prefix-input"><span>$</span><input type="number" value={budgetMax} onChange={(event) => setBudgetMax(Number(event.target.value))} /></div></label>
-          <label className="field"><span>Target duration</span><input value={duration} onChange={(event) => setDuration(event.target.value)} /></label>
-          <label className="field field--full"><span>Acceptance deliverables</span><textarea rows={4} value={deliverables} onChange={(event) => setDeliverables(event.target.value)} /><small>One deliverable per line.</small></label>
-          <div className="permission-note field--full"><LockKeyhole size={18} /><div><strong>Access stays least-privilege</strong><p>You can configure systems, credentials, and approval gates before accepting a proposal.</p></div></div>
-        </div>}
-
-        {step === 3 && <div className="post-review">
-          <div className="post-review__main"><Tag tone="lime">Ready to publish</Tag><h3>{title}</h3><p>{description}</p><div>{skills.split(',').map((item) => item.trim()).filter(Boolean).map((item) => <Tag key={item}>{item}</Tag>)}</div></div>
-          <dl><div><dt>Capability</dt><dd>{category}</dd></div><div><dt>Budget</dt><dd>{pricing === 'Fixed' ? `$${budgetMin.toLocaleString()}–${budgetMax.toLocaleString()}` : `$${budgetMin}–${budgetMax}/hr`}</dd></div><div><dt>Duration</dt><dd>{duration}</dd></div><div><dt>Payment</dt><dd>{pricing} · protected</dd></div></dl>
-          <div className="post-review__safe"><ShieldCheck size={19} /><p><strong>Bureau safety review active</strong>Contact details stay private until a contract begins. All proposals are scanned for risky permissions and off-platform payment requests.</p></div>
-        </div>}
-
-        <footer className="modal-actions">
-          {step > 1 ? <button type="button" className="button button--secondary" onClick={() => setStep((current) => current - 1)}><ArrowLeft size={15} /> Back</button> : <button type="button" className="text-button" onClick={onClose}>Save draft</button>}
-          <div><span>{step} of 3</span><button type="submit" className="button button--dark" disabled={!valid}>{step === 3 ? 'Publish work request' : 'Continue'} <ArrowRight size={16} /></button></div>
-        </footer>
-      </form>
-    </Modal>
-  )
+  return <Modal title="Post a work request" onClose={onClose} wide><form className="post-modal" onSubmit={submit}><header className="modal-heading"><p className="overline">Create work</p><h2>What outcome do you need?</h2><p>Specific acceptance criteria attract better agents and safer proposals.</p></header><div className="modal-progress">{[1,2,3].map((item) => <span key={item} className={`${step === item ? 'is-active' : ''} ${step > item ? 'is-complete' : ''}`}><i>{step > item ? <Check /> : item}</i>{item === 1 ? 'Scope' : item === 2 ? 'Terms' : 'Review'}</span>)}</div>
+    {step === 1 && <div className="modal-fields"><label className="field field--full"><span>Work title</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Audit 1,800 invoices for duplicates" /><small>Describe the result, not the role.</small></label><label className="field"><span>Primary capability</span><div className="select-wrap select-wrap--field"><select value={category} onChange={(event) => setCategory(event.target.value as Category)}>{categories.slice(1).map((item) => <option key={item.name}>{item.name}</option>)}</select><ChevronDown /></div></label><label className="field"><span>Required skills</span><input value={skills} onChange={(event) => setSkills(event.target.value)} placeholder="React, Playwright, accessibility" /></label><label className="field field--full"><span>Scope description</span><textarea rows={6} minLength={100} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe inputs, desired result, constraints, permissions, evidence, and the acceptance test (100+ characters)." /></label></div>}
+    {step === 2 && <div className="modal-fields"><fieldset className="field field--full pricing-choice"><legend>Payment structure</legend><label className={pricing === 'Fixed' ? 'is-selected' : ''}><input type="radio" checked={pricing === 'Fixed'} onChange={() => setPricing('Fixed')} /><CircleDollarSign /><span><strong>Fixed price</strong><small>Pay by accepted milestone</small></span></label><label className={pricing === 'Hourly' ? 'is-selected' : ''}><input type="radio" checked={pricing === 'Hourly'} onChange={() => setPricing('Hourly')} /><Clock3 /><span><strong>Hourly</strong><small>Define a verified runtime unit</small></span></label></fieldset><label className="field"><span>Minimum {pricing === 'Fixed' ? 'budget' : 'rate'}</span><div className="prefix-input"><span>$</span><input type="number" min={5} value={budgetMin} onChange={(event) => setBudgetMin(Number(event.target.value))} /></div></label><label className="field"><span>Maximum {pricing === 'Fixed' ? 'budget' : 'rate'}</span><div className="prefix-input"><span>$</span><input type="number" min={5} value={budgetMax} onChange={(event) => setBudgetMax(Number(event.target.value))} /></div></label><label className="field"><span>Target duration</span><input value={duration} onChange={(event) => setDuration(event.target.value)} /></label><label className="field field--full"><span>Acceptance deliverables</span><textarea rows={4} value={deliverables} onChange={(event) => setDeliverables(event.target.value)} /></label><div className="permission-note field--full"><LockKeyhole /><div><strong>Access stays least-privilege</strong><p>Configure systems, credentials, and approval gates before accepting a proposal.</p></div></div></div>}
+    {step === 3 && <div className="post-review"><div className="post-review__main"><Tag tone="lime">Ready to publish</Tag><h3>{title}</h3><p>{description}</p><div>{skills.split(',').map((item) => item.trim()).filter(Boolean).map((item) => <Tag key={item}>{item}</Tag>)}</div></div><dl><div><dt>Capability</dt><dd>{category}</dd></div><div><dt>Budget</dt><dd>${budgetMin.toLocaleString()}–${budgetMax.toLocaleString()}</dd></div><div><dt>Duration</dt><dd>{duration}</dd></div><div><dt>Client fee</dt><dd>{clientFeeRate(user)}% when funded</dd></div></dl><div className="post-review__safe"><ShieldCheck /><p><strong>Accountable scope</strong>Permissions and human approval gates stay attached to the work and contract record.</p></div></div>}
+    {error && <p className="form-error" role="alert">{error}</p>}<footer className="modal-actions">{step > 1 ? <button type="button" className="button button--secondary" onClick={() => setStep((current) => current - 1)}><ArrowLeft />Back</button> : <button type="button" className="text-button" onClick={onClose}>Cancel</button>}<div><span>{step} of 3</span><button className="button button--dark" disabled={!valid || submitting}>{submitting ? 'Publishing…' : step === 3 ? 'Publish work request' : 'Continue'}<ArrowRight /></button></div></footer></form></Modal>
 }
 
 function HireAgentModal({ agent, onClose }: { agent: Agent; onClose: () => void }) {
   const navigate = useNavigate()
-  const { addContract, showToast } = useApp()
+  const { showToast } = useApp()
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [scope, setScope] = useState('')
   const [budget, setBudget] = useState(agent.packages[0]?.price ?? agent.hourlyRate * 8)
-  const [due, setDue] = useState('Jul 18, 2026')
-
-  const submit = (event: FormEvent) => {
+  const [due, setDue] = useState('2026-07-18')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
-    const id = `ct-${Date.now().toString().slice(-6)}`
-    const contract: Contract = {
-      id,
-      title,
-      agentId: agent.id,
-      client: 'Meridian Labs',
-      status: 'Running',
-      value: budget,
-      started: 'Jul 12',
-      due: due.replace(', 2026', ''),
-      progress: 0,
-      nextMilestone: 'First delivery',
-      milestones: [{ id: `m-${Date.now()}`, title: 'First delivery', amount: budget, status: 'Funded', due: due.replace(', 2026', '') }],
-      activity: [{ id: `a-${Date.now()}`, type: 'payment', title: 'Contract funded', detail: `$${budget.toLocaleString()} protected in Bureau Vault`, time: 'Just now' }],
-    }
-    addContract(contract)
-    onClose()
-    showToast(`${agent.name} hired — contract workspace is ready`)
-    navigate(`/contracts/${id}`)
+    if (!user) { onClose(); navigate('/auth?mode=signup&type=client'); return }
+    const client = user.organizations.find((organization) => organization.kind === 'client')
+    if (!client) { setError('A client organization is required.'); return }
+    setSubmitting(true); setError('')
+    try {
+      const response = await apiFetch<{ contract: { id: string } }>(`/marketplace/agents/${agent.id}/contracts`, { method: 'POST', body: jsonBody({ clientOrganizationId: client.id, title, scope, milestones: [{ title: 'First delivery', description: scope, amountCents: Math.round(budget * 100), dueAt: new Date(`${due}T23:59:00Z`).toISOString() }] }) })
+      onClose(); track('contract_created', { direct: true }); showToast(`${agent.name} contract created — fund the first milestone next`); navigate(`/contracts/${response.contract.id}`)
+    } catch (caught) { setError(caught instanceof ApiError ? caught.message : 'Contract could not be created.') }
+    finally { setSubmitting(false) }
   }
-
-  return (
-    <Modal title={`Hire ${agent.name}`} onClose={onClose} wide>
-      <form className="hire-modal" onSubmit={submit}>
-        <header className="hire-agent-heading"><AgentMark agent={agent} size="large" /><div><p className="overline">Direct contract</p><h2>Hire {agent.name}</h2><p>{agent.specialty}</p><span><Rating rating={agent.rating} reviews={agent.reviews} /> · {agent.success}% accepted</span></div></header>
-        <div className="hire-modal__layout">
-          <div className="modal-fields">
-            <label className="field field--full"><span>Contract title</span><input autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="What outcome will this contract deliver?" /></label>
-            <label className="field field--full"><span>Scope and acceptance criteria</span><textarea required rows={5} value={scope} onChange={(event) => setScope(event.target.value)} placeholder="Describe the inputs, outputs, review evidence, and permissions." /></label>
-            <label className="field"><span>Funded milestone</span><div className="prefix-input"><span>$</span><input type="number" min="1" value={budget} onChange={(event) => setBudget(Number(event.target.value))} /></div></label>
-            <label className="field"><span>Due date</span><input value={due} onChange={(event) => setDue(event.target.value)} /></label>
-          </div>
-          <aside className="hire-summary"><h3>Contract summary</h3><dl><div><dt>Agent</dt><dd>{agent.name}</dd></div><div><dt>Milestone</dt><dd>${budget.toLocaleString()}</dd></div><div><dt>Marketplace fee</dt><dd>$0 in demo</dd></div><div className="hire-total"><dt>Protected today</dt><dd>${budget.toLocaleString()}</dd></div></dl><div className="hire-protection"><ShieldCheck size={18} /><p><strong>Outcome protection</strong>Funds stay in Vault until you approve the evidence and delivery.</p></div><ul><li><Check size={13} />Operator identity verified</li><li><Check size={13} />Signed run activity retained</li><li><Check size={13} />Dispute review available</li></ul></aside>
-        </div>
-        <footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><button type="submit" className="button button--lime" disabled={title.trim().length < 5 || scope.trim().length < 20}>Fund & hire agent <ArrowRight size={16} /></button></div></footer>
-      </form>
-    </Modal>
-  )
+  const rate = clientFeeRate(user)
+  return <Modal title={`Hire ${agent.name}`} onClose={onClose} wide><form className="hire-modal" onSubmit={submit}><header className="hire-agent-heading"><AgentMark agent={agent} size="large" /><div><p className="overline">Direct contract</p><h2>Hire {agent.name}</h2><p>{agent.specialty}</p><span>Review the live profile evidence before contracting.</span></div></header><div className="hire-modal__layout"><div className="modal-fields"><label className="field field--full"><span>Contract title</span><input required minLength={10} value={title} onChange={(event) => setTitle(event.target.value)} /></label><label className="field field--full"><span>Scope and acceptance criteria</span><textarea required minLength={100} rows={6} value={scope} onChange={(event) => setScope(event.target.value)} /></label><label className="field"><span>Work value</span><div className="prefix-input"><span>$</span><input type="number" min={5} value={budget} onChange={(event) => setBudget(Number(event.target.value))} /></div></label><label className="field"><span>Due date</span><input type="date" value={due} onChange={(event) => setDue(event.target.value)} /></label></div><aside className="hire-summary"><h3>Contract economics</h3><dl><div><dt>Work value</dt><dd>${budget.toFixed(2)}</dd></div><div><dt>Client fee</dt><dd>${(budget * rate / 100).toFixed(2)} ({rate}%)</dd></div><div className="hire-total"><dt>Due when funded</dt><dd>${(budget * (1 + rate / 100)).toFixed(2)}</dd></div></dl><div className="hire-protection"><ShieldCheck /><p><strong>Protected funding</strong>Stripe confirms payment; operator transfer follows accepted delivery.</p></div><ul><li><Check />Fee visible before checkout</li><li><Check />Delivery evidence retained</li><li><Check />Dispute review available</li></ul></aside></div>{error && <p className="form-error">{error}</p>}<footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><button className="button button--lime" disabled={submitting || title.length < 10 || scope.length < 100}>{submitting ? 'Creating…' : 'Create contract'}<ArrowRight /></button></div></footer></form></Modal>
 }
 
 function ProposalModal({ job, onClose }: { job: Job; onClose: () => void }) {
   const { incrementProposals, showToast } = useApp()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [price, setPrice] = useState(job.pricing === 'Fixed' ? job.budgetMin : Math.max(job.budgetMin, 68))
   const [delivery, setDelivery] = useState(job.duration)
   const [approach, setApproach] = useState('')
-  const submit = (event: FormEvent) => {
+  const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([])
+  const [agentId, setAgentId] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  useEffect(() => {
+    const operator = user?.organizations.find((organization) => organization.kind === 'operator')
+    if (!operator) return
+    void apiFetch<{ agents: Array<{ id: string; name: string }> }>(`/marketplace/organizations/${operator.id}/agents`).then((response) => { setAgents(response.agents); setAgentId(response.agents[0]?.id ?? '') }).catch(() => undefined)
+  }, [user])
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
-    incrementProposals(job.id)
-    onClose()
-    showToast('Proposal submitted — the client can now review your verified profile')
+    if (!user) { onClose(); navigate('/auth?mode=signup&type=operator'); return }
+    if (!agentId) { setError('Register an agent before submitting a proposal.'); return }
+    setSubmitting(true); setError('')
+    try {
+      await apiFetch(`/marketplace/jobs/${job.id}/proposals`, { method: 'POST', body: jsonBody({ agentId, amountCents: Math.round(price * 100), durationDays: 7, approach, milestones: [{ title: 'Complete delivery', description: `Deliver the scoped result and acceptance evidence within ${delivery}.`, amountCents: Math.round(price * 100), dueInDays: 7 }] }) })
+      incrementProposals(job.id); onClose(); track('proposal_submitted', { category: job.category }); showToast('Proposal submitted to the production work request')
+    } catch (caught) { setError(caught instanceof ApiError ? caught.message : 'Proposal could not be submitted.') }
+    finally { setSubmitting(false) }
   }
+  return <Modal title="Submit a proposal" onClose={onClose} wide><form className="proposal-modal" onSubmit={submit}><header className="modal-heading"><p className="overline">Agent proposal</p><h2>Propose a clear execution plan.</h2><p>{job.title}</p></header><div className="proposal-match"><Sparkles /><div><strong>Choose the proposing runtime</strong><p>Bureau shows actual profile evidence and fee-adjusted operator net.</p></div></div><div className="modal-fields"><label className="field field--full"><span>Proposing agent</span><select required value={agentId} onChange={(event) => setAgentId(event.target.value)}><option value="">Select an agent</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label><label className="field"><span>Your {job.pricing === 'Fixed' ? 'fixed price' : 'hourly rate'}</span><div className="prefix-input"><span>$</span><input type="number" min={5} value={price} onChange={(event) => setPrice(Number(event.target.value))} /></div></label><label className="field"><span>Delivery commitment</span><input value={delivery} onChange={(event) => setDelivery(event.target.value)} /></label><label className="field field--full"><span>Execution approach</span><textarea rows={7} minLength={100} value={approach} onChange={(event) => setApproach(event.target.value)} placeholder="Explain the run plan, approval gates, evidence, risks, and what you need from the client (100+ characters)." /></label></div><div className="proposal-evidence"><FileCheck2 /><div><strong>Operator Starter estimate: ${(price * .9).toFixed(2)} net</strong><p>The 10% payout fee is locked into the contract when a client accepts this proposal.</p></div></div>{error && <p className="form-error">{error}</p>}<footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><span>No proposal credits</span><button className="button button--lime" disabled={submitting || !agentId || approach.length < 100}>{submitting ? 'Submitting…' : 'Submit proposal'}<ArrowRight /></button></div></footer></form></Modal>
+}
 
-  return (
-    <Modal title="Submit a proposal" onClose={onClose} wide>
-      <form className="proposal-modal" onSubmit={submit}>
-        <header className="modal-heading"><p className="overline">Agent proposal</p><h2>Propose a clear execution plan.</h2><p>{job.title}</p></header>
-        <div className="proposal-match"><Sparkles size={18} /><div><strong>96% capability match</strong><p>Your verified history in {job.skills.slice(0, 2).join(' and ')} exceeds this client’s threshold.</p></div></div>
-        <div className="modal-fields">
-          <label className="field"><span>Your {job.pricing === 'Fixed' ? 'fixed price' : 'hourly rate'}</span><div className="prefix-input"><span>$</span><input type="number" min="1" value={price} onChange={(event) => setPrice(Number(event.target.value))} /></div></label>
-          <label className="field"><span>Delivery commitment</span><input value={delivery} onChange={(event) => setDelivery(event.target.value)} /></label>
-          <label className="field field--full"><span>Execution approach</span><textarea autoFocus rows={6} value={approach} onChange={(event) => setApproach(event.target.value)} placeholder="Explain the run plan, approval gates, evidence, and what you need from the client." /><small>Do not include external contact information.</small></label>
-        </div>
-        <div className="proposal-evidence"><FileCheck2 size={18} /><div><strong>Bureau attaches your proof automatically</strong><p>Relevant benchmark scores, completion history, tool verification, and operator identity will accompany this proposal.</p></div></div>
-        <footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><span>No credits required</span><button type="submit" className="button button--lime" disabled={approach.trim().length < 30}>Submit proposal <ArrowRight size={16} /></button></div></footer>
-      </form>
-    </Modal>
-  )
+function clientFeeRate(user: AuthUser | null) {
+  return user?.organizations.some((organization) => organization.kind === 'client' && organization.plan === 'client_scale') ? 3 : 5
 }

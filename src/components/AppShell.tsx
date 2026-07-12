@@ -12,12 +12,14 @@ import {
   Search,
   Settings2,
   Users,
+  ShieldCheck,
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { Logo } from './Common'
+import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   { to: '/workspace', label: 'Overview', icon: LayoutDashboard },
@@ -29,6 +31,7 @@ const navItems = [
 
 export default function AppShell() {
   const { role, setRole, setModal } = useApp()
+  const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -36,6 +39,8 @@ export default function AppShell() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const roleMenuRef = useRef<HTMLDivElement>(null)
+  const initials = user?.displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'GU'
+  const allNavItems = user?.platformRole === 'admin' || user?.platformRole === 'support' ? [...navItems, { to: '/admin', label: 'Admin', icon: ShieldCheck }] : navItems
 
   useEffect(() => {
     setMobileOpen(false)
@@ -66,13 +71,12 @@ export default function AppShell() {
         </div>
 
         <nav className="sidebar__nav" aria-label="Main navigation">
-          {navItems.map((item) => {
+          {allNavItems.map((item) => {
             const Icon = item.icon
             return (
               <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'is-active' : '')}>
                 <Icon size={18} strokeWidth={1.8} />
                 <span>{item.label}</span>
-                {item.label === 'Messages' && <small>2</small>}
               </NavLink>
             )
           })}
@@ -81,7 +85,7 @@ export default function AppShell() {
         <div className="sidebar__agent-cta">
           <span className="sidebar__agent-icon"><Bot size={18} /></span>
           <div>
-            <strong>Put your agent to work</strong>
+            <strong>{user ? 'Put your agent to work' : 'Founding operators wanted'}</strong>
             <p>Connect via API in about 5 minutes.</p>
           </div>
           <NavLink to="/connect">Connect agent <span aria-hidden="true">↗</span></NavLink>
@@ -115,7 +119,7 @@ export default function AppShell() {
           <div className="topbar__actions">
             <button
               className="button button--primary topbar__primary"
-              onClick={() => (role === 'client' ? setModal({ type: 'post-job' }) : navigate('/jobs'))}
+              onClick={() => !user ? navigate('/auth?mode=signup') : (role === 'client' ? setModal({ type: 'post-job' }) : navigate('/jobs'))}
             >
               <Plus size={16} /> {role === 'client' ? 'Post work' : 'Find work'}
             </button>
@@ -128,7 +132,6 @@ export default function AppShell() {
                 aria-expanded={notificationsOpen}
               >
                 <Bell size={18} />
-                <span />
               </button>
               <AnimatePresence>
                 {notificationsOpen && (
@@ -138,19 +141,8 @@ export default function AppShell() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -5, scale: 0.98 }}
                   >
-                    <div className="popover__heading"><strong>Notifications</strong><button>Mark all read</button></div>
-                    <button className="notification-item">
-                      <span className="notification-item__dot" />
-                      <span><strong>Scout OS submitted evidence</strong><small>Contract CT-1048 · 18 min ago</small></span>
-                    </button>
-                    <button className="notification-item">
-                      <span className="notification-item__dot" />
-                      <span><strong>2 new agent proposals</strong><small>Invoice audit · 41 min ago</small></span>
-                    </button>
-                    <button className="notification-item notification-item--read">
-                      <span className="notification-item__dot" />
-                      <span><strong>PR #418 passed all checks</strong><small>Forge CI · 2 hours ago</small></span>
-                    </button>
+                    <div className="popover__heading"><strong>Notifications</strong></div>
+                    <p className="popover-empty">No new production notifications.</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -158,8 +150,8 @@ export default function AppShell() {
 
             <div className="role-switch" ref={roleMenuRef}>
               <button onClick={() => setRoleOpen((open) => !open)} aria-expanded={roleOpen}>
-                <span className="avatar avatar--user">RD</span>
-                <span className="role-switch__copy"><strong>Richard</strong><small>{role === 'client' ? 'Hiring' : 'Agent operator'}</small></span>
+                <span className="avatar avatar--user">{initials}</span>
+                <span className="role-switch__copy"><strong>{user?.displayName ?? 'Preview'}</strong><small>{user ? (role === 'client' ? 'Hiring' : 'Agent operator') : 'Not signed in'}</small></span>
                 <ChevronDown size={15} />
               </button>
               <AnimatePresence>
@@ -179,6 +171,7 @@ export default function AppShell() {
                       <span className="role-icon"><Bot size={16} /></span>
                       <span><strong>Agent operator</strong><small>Find work and earn</small></span>
                     </button>
+                    <div className="role-menu__account">{user ? <button onClick={() => { void logout(); setRoleOpen(false); navigate('/') }}>Sign out</button> : <button onClick={() => navigate('/auth?mode=login')}>Sign in</button>}</div>
                   </motion.div>
                 )}
               </AnimatePresence>

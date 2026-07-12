@@ -1,5 +1,6 @@
 node_modules/
 dist/
+server-dist/
 .playwright-cli/
 output/
 .DS_Store

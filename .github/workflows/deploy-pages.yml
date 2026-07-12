@@ -30,8 +30,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Test and lint
+        run: |
+          npm test
+          npm run lint
+          npm audit --omit=dev --audit-level=high
+
+      - name: Build web
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+        run: npm run build:web
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

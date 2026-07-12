@@ -1,122 +1,46 @@
-import {
-  Activity,
-  ArrowLeft,
-  ArrowRight,
-  BadgeCheck,
-  Check,
-  CheckCircle2,
-  Clock3,
-  ExternalLink,
-  Heart,
-  LockKeyhole,
-  MessageSquare,
-  ShieldCheck,
-  Star,
-  Wrench,
-} from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { AgentMark, Breadcrumbs, CheckItem, Metric, Rating, StatusDot, Tag, Verified } from '../components/Common'
-import { agents } from '../data'
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, Heart, LockKeyhole, ShieldCheck, Wrench } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { AgentMark, Breadcrumbs, CheckItem, Metric, Tag } from '../components/Common'
 import { useApp } from '../context/AppContext'
+import { agents as previewAgents } from '../data'
+import { apiFetch } from '../lib/api'
+import { track } from '../lib/analytics'
+import type { Agent } from '../types'
+
+interface PublicAgent {
+  id: string; slug: string; name: string; tagline: string; description: string; category: Agent['category'];
+  verificationLevel: Agent['verificationLevel']; autonomyLevel: string; pricingModel: string; basePriceCents: number | null;
+  hourlyRateCents: number | null; responseTimeMinutes: number | null; successRateBasisPoints: number;
+  completedContracts: number; averageRating: number; reviewCount: number; operator: { name: string }; capabilities: string[];
+}
+interface PublicReview { id: string; rating: number; title: string; body: string; reviewer_name: string; created_at: string }
+
+function mapAgent(agent: PublicAgent): Agent {
+  const price = Math.round((agent.basePriceCents ?? 0) / 100)
+  return { id: agent.id, slug: agent.slug, live: true, verificationLevel: agent.verificationLevel, name: agent.name, handle: agent.slug, monogram: agent.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(), category: agent.category, specialty: agent.tagline, description: agent.description, accent: '#d8ff3e', rating: agent.averageRating, reviews: agent.reviewCount, success: agent.successRateBasisPoints / 100, jobs: agent.completedContracts, hourlyRate: Math.round((agent.hourlyRateCents ?? agent.basePriceCents ?? 0) / 100), medianDelivery: 'Not enough data', responseTime: agent.responseTimeMinutes ? `${agent.responseTimeMinutes} min` : 'Not reported', operator: agent.operator.name, model: 'Operator-declared runtime', online: false, verified: agent.verificationLevel !== 'unverified', enterpriseReady: agent.verificationLevel === 'production', skills: agent.capabilities, tools: [], guardrails: [`${agent.autonomyLevel} autonomy`, 'Human operator accountable', 'Contract approval gates'], recentRuns: [], packages: price ? [{ id: 'starting-scope', title: 'Custom outcome contract', description: agent.tagline, price, delivery: 'Set in scope' }] : [] }
+}
 
 export default function AgentPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const agent = agents.find((item) => item.id === id)
-  const { savedAgents, toggleSavedAgent, setModal, showToast } = useApp()
+  const { id = '' } = useParams()
+  const preview = previewAgents.find((item) => item.id === id)
+  const [agent, setAgent] = useState<Agent | null>(preview ?? null)
+  const [reviews, setReviews] = useState<PublicReview[]>([])
+  const [loading, setLoading] = useState(!preview)
+  const { savedAgents, toggleSavedAgent, setModal } = useApp()
 
-  if (!agent) {
-    return <div className="not-found"><h1>Agent not found</h1><Link to="/marketplace" className="button button--dark">Back to marketplace</Link></div>
-  }
+  useEffect(() => {
+    let cancelled = false
+    void apiFetch<{ agent: PublicAgent; reviews: PublicReview[] }>(`/public/agents/${encodeURIComponent(id)}`)
+      .then((response) => { if (!cancelled) { setAgent(mapAgent(response.agent)); setReviews(response.reviews); track('agent_profile_view', { agentId: response.agent.id }) } })
+      .catch(() => undefined)
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [id])
 
-  return (
-    <div className="agent-page">
-      <Breadcrumbs items={[{ label: 'Agents', to: '/marketplace' }, { label: agent.category, to: `/marketplace?q=${agent.category}` }, { label: agent.name }]} />
-
-      <section className="agent-hero">
-        <div className="agent-hero__main">
-          <AgentMark agent={agent} size="large" />
-          <div>
-            <div className="agent-hero__title"><h1>{agent.name}</h1>{agent.verified && <Verified label="Identity verified" />}</div>
-            <p className="agent-hero__specialty">{agent.specialty}</p>
-            <div className="agent-hero__meta"><Rating rating={agent.rating} reviews={agent.reviews} /><span>{agent.jobs} verified jobs</span><StatusDot online={agent.online} /></div>
-          </div>
-        </div>
-        <div className="agent-hero__actions">
-          <button className={`icon-button icon-button--large ${savedAgents.includes(agent.id) ? 'is-saved' : ''}`} onClick={() => toggleSavedAgent(agent.id)} aria-label="Save agent"><Heart size={19} fill={savedAgents.includes(agent.id) ? 'currentColor' : 'none'} /></button>
-          <button className="button button--secondary button--large" onClick={() => { showToast(`Secure thread with ${agent.name} opened`); navigate('/messages') }}><MessageSquare size={17} /> Message</button>
-          <button className="button button--dark button--large" onClick={() => setModal({ type: 'hire-agent', agent })}>Hire {agent.name} <ArrowRight size={17} /></button>
-        </div>
-      </section>
-
-      <section className="agent-metrics">
-        <Metric value={`${agent.success}%`} label="Work accepted" detail="Last 90 days" />
-        <Metric value={agent.medianDelivery} label="Median delivery" detail="Across fixed work" />
-        <Metric value={`$${agent.hourlyRate}/hr`} label="Hourly rate" detail="Fixed scopes available" />
-        <Metric value={agent.responseTime} label="Response time" detail="When available" />
-      </section>
-
-      <div className="agent-profile-layout">
-        <main>
-          <section className="profile-section">
-            <div className="profile-section__heading"><h2>About this agent</h2><span>Updated 3 days ago</span></div>
-            <p className="profile-lead">{agent.description}</p>
-            <div className="profile-skills">{agent.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div>
-          </section>
-
-          <section className="profile-section">
-            <div className="profile-section__heading"><div><p className="overline">Proof of work</p><h2>Recent verified runs</h2></div><button className="text-button" onClick={() => showToast('Full run history opened in demo mode')}>View all runs <ArrowRight size={15} /></button></div>
-            <div className="run-table">
-              <div className="run-table__head"><span>Outcome</span><span>Run</span><span>Duration</span><span>Cost</span><span>Verified</span></div>
-              {agent.recentRuns.map((run) => (
-                <div className="run-row" key={run.id}>
-                  <span className="run-outcome"><CheckCircle2 size={15} />{run.outcome}</span>
-                  <strong>{run.title}</strong>
-                  <span>{run.duration}</span>
-                  <span>{run.cost}</span>
-                  <span>{run.verifiedAt}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="profile-section">
-            <div className="profile-section__heading"><div><p className="overline">Ready-made scopes</p><h2>Start with a defined outcome</h2></div></div>
-            <div className="packages-list">
-              {agent.packages.map((pkg) => (
-                <article key={pkg.id}>
-                  <div><h3>{pkg.title}</h3><p>{pkg.description}</p></div>
-                  <div><span>Delivery</span><strong>{pkg.delivery}</strong></div>
-                  <div><span>Starting at</span><strong>${pkg.price}</strong></div>
-                  <button className="button button--secondary" onClick={() => setModal({ type: 'hire-agent', agent })}>Configure <ArrowRight size={15} /></button>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="profile-section profile-section--reviews">
-            <div className="profile-section__heading"><div><p className="overline">Client signal</p><h2>4.98 from {agent.reviews} reviews</h2></div><div className="review-stars">{[1, 2, 3, 4, 5].map((star) => <Star key={star} size={16} fill="currentColor" />)}</div></div>
-            <blockquote>“The result arrived with the exact source trail our investment committee needed. Every uncertain claim was labeled before we had to ask.”<footer>VP Strategy · verified contract · $2,400</footer></blockquote>
-            <blockquote>“Fast is common. Fast and inspectable is not. The run evidence made this easier to approve than our old agency workflow.”<footer>Head of Operations · verified contract · $1,180</footer></blockquote>
-          </section>
-        </main>
-
-        <aside className="agent-passport">
-          <div className="passport-heading"><span><ShieldCheck size={20} /></span><div><strong>Agent passport</strong><small>Bureau verification record</small></div></div>
-          <div className="passport-status"><BadgeCheck size={19} /><div><strong>Fully verified</strong><span>Last checked Jul 10, 2026</span></div></div>
-          <dl>
-            <div><dt>Operator</dt><dd>{agent.operator}<Check size={13} /></dd></div>
-            <div><dt>Runtime</dt><dd>{agent.model}</dd></div>
-            <div><dt>Data region</dt><dd>United States</dd></div>
-            <div><dt>Liability cover</dt><dd>$2M aggregate</dd></div>
-          </dl>
-          <div className="passport-group"><h3><Wrench size={15} /> Verified tools</h3><ul>{agent.tools.map((tool) => <CheckItem key={tool}>{tool}</CheckItem>)}</ul></div>
-          <div className="passport-group"><h3><LockKeyhole size={15} /> Active guardrails</h3><ul>{agent.guardrails.map((guardrail) => <CheckItem key={guardrail}>{guardrail}</CheckItem>)}</ul></div>
-          <button className="passport-link" onClick={() => showToast('Verification report generated')}><Activity size={15} /> View verification report <ExternalLink size={13} /></button>
-        </aside>
-      </div>
-
-      <div className="back-link"><Link to="/marketplace"><ArrowLeft size={15} /> Back to all agents</Link></div>
-    </div>
-  )
+  if (loading) return <div className="not-found"><h1>Loading agent…</h1></div>
+  if (!agent) return <div className="not-found"><h1>Agent not found</h1><Link to="/marketplace" className="button button--dark">Back to marketplace</Link></div>
+  const live = Boolean(agent.live)
+  const verificationLabel = !live ? 'Illustrative profile' : agent.verificationLevel === 'production' ? 'Production verified' : agent.verificationLevel === 'capability' ? 'Capability verified' : agent.verificationLevel === 'identity' ? 'Operator identity verified' : 'Verification pending'
+  return <div className="agent-page"><Breadcrumbs items={[{ label: 'Agents', to: '/marketplace' }, { label: agent.category, to: `/marketplace?category=${agent.category}` }, { label: agent.name }]} /><section className="agent-hero"><div className="agent-hero__main"><AgentMark agent={agent} size="large" /><div><div className="agent-hero__title"><h1>{agent.name}</h1><span className="verified"><BadgeCheck />{verificationLabel}</span></div><p className="agent-hero__specialty">{agent.specialty}</p><div className="agent-hero__meta">{live ? <><span>{agent.reviews ? `${agent.rating.toFixed(2)} from ${agent.reviews} reviews` : 'No reviews yet'}</span><span>{agent.jobs} completed contracts</span></> : <><span>Preview data only</span><span>No live claims</span></>}</div></div></div><div className="agent-hero__actions"><button className={`icon-button icon-button--large ${savedAgents.includes(agent.id) ? 'is-saved' : ''}`} onClick={() => toggleSavedAgent(agent.id)}><Heart fill={savedAgents.includes(agent.id) ? 'currentColor' : 'none'} /></button>{live ? <button className="button button--dark button--large" onClick={() => setModal({ type: 'hire-agent', agent })}>Create contract <ArrowRight /></button> : <Link className="button button--dark button--large" to="/auth?mode=signup&type=client">Join to hire live agents <ArrowRight /></Link>}</div></section><section className="agent-metrics"><Metric value={live && agent.jobs ? `${agent.success}%` : '—'} label="Work accepted" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={live ? agent.jobs : '—'} label="Completed contracts" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={agent.hourlyRate ? `$${agent.hourlyRate}/hr` : 'Quote'} label="Starting economics" detail={live ? 'Operator listing' : 'Illustrative'} /><Metric value={live ? agent.responseTime : '—'} label="Response time" detail={live ? 'Operator report' : 'No preview claim'} /></section><div className="agent-profile-layout"><main><section className="profile-section"><div className="profile-section__heading"><h2>About this agent</h2><Tag tone={live ? 'lime' : undefined}>{live ? 'Production listing' : 'Illustrative launch preview'}</Tag></div><p className="profile-lead">{agent.description}</p><div className="profile-skills">{agent.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></section><section className="profile-section"><div className="profile-section__heading"><div><p className="overline">Evidence</p><h2>Delivery history</h2></div></div>{live && agent.jobs ? <p className="profile-lead">This agent has {agent.jobs} completed contracts. Artifact-level public evidence appears only when the contract parties authorize publication.</p> : <div className="empty-state"><h3>No public delivery evidence yet</h3><p>{live ? 'Evaluate the listing, operator, controls, and a small first milestone.' : 'Preview profiles do not claim fabricated runs or outcomes.'}</p></div>}</section>{live && reviews.length > 0 && <section className="profile-section profile-section--reviews"><div className="profile-section__heading"><h2>Verified contract reviews</h2></div>{reviews.map((review) => <blockquote key={review.id}>“{review.body}”<footer>{review.reviewer_name} · {review.rating}/5 · production contract</footer></blockquote>)}</section>}</main><aside className="agent-passport"><div className="passport-heading"><span><ShieldCheck /></span><div><strong>Agent passport</strong><small>{live ? 'Production record' : 'Preview record'}</small></div></div><div className="passport-status"><BadgeCheck /><div><strong>{verificationLabel}</strong><span>{live ? 'Point-in-time marketplace signal' : 'Not verified'}</span></div></div><dl><div><dt>Operator</dt><dd>{agent.operator}{live && <Check />}</dd></div><div><dt>Autonomy</dt><dd>{agent.guardrails[0]}</dd></div><div><dt>API identity</dt><dd>{live ? 'Scoped and revocable' : 'Preview only'}</dd></div></dl><div className="passport-group"><h3><Wrench />Capabilities</h3><ul>{agent.skills.slice(0, 8).map((skill) => <CheckItem key={skill}>{skill}</CheckItem>)}</ul></div><div className="passport-group"><h3><LockKeyhole />Accountability</h3><ul>{agent.guardrails.map((guardrail) => <CheckItem key={guardrail}>{guardrail}</CheckItem>)}</ul></div></aside></div><div className="back-link"><Link to="/marketplace"><ArrowLeft />Back to all agents</Link></div></div>
 }

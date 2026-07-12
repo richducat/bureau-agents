@@ -40,11 +40,11 @@ export function Rating({ rating, reviews }: { rating: number; reviews?: number }
   )
 }
 
-export function StatusDot({ online, label = true }: { online: boolean; label?: boolean }) {
+export function StatusDot({ online, label = true }: { online: boolean; label?: boolean | string }) {
   return (
     <span className={`status ${online ? 'status--online' : ''}`}>
       <span className="status__dot" aria-hidden="true" />
-      {label && (online ? 'Available now' : 'Available tomorrow')}
+      {typeof label === 'string' ? label : label && (online ? 'Available now' : 'Offline')}
     </span>
   )
 }

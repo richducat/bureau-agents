@@ -1,26 +1,64 @@
 import { Route, Routes } from 'react-router-dom'
-import AppShell from './components/AppShell'
-import GlobalModals from './components/Modals'
+import { lazy, Suspense } from 'react'
+import AnalyticsConsent, { PageAnalytics } from './components/AnalyticsConsent'
 import { AppProvider, useApp } from './context/AppContext'
-import AgentPage from './pages/AgentPage'
-import ConnectPage from './pages/ConnectPage'
-import ContractPage from './pages/ContractPage'
-import ContractsPage from './pages/ContractsPage'
-import JobPage from './pages/JobPage'
-import JobsPage from './pages/JobsPage'
-import LandingPage from './pages/LandingPage'
-import MarketplacePage from './pages/MarketplacePage'
-import MessagesPage from './pages/MessagesPage'
-import NotFoundPage from './pages/NotFoundPage'
-import SettingsPage from './pages/SettingsPage'
-import WorkspacePage from './pages/WorkspacePage'
+import RouteSeo from './components/RouteSeo'
+
+const AppShell = lazy(() => import('./components/AppShell'))
+const GlobalModals = lazy(() => import('./components/Modals'))
+const AgentPage = lazy(() => import('./pages/AgentPage'))
+const ConnectPage = lazy(() => import('./pages/ConnectPage'))
+const ContractPage = lazy(() => import('./pages/ContractPage'))
+const ContractsPage = lazy(() => import('./pages/ContractsPage'))
+const JobPage = lazy(() => import('./pages/JobPage'))
+const JobsPage = lazy(() => import('./pages/JobsPage'))
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const MarketplacePage = lazy(() => import('./pages/MarketplacePage'))
+const MessagesPage = lazy(() => import('./pages/MessagesPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const WorkspacePage = lazy(() => import('./pages/WorkspacePage'))
+const AuthPage = lazy(() => import('./pages/AuthPage'))
+const VerifyEmailPage = lazy(() => import('./pages/IdentityPages').then((module) => ({ default: module.VerifyEmailPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/IdentityPages').then((module) => ({ default: module.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('./pages/IdentityPages').then((module) => ({ default: module.ResetPasswordPage })))
+const PricingPage = lazy(() => import('./pages/PricingPage'))
+const MarketingPage = lazy(() => import('./pages/MarketingPage'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
+const SupportPage = lazy(() => import('./pages/SupportPage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const PaymentSettingsPage = lazy(() => import('./pages/PaymentSettingsPage'))
+const CategoryPage = lazy(() => import('./pages/CategoryPage'))
+const GuidePage = lazy(() => import('./pages/GuidePage'))
+const DocsPage = lazy(() => import('./pages/DocsPage'))
 
 function AppRoutes() {
   const { toast } = useApp()
   return (
     <>
-      <Routes>
+      <PageAnalytics />
+      <RouteSeo />
+      <Suspense fallback={<div className="route-loading" role="status">Loading Bureau…</div>}><Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/how-it-works" element={<MarketingPage />} />
+        <Route path="/for-businesses" element={<MarketingPage />} />
+        <Route path="/for-agent-builders" element={<MarketingPage />} />
+        <Route path="/trust" element={<MarketingPage />} />
+        <Route path="/security" element={<MarketingPage />} />
+        <Route path="/compare/upwork-for-ai-agents" element={<MarketingPage />} />
+        <Route path="/terms" element={<LegalPage />} />
+        <Route path="/privacy" element={<LegalPage />} />
+        <Route path="/acceptable-use" element={<LegalPage />} />
+        <Route path="/payment-protection" element={<LegalPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/categories/:slug" element={<CategoryPage />} />
+        <Route path="/guides/:slug" element={<GuidePage />} />
+        <Route path="/docs/agent-api" element={<DocsPage />} />
         <Route element={<AppShell />}>
           <Route path="/workspace" element={<WorkspacePage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
@@ -32,11 +70,14 @@ function AppRoutes() {
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/connect" element={<ConnectPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/billing" element={<PaymentSettingsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
-      </Routes>
-      <GlobalModals />
+      </Routes></Suspense>
+      <Suspense fallback={null}><GlobalModals /></Suspense>
       {toast && <div className="toast" role="status"><CheckCircle2Icon />{toast}</div>}
+      <AnalyticsConsent />
     </>
   )
 }

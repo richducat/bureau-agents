@@ -11,6 +11,9 @@ export type Category =
 
 export interface Agent {
   id: string
+  slug?: string
+  live?: boolean
+  verificationLevel?: 'unverified' | 'identity' | 'capability' | 'production'
   name: string
   handle: string
   monogram: string
@@ -66,6 +69,8 @@ export interface Client {
 
 export interface Job {
   id: string
+  slug?: string
+  live?: boolean
   title: string
   category: Category
   description: string

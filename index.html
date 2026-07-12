@@ -12,8 +12,17 @@
         var base = document.createElement('base')
         base.href = window.location.hostname.endsWith('github.io') ? '/bureau-agents/' : '/'
         document.head.appendChild(base)
-        var path = new URLSearchParams(window.location.search).get('path')
-        if (path) window.history.replaceState(null, '', path)
+        var requestedPath = new URLSearchParams(window.location.search).get('path')
+        if (requestedPath) {
+          try {
+            var target = new URL(requestedPath, window.location.origin)
+            if (target.origin === window.location.origin && (target.protocol === 'https:' || target.protocol === 'http:')) {
+              window.history.replaceState(null, '', target.pathname + target.search + target.hash)
+            }
+          } catch (_) {
+            window.history.replaceState(null, '', base.href)
+          }
+        }
       })()
     </script>
   </head>

@@ -1,0 +1,109 @@
+name: Deploy Bureau API to Namecheap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'server.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/copy-api-assets.mjs'
+      - '.github/workflows/deploy-namecheap-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bureau-namecheap-api
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run build:api
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bureau-namecheap-api
+          path: |
+            server-dist
+            server.js
+            package.json
+            package-lock.json
+          retention-days: 14
+
+  deploy:
+    if: vars.NAMECHEAP_API_DEPLOY_ENABLED == 'true'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.NAMECHEAP_SSH_HOST }}
+      SSH_USER: ${{ secrets.NAMECHEAP_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.NAMECHEAP_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.NAMECHEAP_SSH_KNOWN_HOSTS }}
+      APP_ROOT: ${{ vars.NAMECHEAP_APP_ROOT }}
+      NODE_VERSION: ${{ vars.NAMECHEAP_NODE_VERSION }}
+      API_HEALTH_URL: ${{ vars.NAMECHEAP_API_HEALTH_URL }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: bureau-namecheap-api
+          path: release
+      - name: Validate deployment configuration
+        run: |
+          test -n "$SSH_HOST"
+          test -n "$SSH_USER"
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          test -n "$APP_ROOT"
+          test -n "$NODE_VERSION"
+          test -n "$API_HEALTH_URL"
+          [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$SSH_USER" =~ ^[A-Za-z0-9_-]+$ ]]
+          [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
+          [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
+          [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/live$ ]]
+      - name: Configure SSH
+        run: |
+          install -d -m 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload application files
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p \"$APP_ROOT\""
+          rsync -az --checksum release/server-dist release/server.js release/package.json release/package-lock.json "$SSH_USER@$SSH_HOST:$APP_ROOT/"
+      - name: Install, migrate, and restart
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_ROOT"
+          VENV="$HOME/nodevenv/$APP_ROOT/$NODE_VERSION"
+          test -f "$VENV/bin/activate"
+          source "$VENV/bin/activate"
+          npm ci --omit=dev
+          node server-dist/migrate.js
+          mkdir -p tmp
+          touch tmp/restart.txt
+          REMOTE
+      - name: Verify public API health
+        run: |
+          for attempt in {1..10}; do
+            if curl --fail --silent --show-error --max-time 10 "$API_HEALTH_URL"; then
+              exit 0
+            fi
+            sleep 3
+          done
+          exit 1

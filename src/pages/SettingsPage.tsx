@@ -1,21 +1,13 @@
 import { Bell, CreditCard, KeyRound, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
+import { Link, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function SettingsPage() {
-  const [section, setSection] = useState('Profile')
-  const { showToast } = useApp()
-  const items = [{ label: 'Profile', icon: UserRound }, { label: 'Security', icon: LockKeyhole }, { label: 'Billing & Vault', icon: CreditCard }, { label: 'Notifications', icon: Bell }, { label: 'API access', icon: KeyRound }]
-  return (
-    <div className="settings-page">
-      <header className="page-heading"><div><p className="overline">Workspace controls</p><h1>Settings</h1><p>Manage your identity, security, payment protection, and agent integrations.</p></div></header>
-      <div className="settings-layout">
-        <aside>{items.map((item) => { const Icon = item.icon; return <button className={section === item.label ? 'is-active' : ''} key={item.label} onClick={() => setSection(item.label)}><Icon size={17} />{item.label}</button> })}</aside>
-        <main>
-          <div className="settings-section-heading"><h2>{section}</h2><p>{section === 'Profile' ? 'The information associated with your Bureau client workspace.' : `Configure your ${section.toLowerCase()} preferences.`}</p></div>
-          {section === 'Profile' ? <div className="settings-form"><div className="settings-avatar"><span>RD</span><button className="button button--secondary" onClick={() => showToast('Profile image picker opened')}>Change image</button></div><label className="field"><span>Full name</span><input defaultValue="Richard Ducat" /></label><label className="field"><span>Company</span><input defaultValue="Meridian Labs" /></label><label className="field"><span>Email</span><input defaultValue="richducat@gmail.com" /></label><label className="field"><span>Location</span><input defaultValue="Melbourne, Florida" /></label><button className="button button--dark" onClick={() => showToast('Profile settings saved')}>Save changes</button></div> : <div className="settings-placeholder"><ShieldCheck size={30} /><h3>{section} is configured</h3><p>This working demo includes the full setting surface without connecting real credentials or payment methods.</p><button className="button button--dark" onClick={() => showToast(`${section} preferences saved`)}>Save preferences</button></div>}
-        </main>
-      </div>
-    </div>
-  )
+  const [section, setSection] = useState<'Profile' | 'Security' | 'Notifications'>('Profile')
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/auth?mode=login" replace />
+  const items = [{ label: 'Profile' as const, icon: UserRound }, { label: 'Security' as const, icon: LockKeyhole }, { label: 'Notifications' as const, icon: Bell }]
+  const initials = user.displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+  return <div className="settings-page"><header className="page-heading"><div><p className="overline">Workspace controls</p><h1>Settings</h1><p>Manage your identity, security, payment protection, and agent integrations.</p></div></header><div className="settings-layout"><aside>{items.map((item) => { const Icon = item.icon; return <button className={section === item.label ? 'is-active' : ''} key={item.label} onClick={() => setSection(item.label)}><Icon />{item.label}</button> })}<Link to="/settings/billing"><CreditCard />Billing & payouts</Link><Link to="/connect"><KeyRound />Agent API</Link></aside><main><div className="settings-section-heading"><h2>{section}</h2><p>{section === 'Profile' ? 'Verified account and organization information loaded from the production session.' : section === 'Security' ? 'How Bureau protects this account.' : 'Product and contract notification controls.'}</p></div>{section === 'Profile' && <div className="settings-form"><div className="settings-avatar"><span>{initials}</span></div><label className="field"><span>Full name</span><input value={user.displayName} readOnly /></label><label className="field"><span>Email</span><input value={user.email} readOnly /></label><label className="field"><span>Email status</span><input value={user.emailVerified ? 'Verified' : 'Verification required'} readOnly /></label><label className="field"><span>Organizations</span><input value={user.organizations.map((organization) => organization.name).join(', ') || 'None'} readOnly /></label></div>}{section === 'Security' && <div className="settings-security"><ShieldCheck /><h3>Secure session active</h3><ul><li>HTTP-only session cookie; no bearer token in browser storage</li><li>CSRF token and trusted-origin checks on every browser state change</li><li>Adaptive password hashing and rate-limited authentication</li><li>Password reset revokes all active sessions</li><li>Agent runtime keys are separate, scoped, hashed, and revocable</li></ul><Link className="button button--dark" to="/forgot-password">Change password securely</Link></div>}{section === 'Notifications' && <div className="settings-security"><Bell /><h3>Transactional notifications</h3><p>Bureau sends required account verification, password reset, contract, payment, dispute, and payout notices. Marketing email is not enabled by default.</p></div>}</main></div></div>
 }
