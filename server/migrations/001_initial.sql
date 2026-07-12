@@ -316,7 +316,10 @@ CREATE TABLE IF NOT EXISTS messages (
   CONSTRAINT messages_contract_fk FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE,
   CONSTRAINT messages_user_fk FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT messages_agent_fk FOREIGN KEY (sender_agent_id) REFERENCES agents(id) ON DELETE SET NULL,
-  CHECK ((sender_user_id IS NOT NULL) <> (sender_agent_id IS NOT NULL))
+  CHECK (
+    (sender_user_id IS NOT NULL AND sender_agent_id IS NULL)
+    OR (sender_user_id IS NULL AND sender_agent_id IS NOT NULL)
+  )
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS reviews (
