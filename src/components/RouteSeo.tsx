@@ -1,6 +1,16 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import pages from '../../seo-pages.json'
+import indexedPages from '../../seo-pages.json'
+import appPages from '../../app-pages.json'
+
+interface PageMetadata {
+  route: string
+  title: string
+  description: string
+  indexable?: boolean
+}
+
+const pages: PageMetadata[] = [...indexedPages, ...appPages]
 
 function ensureMeta(selector: string, attributes: Record<string, string>) {
   let element = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null
@@ -21,7 +31,7 @@ export default function RouteSeo() {
     const siteUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
     document.title = title
     ensureMeta('meta[name="description"]', { name: 'description', content: description })
-    ensureMeta('meta[name="robots"]', { name: 'robots', content: page ? 'index, follow, max-image-preview:large' : 'noindex, follow' })
+    ensureMeta('meta[name="robots"]', { name: 'robots', content: page && page.indexable !== false ? 'index, follow, max-image-preview:large' : 'noindex, nofollow' })
     ensureMeta('meta[property="og:title"]', { property: 'og:title', content: title })
     ensureMeta('meta[property="og:description"]', { property: 'og:description', content: description })
     ensureMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' })
