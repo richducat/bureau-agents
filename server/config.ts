@@ -1,5 +1,11 @@
 import { z } from 'zod'
 
+try {
+  process.loadEnvFile()
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+}
+
 const booleanString = z.string().default('false').transform((value) => value === 'true')
 
 const schema = z.object({
