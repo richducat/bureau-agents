@@ -45,6 +45,14 @@
     footer { padding: 36px clamp(24px, 5vw, 80px); color: #c9cbc2; background: var(--ink); border-top: 1px solid #33342f; }
     .toast { position: fixed; right: 24px; bottom: 24px; padding: 14px 18px; border-radius: 9px; color: var(--ink); background: var(--lime); font-weight: 750; opacity: 0; transform: translateY(12px); transition: .2s ease; pointer-events: none; }
     .toast.show { opacity: 1; transform: none; }
+    .copy-fallback[hidden] { display: none; }
+    .copy-fallback { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 24px; background: rgba(16,17,14,.72); }
+    .copy-fallback__panel { width: min(680px, 100%); padding: 28px; border-radius: 18px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.3); }
+    .copy-fallback__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+    .copy-fallback h2 { margin: 0; font-size: 30px; letter-spacing: -.035em; }
+    .copy-fallback p { margin: 10px 0 20px; color: var(--muted); line-height: 1.5; }
+    .copy-fallback textarea { width: 100%; min-height: 240px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: var(--cream); font: 16px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif; resize: vertical; }
+    .copy-fallback__close { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font-size: 22px; cursor: pointer; }
     @media (max-width: 800px) {
       header { align-items: flex-start; }
       header > .button { display: none; }
@@ -89,9 +97,20 @@
   </main>
   <footer>Campaign destination: <a href="https://ai.eb28.co">ai.eb28.co</a> · Bureau Work Store</footer>
   <div class="toast" role="status" aria-live="polite">Copied</div>
+  <div class="copy-fallback" hidden>
+    <section class="copy-fallback__panel" role="dialog" aria-modal="true" aria-labelledby="copy-fallback-title">
+      <div class="copy-fallback__head">
+        <div><h2 id="copy-fallback-title">Caption ready to copy</h2><p>Your browser blocked one-click clipboard access. The complete caption is selected below—press Command+C or Control+C.</p></div>
+        <button class="copy-fallback__close" type="button" data-close-copy aria-label="Close caption">×</button>
+      </div>
+      <textarea readonly aria-label="Selected social caption"></textarea>
+    </section>
+  </div>
   <script>
     const grid = document.querySelector('#campaign-grid');
     const toast = document.querySelector('.toast');
+    const copyFallback = document.querySelector('.copy-fallback');
+    const copyFallbackText = copyFallback.querySelector('textarea');
     let campaign;
 
     function flash(message) {
@@ -104,24 +123,28 @@
       return `${post.primaryText}\n\n${post.hashtags.join(' ')}\n\n${post.destination}`;
     }
 
-    async function copyText(value) {
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(value);
-          return true;
-        }
-      } catch (_) {
-        // Fall through to the selection-based copy path.
-      }
+    function copyText(value) {
       const field = document.createElement('textarea');
       field.value = value;
       field.setAttribute('readonly', '');
       field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
       document.body.appendChild(field);
       field.select();
-      const copied = document.execCommand('copy');
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (_) {
+        copied = false;
+      }
       field.remove();
       return copied;
+    }
+
+    function showCopyFallback(value) {
+      copyFallback.hidden = false;
+      copyFallbackText.value = value;
+      copyFallbackText.focus();
+      copyFallbackText.select();
     }
 
     fetch('campaign.json')
@@ -144,16 +167,22 @@
           </article>`).join('');
       });
 
-    document.addEventListener('click', async (event) => {
-      const button = event.target.closest('[data-copy]');
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : event.target.parentElement;
+      const button = target.closest('[data-copy]');
       if (button && campaign) {
-        const copied = await copyText(fullCaption(campaign.posts[Number(button.dataset.copy)]));
-        flash(copied ? 'Caption copied' : 'Open captions to copy');
+        const caption = fullCaption(campaign.posts[Number(button.dataset.copy)]);
+        const copied = copyText(caption);
+        if (copied) flash('Caption copied');
+        else showCopyFallback(caption);
       }
-      if (event.target.closest('[data-copy-video]') && campaign) {
-        const copied = await copyText(`${campaign.video.caption}\n\n${campaign.video.destination}`);
-        flash(copied ? 'Video caption copied' : 'Open captions to copy');
+      if (target.closest('[data-copy-video]') && campaign) {
+        const caption = `${campaign.video.caption}\n\n${campaign.video.destination}`;
+        const copied = copyText(caption);
+        if (copied) flash('Video caption copied');
+        else showCopyFallback(caption);
       }
+      if (target.closest('[data-close-copy]')) copyFallback.hidden = true;
     });
   </script>
 </body>
