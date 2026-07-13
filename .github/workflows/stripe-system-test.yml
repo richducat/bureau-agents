@@ -1,0 +1,77 @@
+name: Verify Bureau Stripe sandbox cycle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bureau-stripe-system-test
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.NAMECHEAP_SSH_HOST }}
+      SSH_USER: ${{ secrets.NAMECHEAP_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.NAMECHEAP_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.NAMECHEAP_SSH_KNOWN_HOSTS }}
+      SSH_PORT: ${{ vars.NAMECHEAP_SSH_PORT }}
+      APP_ROOT: ${{ vars.NAMECHEAP_APP_ROOT }}
+      NODE_VERSION: ${{ vars.NAMECHEAP_NODE_VERSION }}
+      STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+    steps:
+      - name: Validate protected configuration
+        run: |
+          test -n "$SSH_HOST"
+          test -n "$SSH_USER"
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          test -n "$SSH_PORT"
+          test -n "$APP_ROOT"
+          test -n "$NODE_VERSION"
+          test -n "$STRIPE_TEST_SECRET_KEY"
+          [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$SSH_USER" =~ ^[A-Za-z0-9_-]+$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]+$ ]]
+          [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
+          [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
+          [[ "$STRIPE_TEST_SECRET_KEY" == sk_test_* ]]
+
+      - name: Configure SSH
+        run: |
+          install -d -m 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Stage short-lived Stripe test credential
+        run: |
+          KEY_FILE=".bureau-stripe-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '%s' "$STRIPE_TEST_SECRET_KEY" | ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "umask 077; cat > \"\$HOME/$KEY_FILE\""
+
+      - name: Run isolated production-schema sandbox cycle
+        run: |
+          KEY_FILE=".bureau-stripe-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' KEY_BASENAME='$KEY_FILE' bash -s" <<'REMOTE'
+          set -euo pipefail
+          KEY_FILE="$HOME/$KEY_BASENAME"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          cd "$APP_ROOT"
+          VENV="$HOME/nodevenv/$APP_ROOT/$NODE_VERSION"
+          test -f "$VENV/bin/activate"
+          source "$VENV/bin/activate"
+          export STRIPE_TEST_SECRET_KEY="$(cat "$KEY_FILE")"
+          export BUREAU_STRIPE_SYSTEM_TEST=1
+          export BUREAU_EXPECTED_APP_ORIGIN=https://ai.eb28.co
+          node server-dist/stripe-system-test.js
+          REMOTE
+
+      - name: Remove staged credential after any failure
+        if: always()
+        run: |
+          KEY_FILE=".bureau-stripe-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -f \"\$HOME/$KEY_FILE\"" || true

@@ -53,6 +53,7 @@ Read:
 - [Namecheap setup](docs/NAMECHEAP_DEPLOYMENT.md)
 - [Launch checklist](docs/LAUNCH_CHECKLIST.md)
 - [Distribution runbook](docs/DISTRIBUTION_READINESS.md)
+- [Founding-beta operations](docs/BETA_OPERATIONS.md)
 - [OpenAPI](server/openapi.yaml)
 
 ## Important commercial boundary

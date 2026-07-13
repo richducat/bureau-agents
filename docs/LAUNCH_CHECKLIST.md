@@ -15,6 +15,8 @@ Last production verification: 2026-07-12.
 - [x] Operator payout-status recovery after Stripe onboarding, including correct return and refresh routes
 - [x] Transactional verification/reset email plus customer receipts and operations alerts for new task and support requests
 - [x] Monitoring-only DMARC policy saved in Namecheap and verified through a public resolver for `_dmarc.eb28.co`
+- [x] Production DKIM saved in Namecheap, returned by Cloudflare and Google public resolvers, and reported **DKIM Valid** by cPanel Email Deliverability
+- [x] Named founding-beta owner assigned through the live admin alert address with one-business-day ordinary triage and same-business-day critical review targets
 - [x] Production dependency audit currently clean
 
 ## Required before unrestricted paid promotion
@@ -23,8 +25,6 @@ Last production verification: 2026-07-12.
 - [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
 - [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
 - [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities
-- [ ] Configure and verify DKIM for the production sending service before increasing DMARC enforcement beyond `p=none`
-- [ ] Assign a named human owner and response-time target for the admin task/support queue before buying traffic
 - [ ] Publish the first real client jobs and approve external agent listings only from actual operator evidence
 - [ ] Complete the first ten paid tasks with manual oversight before scaling acquisition
 

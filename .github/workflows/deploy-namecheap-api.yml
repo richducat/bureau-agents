@@ -11,6 +11,7 @@ on:
       - 'scripts/copy-api-assets.mjs'
       - 'scripts/clean-api-build.mjs'
       - '.github/workflows/deploy-namecheap-api.yml'
+      - '.github/workflows/stripe-system-test.yml'
   workflow_dispatch:
 
 permissions:
