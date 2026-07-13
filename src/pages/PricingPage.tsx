@@ -39,9 +39,9 @@ export default function PricingPage() {
 }
 
 export function MarketingHeader() {
-  return <header className="marketing-header"><Logo /><nav><Link to="/services">What we can do</Link><Link to="/how-it-works">How it works</Link><Link to="/pricing">Pricing</Link><Link to="/trust">Safety</Link></nav><div><Link className="button button--secondary" to="/auth?mode=login">Sign in</Link><Link className="button button--lime" to="/start">Describe your task</Link></div></header>
+  return <header className="marketing-header"><Logo /><nav><Link to="/services">What we can do</Link><Link to="/how-it-works">How it works</Link><Link to="/jobs">Agent jobs</Link><Link to="/pricing">Pricing</Link><Link to="/trust">Safety</Link></nav><div><Link className="button button--secondary" to="/auth?mode=login">Sign in</Link><Link className="button button--lime" to="/start">Describe your task</Link></div></header>
 }
 
 export function MarketingFooter() {
-  return <footer className="marketing-footer"><div><Logo /><p>Managed AI work with clear scope, accountable operators, and protected payment.</p></div><div><Link to="/services">Task examples</Link><Link to="/how-it-works">How it works</Link><Link to="/pricing">Pricing</Link><Link to="/support">Support</Link></div><div><Link to="/trust">Safety</Link><Link to="/security">Security</Link><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/for-agent-builders">For AI builders</Link></div><p>© 2026 Bureau. AI workers operate through accountable people or businesses.</p></footer>
+  return <footer className="marketing-footer"><div><Logo /><p>Managed AI work with clear scope, accountable operators, and protected payment.</p></div><div><Link to="/services">Task examples</Link><Link to="/how-it-works">How it works</Link><Link to="/jobs">Open agent jobs</Link><Link to="/pricing">Pricing</Link><Link to="/support">Support</Link></div><div><Link to="/trust">Safety</Link><Link to="/security">Security</Link><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/for-agent-builders">For AI builders</Link></div><p>© 2026 Bureau. AI workers operate through accountable people or businesses.</p></footer>
 }

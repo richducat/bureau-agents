@@ -576,6 +576,23 @@ marketplaceRouter.get('/organizations/:organizationId/jobs', asyncRoute(async (r
   res.json({ jobs })
 }))
 
+marketplaceRouter.get('/organizations/:organizationId/proposals', asyncRoute(async (req, res) => {
+  const organizationId = uuid.parse(req.params.organizationId)
+  const membership = membershipFor(req, organizationId)
+  if (membership.kind !== 'operator') throw new HttpError(400, 'An operator organization is required.', 'invalid_organization_kind')
+  const proposals = await rows<GenericRow>(
+    `SELECT p.id, p.status, p.amount_cents, p.duration_days, p.created_at, p.updated_at,
+      j.id AS job_id, j.slug AS job_slug, j.title AS job_title, j.status AS job_status, j.category,
+      a.id AS agent_id, a.name AS agent_name, co.name AS client_name,
+      c.id AS contract_id, c.status AS contract_status
+     FROM proposals p JOIN agents a ON a.id = p.agent_id JOIN jobs j ON j.id = p.job_id
+     JOIN organizations co ON co.id = j.client_org_id LEFT JOIN contracts c ON c.proposal_id = p.id
+     WHERE a.operator_org_id = ? ORDER BY p.updated_at DESC LIMIT 250`,
+    [organizationId],
+  )
+  res.json({ proposals })
+}))
+
 const proposalSchema = z.object({
   agentId: uuid,
   amountCents: money,
@@ -629,6 +646,29 @@ marketplaceRouter.get('/jobs/:jobId/proposals', asyncRoute(async (req, res) => {
   res.json({ proposals: proposals.map((proposal) => ({ ...proposal, milestones: parseJson(proposal.milestones, []) })) })
 }))
 
+marketplaceRouter.patch('/proposals/:proposalId/status', asyncRoute(async (req, res) => {
+  const proposalId = uuid.parse(req.params.proposalId)
+  const input = z.object({ status: z.enum(['submitted', 'shortlisted']) }).parse(req.body)
+  const proposal = await one<GenericRow>(
+    `SELECT p.status, p.agent_id, j.client_org_id, j.status AS job_status
+     FROM proposals p JOIN jobs j ON j.id = p.job_id WHERE p.id = ?`,
+    [proposalId],
+  )
+  if (!proposal) throw new HttpError(404, 'Proposal not found.', 'proposal_not_found')
+  membershipFor(req, String(proposal.client_org_id), ['owner', 'admin', 'member'])
+  if (proposal.job_status !== 'open' || !['submitted', 'shortlisted'].includes(String(proposal.status))) {
+    throw new HttpError(409, 'Proposal decision can no longer be changed.', 'proposal_not_available')
+  }
+  const result = await execute(
+    `UPDATE proposals p JOIN jobs j ON j.id = p.job_id SET p.status = ?
+     WHERE p.id = ? AND p.status IN ('submitted','shortlisted') AND j.status = 'open'`,
+    [input.status, proposalId],
+  )
+  if (!result.affectedRows) throw new HttpError(409, 'Proposal decision can no longer be changed.', 'proposal_not_available')
+  await enqueueAgentWebhook(String(proposal.agent_id), 'proposal.status_changed', { proposalId, status: input.status })
+  res.json({ proposal: { id: proposalId, status: input.status } })
+}))
+
 marketplaceRouter.post('/proposals/:proposalId/accept', asyncRoute(async (req, res) => {
   const proposalId = uuid.parse(req.params.proposalId)
   const contractId = randomUUID()
@@ -644,7 +684,7 @@ marketplaceRouter.post('/proposals/:proposalId/accept', asyncRoute(async (req, r
     const proposal = records[0] as GenericRow | undefined
     if (!proposal) throw new HttpError(404, 'Proposal not found.', 'proposal_not_found')
     membershipFor(req, String(proposal.client_org_id), ['owner', 'admin', 'member'])
-    if (proposal.job_status !== 'open' || proposal.status !== 'submitted') throw new HttpError(409, 'Proposal is no longer available.', 'proposal_not_available')
+    if (proposal.job_status !== 'open' || !['submitted', 'shortlisted'].includes(String(proposal.status))) throw new HttpError(409, 'Proposal is no longer available.', 'proposal_not_available')
     const fees = calculateFees(Number(proposal.amount_cents), proposal.client_plan as ClientPlan, proposal.operator_plan as OperatorPlan)
     const milestones = parseJson<Array<{ title: string; description: string; amountCents: number; dueInDays: number }>>(proposal.milestones, [])
     await connection.execute(

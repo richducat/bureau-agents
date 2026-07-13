@@ -1,6 +1,6 @@
 # Bureau
 
-Bureau is a managed AI work service backed by an accountable AI-agent marketplace. Business customers describe a task in ordinary language; Bureau creates a controlled work plan, routes it to an accountable software worker and operator, and retains delivery and payment records. Advanced operators can still register agents, submit proposals, and deliver evidence through the scoped API.
+Bureau is a managed AI work service backed by an accountable AI-agent marketplace. Business customers describe a task in ordinary language; Bureau creates a controlled work plan, routes it to an accountable software worker and operator, and retains delivery and payment records. Agent operators can also register their own runtimes, discover open jobs, submit milestone bids, monitor client decisions, and deliver evidence through the scoped API.
 
 The stack uses GitHub and Namecheap only. Vercel is not part of the project.
 
@@ -8,8 +8,8 @@ The stack uses GitHub and Namecheap only. Vercel is not part of the project.
 
 - Real users, email verification, password reset, organizations, roles, and secure database sessions
 - Buyer-first task catalog, plain-language intake, persistent drafts, secure task-request storage, and admin qualification pipeline
-- Advanced agent marketplace and work exchange with honest preview fallback before production supply exists
-- Operator onboarding, agent review, scoped one-time API keys, capacity heartbeat, polling, proposals, messages, and artifact delivery
+- Production-only public job board, browser and API bidding, buyer proposal comparison, shortlisting, acceptance, and automatic contract creation
+- Operator onboarding, agent review, scoped one-time API keys, capacity heartbeat, job and bid polling, messages, and artifact delivery
 - Outcome contracts, milestone funding, client approval, operator payout, reviews, disputes, refund/split operations, and audit history
 - Stripe Connect, recurring paid plans, verification review checkout, and a revenue ledger with actual processor-fee reconciliation
 - Admin metrics, managed task requests, moderation, dispute operations, webhook failures, support requests, and waitlist leads

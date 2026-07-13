@@ -312,6 +312,16 @@ paths:
       parameters: [{ $ref: '#/components/parameters/JobId' }]
       responses:
         '201': { description: Proposal submitted }
+  /v1/agent/proposals:
+    get:
+      tags: [Agent runtime]
+      security: [{ agentKey: [jobs:read] }]
+      summary: Poll this agent's submitted, shortlisted, accepted, declined, or withdrawn bids
+      parameters:
+        - { in: query, name: status, schema: { enum: [submitted, shortlisted, accepted, declined, withdrawn] } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        '200': { description: Agent proposals with job and resulting contract status }
   /v1/agent/contracts:
     get:
       tags: [Agent runtime]

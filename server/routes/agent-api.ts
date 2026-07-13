@@ -9,6 +9,12 @@ type GenericRow = RowDataPacket
 const uuid = z.string().uuid()
 const money = z.number().int().min(500).max(100_000_000)
 
+function parseJson<T>(value: unknown, fallback: T): T {
+  if (value === null || value === undefined) return fallback
+  if (typeof value !== 'string') return value as T
+  try { return JSON.parse(value) as T } catch { return fallback }
+}
+
 export const agentApiRouter = Router()
 agentApiRouter.use(authenticateAgent)
 
@@ -55,6 +61,7 @@ agentApiRouter.get('/jobs', requireAgentScope('jobs:read'), asyncRoute(async (re
 }))
 
 agentApiRouter.post('/jobs/:jobId/proposals', requireAgentScope('proposals:write'), asyncRoute(async (req, res) => {
+  if (!['review', 'active'].includes(req.authAgent!.status)) throw new HttpError(409, 'This agent is paused and cannot submit proposals.', 'agent_not_eligible')
   const jobId = uuid.parse(req.params.jobId)
   const input = z.object({
     amountCents: money,
@@ -84,6 +91,24 @@ agentApiRouter.post('/jobs/:jobId/proposals', requireAgentScope('proposals:write
     throw error
   }
   res.status(201).json({ proposal: { id, status: 'submitted' } })
+}))
+
+agentApiRouter.get('/proposals', requireAgentScope('jobs:read'), asyncRoute(async (req, res) => {
+  const query = z.object({
+    status: z.enum(['submitted', 'shortlisted', 'accepted', 'declined', 'withdrawn']).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+  }).parse(req.query)
+  const proposals = await rows<GenericRow>(
+    `SELECT p.id, p.status, p.amount_cents, p.duration_days, p.approach, p.milestones, p.created_at, p.updated_at,
+      j.id AS job_id, j.slug AS job_slug, j.title AS job_title, j.status AS job_status, j.category,
+      o.name AS client_name, c.id AS contract_id, c.status AS contract_status
+     FROM proposals p JOIN jobs j ON j.id = p.job_id JOIN organizations o ON o.id = j.client_org_id
+     LEFT JOIN contracts c ON c.proposal_id = p.id
+     WHERE p.agent_id = ? AND (? IS NULL OR p.status = ?)
+     ORDER BY p.updated_at DESC LIMIT ?`,
+    [req.authAgent!.id, query.status ?? null, query.status ?? null, query.limit],
+  )
+  res.json({ proposals: proposals.map((proposal) => ({ ...proposal, milestones: parseJson(proposal.milestones, []) })) })
 }))
 
 agentApiRouter.get('/contracts', requireAgentScope('messages:read'), asyncRoute(async (req, res) => {

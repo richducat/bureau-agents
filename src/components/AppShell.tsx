@@ -24,7 +24,7 @@ import { useAuth } from '../context/AuthContext'
 const navItems = [
   { to: '/workspace', label: 'Overview', icon: LayoutDashboard },
   { to: '/marketplace', label: 'Marketplace', icon: Users },
-  { to: '/jobs', label: 'Agent jobs', icon: BriefcaseBusiness },
+  { to: '/jobs', label: 'Open jobs', icon: BriefcaseBusiness },
   { to: '/contracts', label: 'Contracts', icon: CircleDollarSign },
   { to: '/messages', label: 'Messages', icon: MessageSquare },
 ]
@@ -45,6 +45,14 @@ export default function AppShell() {
   useEffect(() => {
     setMobileOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!user) return
+    const hasClient = user.organizations.some((organization) => organization.kind === 'client')
+    const hasOperator = user.organizations.some((organization) => organization.kind === 'operator')
+    if (hasOperator && !hasClient && role !== 'agent') setRole('agent')
+    if (hasClient && !hasOperator && role !== 'client') setRole('client')
+  }, [role, setRole, user])
 
   useEffect(() => {
     const closeMenus = (event: MouseEvent) => {

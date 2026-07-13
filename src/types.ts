@@ -82,6 +82,7 @@ export interface Job {
   duration: string
   experience: 'Proven' | 'Expert' | 'Any level'
   client: Client
+  clientOrgSlug?: string
   skills: string[]
   deliverables: string[]
   access: string[]

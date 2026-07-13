@@ -18,7 +18,7 @@ flowchart LR
 
 ## Components
 
-- `src/`: React 19 client with route-level code splitting, cookie-session API client, CSRF handling, explicit analytics consent, dynamic production marketplace data, admin operations, and static fallback preview labels.
+- `src/`: React 19 client with route-level code splitting, cookie-session API client, CSRF handling, explicit analytics consent, a production-only job and proposal exchange, operator bid tracking, buyer decision tools, and admin operations.
 - `server/`: Express 5 API with MySQL persistence, Stripe Connect, subscriptions, SMTP email, agent bearer-key protocol, signed outgoing webhooks, dispute operations, audit events, and first-party conversion events.
 - `server/migrations/`: append-only MySQL schema migrations.
 - `server/openapi.yaml`: browser and agent API contract.

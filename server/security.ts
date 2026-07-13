@@ -27,6 +27,7 @@ export interface AuthenticatedUser {
 export interface AuthenticatedAgent {
   id: string
   name: string
+  status: 'review' | 'active' | 'paused'
   operatorOrgId: string
   keyId: string
   scopes: string[]
@@ -63,6 +64,7 @@ interface AgentKeyRow extends RowDataPacket {
   key_id: string
   agent_id: string
   agent_name: string
+  agent_status: 'review' | 'active' | 'paused'
   operator_org_id: string
   scopes: string | string[]
 }
@@ -247,7 +249,7 @@ export async function authenticateAgent(req: Request, _res: Response, next: Next
     if (!authorization.startsWith('Bearer br_live_')) throw new HttpError(401, 'Valid agent API key required.', 'agent_authentication_required')
     const key = authorization.slice('Bearer '.length)
     const record = await one<AgentKeyRow>(
-      `SELECT k.id AS key_id, a.id AS agent_id, a.name AS agent_name, a.operator_org_id, k.scopes
+      `SELECT k.id AS key_id, a.id AS agent_id, a.name AS agent_name, a.status AS agent_status, a.operator_org_id, k.scopes
        FROM agent_api_keys k JOIN agents a ON a.id = k.agent_id
        WHERE k.key_hash = ? AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > UTC_TIMESTAMP(3))
          AND a.status IN ('review','active','paused')`,
@@ -255,7 +257,7 @@ export async function authenticateAgent(req: Request, _res: Response, next: Next
     )
     if (!record) throw new HttpError(401, 'Agent API key is invalid or revoked.', 'agent_authentication_required')
     const scopes = typeof record.scopes === 'string' ? JSON.parse(record.scopes) as string[] : record.scopes
-    req.authAgent = { id: record.agent_id, name: record.agent_name, operatorOrgId: record.operator_org_id, keyId: record.key_id, scopes }
+    req.authAgent = { id: record.agent_id, name: record.agent_name, status: record.agent_status, operatorOrgId: record.operator_org_id, keyId: record.key_id, scopes }
     void execute('UPDATE agent_api_keys SET last_used_at = UTC_TIMESTAMP(3) WHERE id = ?', [record.key_id])
     next()
   } catch (error) {

@@ -1,31 +1,36 @@
-import { ArrowRight, BriefcaseBusiness, ChevronDown, Search, SlidersHorizontal } from 'lucide-react'
+import { ArrowRight, Bot, BriefcaseBusiness, ChevronDown, CircleDollarSign, KeyRound, Search, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Tag } from '../components/Common'
-import { categories } from '../data'
 import { useApp } from '../context/AppContext'
-import type { Category } from '../types'
-import type { Job } from '../types'
+import { useAuth } from '../context/AuthContext'
+import { categories } from '../data'
 import { apiFetch } from '../lib/api'
+import type { Category, Job } from '../types'
 
 interface PublicJob { id: string; slug: string; title: string; description: string; category: Category; deliverables: string[]; requiredCapabilities: string[]; autonomyLevel: string; budgetMinCents: number; budgetMaxCents: number; deadlineAt: string | null; client: { name: string }; proposalCount: number; publishedAt: string }
 
 function mapPublicJob(job: PublicJob): Job {
-  return { id: job.id, slug: job.slug, live: true, title: job.title, category: job.category, description: job.description, budgetMin: job.budgetMinCents / 100, budgetMax: job.budgetMaxCents / 100, pricing: 'Fixed', posted: new Date(job.publishedAt).toLocaleDateString(), proposals: job.proposalCount, duration: job.deadlineAt ? `Due ${new Date(job.deadlineAt).toLocaleDateString()}` : 'Set with operator', experience: 'Any level', client: { name: job.client.name, initials: job.client.name.slice(0, 2).toUpperCase(), verified: false, spend: 'Private', hires: 0, rating: 0, location: 'Private' }, skills: job.requiredCapabilities, deliverables: job.deliverables, access: ['Defined in the contract before work begins'], risk: job.autonomyLevel === 'autonomous' ? 'Elevated' : job.autonomyLevel === 'supervised' ? 'Moderate' : 'Low' }
+  return { id: job.id, slug: job.slug, live: true, title: job.title, category: job.category, description: job.description, budgetMin: job.budgetMinCents / 100, budgetMax: job.budgetMaxCents / 100, pricing: 'Fixed', posted: new Date(job.publishedAt).toLocaleDateString(), proposals: job.proposalCount, duration: job.deadlineAt ? `Due ${new Date(job.deadlineAt).toLocaleDateString()}` : 'Set in the bid', experience: 'Any level', client: { name: job.client.name, initials: job.client.name.slice(0, 2).toUpperCase(), verified: false, spend: 'Private', hires: 0, rating: 0, location: 'Private' }, skills: job.requiredCapabilities, deliverables: job.deliverables, access: ['Defined in the contract before work begins'], risk: job.autonomyLevel === 'autonomous' ? 'Elevated' : job.autonomyLevel === 'supervised' ? 'Moderate' : 'Low' }
 }
 
 export default function JobsPage() {
-  const { jobs: previewJobs, role, setModal } = useApp()
-  const [jobs, setJobs] = useState<Job[]>(previewJobs)
-  const [hasLiveJobs, setHasLiveJobs] = useState(false)
+  const { setModal } = useApp()
+  const { user } = useAuth()
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<Category | 'All agents'>('All agents')
   const [sort, setSort] = useState('Newest')
+  const client = user?.organizations.find((organization) => organization.kind === 'client')
+  const operator = user?.organizations.find((organization) => organization.kind === 'operator')
 
   useEffect(() => {
-    void apiFetch<{ jobs: PublicJob[] }>('/public/jobs?limit=50').then((response) => {
-      if (response.jobs.length) { setJobs(response.jobs.map(mapPublicJob)); setHasLiveJobs(true) }
-    }).catch(() => undefined)
+    void apiFetch<{ jobs: PublicJob[] }>('/public/jobs?limit=50')
+      .then((response) => setJobs(response.jobs.map(mapPublicJob)))
+      .catch(() => setError('Open work could not be loaded. Refresh and try again.'))
+      .finally(() => setLoaded(true))
   }, [])
 
   const filtered = useMemo(() => {
@@ -39,49 +44,37 @@ export default function JobsPage() {
     return result
   }, [category, jobs, query, sort])
 
-  return (
-    <div className="jobs-page">
-      <header className="page-heading page-heading--jobs">
-        <div>
-          <p className="overline">{hasLiveJobs ? 'Production work exchange' : 'Founding work exchange preview'}</p>
-          <h1>{role === 'client' ? 'Your next outcome starts here.' : 'Find work your agent can win.'}</h1>
-          <p>{role === 'client' ? 'Post a scope and compare proposals from agents with verifiable delivery histories.' : 'Every listing includes budget, access boundaries, review gates, and acceptance criteria.'}</p>
-        </div>
-        {role === 'client' && <button className="button button--dark button--large" onClick={() => setModal({ type: 'post-job' })}>Post a work request <ArrowRight size={17} /></button>}
-      </header>
+  return <div className="jobs-page">
+    <header className="page-heading page-heading--jobs jobs-market-heading">
+      <div><p className="overline">Agent work marketplace</p><h1>Open work. Real budgets. Agent-native bids.</h1><p>Your own agent can poll these jobs, submit a priced milestone plan, monitor the bid, deliver the contract, and receive operator payouts through one API.</p></div>
+      <div className="jobs-market-actions"><Link className="button button--lime button--large" to="/connect"><Bot />{operator ? 'Manage your agents' : 'Connect your agent'}<ArrowRight /></Link>{client ? <button className="button button--dark button--large" onClick={() => setModal({ type: 'post-job' })}><BriefcaseBusiness />Post a job</button> : <Link className="button button--secondary button--large" to="/auth?mode=signup&type=client"><BriefcaseBusiness />Post work</Link>}</div>
+    </header>
 
-      <div className="jobs-toolbar">
-        <label className="jobs-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search work by outcome or capability" /></label>
-        <label className="select-button"><SlidersHorizontal size={15} /><select value={category} onChange={(event) => setCategory(event.target.value as Category | 'All agents')}>
-          {categories.map((item) => <option key={item.name}>{item.name}</option>)}
-        </select><ChevronDown size={14} /></label>
-        <label className="select-button">Sort:<select value={sort} onChange={(event) => setSort(event.target.value)}><option>Newest</option><option>Highest budget</option><option>Fewest proposals</option></select><ChevronDown size={14} /></label>
-        <span className="jobs-verified">{hasLiveJobs ? 'Listings loaded from the production ledger.' : 'Illustrative scopes are labeled until production clients publish.'}</span>
-      </div>
+    <section className="jobs-market-rail" aria-label="How agents find and win work">
+      <div><span>01</span><KeyRound /><strong>Connect</strong><small>Issue a scoped runtime key.</small></div>
+      <div><span>02</span><Search /><strong>Discover</strong><small>Poll matching public jobs.</small></div>
+      <div><span>03</span><CircleDollarSign /><strong>Bid</strong><small>Price one or more milestones.</small></div>
+      <div><span>04</span><BriefcaseBusiness /><strong>Deliver</strong><small>Work through the funded contract.</small></div>
+      <Link to="/docs/agent-api#jobs">Agent API <ArrowRight /></Link>
+    </section>
 
-      <div className="jobs-summary"><p><strong>{filtered.length}</strong> {hasLiveJobs ? 'open production scopes' : 'illustrative scopes'}</p><span>{hasLiveJobs ? 'Loaded from Bureau API' : 'Production listings will replace preview data'}</span></div>
-
-      <div className="job-list">
-        {filtered.map((job) => (
-          <article className="job-row" key={job.id}>
-            {job.featured && <span className="job-row__featured">Priority match</span>}
-            <div className="job-row__client"><span className="avatar">{job.client.initials}</span><span>{job.client.name}<small>{job.live ? 'Production client organization' : 'Illustrative client profile'}</small></span></div>
-            <div className="job-row__main">
-              <div className="job-row__meta"><span>{job.category}</span><span>{job.posted}</span><span>{job.experience}</span></div>
-              <Link to={`/jobs/${job.slug ?? job.id}`} className="job-row__title">{job.title}</Link>
-              <p>{job.description}</p>
-              <div className="job-row__skills">{job.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div>
-            </div>
-            <div className="job-row__terms">
-              <span>Budget</span>
-              <strong>{job.pricing === 'Fixed' ? `$${job.budgetMin.toLocaleString()}–${job.budgetMax.toLocaleString()}` : `$${job.budgetMin}–${job.budgetMax}/hr`}</strong>
-              <small>{job.pricing} · {job.duration}</small>
-              <div><BriefcaseBusiness size={14} /> {job.live ? `${job.proposals} proposals` : 'Example contract workflow'}</div>
-              <Link to={`/jobs/${job.slug ?? job.id}`} className="button button--secondary">View scope <ArrowRight size={15} /></Link>
-            </div>
-          </article>
-        ))}
-      </div>
+    <div className="jobs-toolbar">
+      <label className="jobs-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search work by outcome or capability" /></label>
+      <label className="select-button"><SlidersHorizontal size={15} /><select value={category} onChange={(event) => setCategory(event.target.value as Category | 'All agents')}>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><ChevronDown size={14} /></label>
+      <label className="select-button">Sort:<select value={sort} onChange={(event) => setSort(event.target.value)}><option>Newest</option><option>Highest budget</option><option>Fewest proposals</option></select><ChevronDown size={14} /></label>
+      <span className="jobs-verified">No proposal credits. Fees apply only to accepted, released work.</span>
     </div>
-  )
+
+    <div className="jobs-summary"><p><strong>{filtered.length}</strong> open production {filtered.length === 1 ? 'job' : 'jobs'}</p><span>{loaded ? 'Live Bureau ledger' : 'Loading live work…'}</span></div>
+    {error && <p className="form-error" role="alert">{error}</p>}
+
+    <div className="job-list">
+      {filtered.map((job) => <article className="job-row" key={job.id}>
+        <div className="job-row__client"><span className="avatar">{job.client.initials}</span><span>{job.client.name}<small>Production client organization</small></span></div>
+        <div className="job-row__main"><div className="job-row__meta"><span>{job.category}</span><span>{job.posted}</span><span>{job.risk} autonomy</span></div><Link to={`/jobs/${job.slug}`} className="job-row__title">{job.title}</Link><p>{job.description}</p><div className="job-row__skills">{job.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></div>
+        <div className="job-row__terms"><span>Budget</span><strong>${job.budgetMin.toLocaleString()}–${job.budgetMax.toLocaleString()}</strong><small>Fixed price · {job.duration}</small><div><BriefcaseBusiness size={14} />{job.proposals} {job.proposals === 1 ? 'bid' : 'bids'}</div><Link to={`/jobs/${job.slug}`} className="button button--secondary">View and bid <ArrowRight size={15} /></Link></div>
+      </article>)}
+      {loaded && !error && filtered.length === 0 && <section className="jobs-empty-market"><Bot /><div><p className="overline">The production board is open</p><h2>{jobs.length ? 'No jobs match these filters.' : 'No client jobs are open yet.'}</h2><p>{jobs.length ? 'Clear a filter to see more work.' : 'Connect your agent now so it is ready to poll and bid the moment clients publish work.'}</p></div><div><Link className="button button--lime" to="/connect">Connect your agent <ArrowRight /></Link><Link className="button button--secondary" to="/docs/agent-api#jobs">Read bidding API</Link></div></section>}
+    </div>
+  </div>
 }
