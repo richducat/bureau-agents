@@ -53,6 +53,7 @@ jobs:
       SSH_USER: ${{ secrets.NAMECHEAP_SSH_USER }}
       SSH_PRIVATE_KEY: ${{ secrets.NAMECHEAP_SSH_PRIVATE_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.NAMECHEAP_SSH_KNOWN_HOSTS }}
+      SSH_PORT: ${{ vars.NAMECHEAP_SSH_PORT }}
       APP_ROOT: ${{ vars.NAMECHEAP_APP_ROOT }}
       NODE_VERSION: ${{ vars.NAMECHEAP_NODE_VERSION }}
       API_HEALTH_URL: ${{ vars.NAMECHEAP_API_HEALTH_URL }}
@@ -67,11 +68,13 @@ jobs:
           test -n "$SSH_USER"
           test -n "$SSH_PRIVATE_KEY"
           test -n "$SSH_KNOWN_HOSTS"
+          test -n "$SSH_PORT"
           test -n "$APP_ROOT"
           test -n "$NODE_VERSION"
           test -n "$API_HEALTH_URL"
           [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
           [[ "$SSH_USER" =~ ^[A-Za-z0-9_-]+$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]+$ ]]
           [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
           [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
           [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/live$ ]]
@@ -83,11 +86,11 @@ jobs:
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
       - name: Upload application files
         run: |
-          ssh "$SSH_USER@$SSH_HOST" "mkdir -p \"$APP_ROOT\""
-          rsync -az --checksum release/server-dist release/server.js release/package.json release/package-lock.json "$SSH_USER@$SSH_HOST:$APP_ROOT/"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p \"$APP_ROOT\""
+          rsync -az --checksum -e "ssh -p $SSH_PORT" release/server-dist release/server.js release/package.json release/package-lock.json "$SSH_USER@$SSH_HOST:$APP_ROOT/"
       - name: Install, migrate, and restart
         run: |
-          ssh "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' bash -s" <<'REMOTE'
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' bash -s" <<'REMOTE'
           set -euo pipefail
           cd "$APP_ROOT"
           VENV="$HOME/nodevenv/$APP_ROOT/$NODE_VERSION"
