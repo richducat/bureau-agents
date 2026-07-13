@@ -7,7 +7,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: bureau-stripe-system-test
+  # Serialize with API deployments so the production app is never restarting
+  # while the production-schema sandbox verification is running.
+  group: bureau-namecheap-api
   cancel-in-progress: false
 
 jobs:
@@ -22,6 +24,7 @@ jobs:
       SSH_PORT: ${{ vars.NAMECHEAP_SSH_PORT }}
       APP_ROOT: ${{ vars.NAMECHEAP_APP_ROOT }}
       NODE_VERSION: ${{ vars.NAMECHEAP_NODE_VERSION }}
+      API_HEALTH_URL: ${{ vars.NAMECHEAP_API_HEALTH_URL }}
       STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
     steps:
       - name: Validate protected configuration
@@ -33,12 +36,14 @@ jobs:
           test -n "$SSH_PORT"
           test -n "$APP_ROOT"
           test -n "$NODE_VERSION"
+          test -n "$API_HEALTH_URL"
           test -n "$STRIPE_TEST_SECRET_KEY"
           [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
           [[ "$SSH_USER" =~ ^[A-Za-z0-9_-]+$ ]]
           [[ "$SSH_PORT" =~ ^[0-9]+$ ]]
           [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
           [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
+          [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/ready$ ]]
           [[ "$STRIPE_TEST_SECRET_KEY" == sk_test_* ]]
 
       - name: Configure SSH
@@ -47,6 +52,16 @@ jobs:
           install -m 600 /dev/null ~/.ssh/id_ed25519
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Verify production API is ready
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error --max-time 10 "$API_HEALTH_URL"; then
+              exit 0
+            fi
+            sleep 3
+          done
+          exit 1
 
       - name: Stage short-lived Stripe test credential
         run: |
