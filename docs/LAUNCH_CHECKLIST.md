@@ -1,6 +1,6 @@
 # Commercial launch checklist
 
-Last production verification: 2026-07-12.
+Last production verification: 2026-07-13.
 
 ## Verified live
 
@@ -21,7 +21,7 @@ Last production verification: 2026-07-12.
 
 ## Required before unrestricted paid promotion
 
-- [ ] Complete and record one end-to-end test-mode cycle for milestone funding, webhook reconciliation, operator transfer, refund, and dispute handling
+- [x] End-to-end Stripe test-mode cycle completed at `2026-07-13T04:26:06Z`: connected-account readiness, Checkout Session creation, test-card payment, signed and duplicate webhook handling, delivery, source-linked operator transfer, processor and Bureau disputes, transfer reversal, full refund, database reconciliation, and fixture cleanup all passed in [GitHub run 29223924517](https://github.com/richducat/bureau-agents/actions/runs/29223924517)
 - [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
 - [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
 - [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities
