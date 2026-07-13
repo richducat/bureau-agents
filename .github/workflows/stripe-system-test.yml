@@ -57,7 +57,8 @@ jobs:
         run: |
           KEY_FILE=".bureau-stripe-test-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' KEY_BASENAME='$KEY_FILE' bash -s" <<'REMOTE'
-          set -euo pipefail
+          # CloudLinux's Node activation script reads optional unset variables.
+          set -eo pipefail
           KEY_FILE="$HOME/$KEY_BASENAME"
           trap 'rm -f "$KEY_FILE"' EXIT
           cd "$APP_ROOT"
