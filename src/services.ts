@@ -11,6 +11,7 @@ export interface ManagedService {
   turnaround: string
   deliverables: string[]
   goodFor: string
+  unitLabelSingular: string
   unitLabel: string
   unitCapacity: number
   maximumAutomaticUnits: number
@@ -25,6 +26,7 @@ function publishedPackage(id: keyof typeof MANAGED_CATALOG) {
     startingPrice: service.startingPriceCents / 100,
     turnaround: service.turnaround,
     deliverables: [...service.deliverables],
+    unitLabelSingular: service.unitLabelSingular,
     unitLabel: service.unitLabel,
     unitCapacity: service.unitCapacity,
     maximumAutomaticUnits: service.maximumAutomaticUnits,

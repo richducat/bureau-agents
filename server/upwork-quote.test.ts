@@ -8,6 +8,7 @@ const service: ManagedServiceDefinition = {
   startingPriceCents: 28_000,
   turnaround: '1–3 days',
   deliverables: ['Tested change'],
+  unitLabelSingular: 'reproducible website issue',
   unitLabel: 'reproducible website issues',
   unitCapacity: 1,
   maximumAutomaticUnits: 3,

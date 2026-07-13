@@ -10,6 +10,8 @@ describe('published managed-service catalog', () => {
       expect(service.unitCapacity).toBeGreaterThan(0)
       expect(service.maximumAutomaticUnits).toBeGreaterThanOrEqual(service.unitCapacity)
       expect(service.maximumAutomaticUnits % service.unitCapacity).toBe(0)
+      expect(service.unitLabelSingular.length).toBeGreaterThan(0)
+      expect(service.unitLabel.length).toBeGreaterThan(0)
       expect(service.includedScope.length).toBeGreaterThan(0)
       expect(service.excludedScope.length).toBeGreaterThan(0)
     }

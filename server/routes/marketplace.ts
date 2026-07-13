@@ -117,7 +117,8 @@ function publicManagedMatch(agent: GenericRow | null) {
 
 function publicCatalogPackage(service: NonNullable<ReturnType<typeof managedService>>, scopeUnits: number, packageCount: number) {
   return {
-    unitLabel: service.unitLabel,
+    unitLabel: scopeUnits === 1 ? service.unitLabelSingular : service.unitLabel,
+    unitLabelSingular: service.unitLabelSingular,
     unitCapacity: service.unitCapacity,
     maximumAutomaticUnits: service.maximumAutomaticUnits,
     requestedUnits: scopeUnits,
@@ -366,11 +367,12 @@ publicRouter.post('/upwork-quotes', managedTaskLimiter, asyncRoute(async (req, r
   const catalogQuote = calculateBureauCatalogQuote(service, input.scopeUnits)
   const available = catalogQuote.status === 'available' && Boolean(agent)
   const quoteWorkValueCents = available ? catalogQuote.workValueCents : null
-  const packageDescription = `${catalogQuote.packageCount} ${catalogQuote.packageCount === 1 ? 'package' : 'packages'} covering ${input.scopeUnits.toLocaleString()} ${service.unitLabel}`
+  const requestedUnitLabel = input.scopeUnits === 1 ? service.unitLabelSingular : service.unitLabel
+  const packageDescription = `${catalogQuote.packageCount} ${catalogQuote.packageCount === 1 ? 'package' : 'packages'} covering ${input.scopeUnits.toLocaleString()} ${requestedUnitLabel}`
   const quoteSummary = available
     ? `Automatic bounded Bureau catalog quote: ${packageDescription} at $${(service.startingPriceCents / 100).toFixed(2)} per package; total work value $${(catalogQuote.workValueCents! / 100).toFixed(2)}. Included: ${service.includedScope.join(', ')}. Excluded: ${service.excludedScope.join(', ')}. Deliverables: ${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround} per package. Bureau validated the Upwork URL format only and makes no external savings claim.`
     : catalogQuote.status === 'manual_review'
-      ? `Manual scope review required: ${input.scopeUnits.toLocaleString()} ${service.unitLabel} exceeds the automatic limit of ${service.maximumAutomaticUnits.toLocaleString()}. No payable quote or external savings claim applies.`
+      ? `Manual scope review required: ${input.scopeUnits.toLocaleString()} ${requestedUnitLabel} exceeds the automatic limit of ${service.maximumAutomaticUnits.toLocaleString()}. No payable quote or external savings claim applies.`
       : `The bounded catalog calculation is ${packageDescription} at $${(service.startingPriceCents / 100).toFixed(2)} per package, but no matching active agent is currently available. No payable quote or external savings claim applies.`
   const id = randomUUID()
   const clientOrganization = req.authUser?.organizations.find((organization) => organization.kind === 'client')
@@ -397,7 +399,7 @@ publicRouter.post('/upwork-quotes', managedTaskLimiter, asyncRoute(async (req, r
     sendUpworkTransferReceipt(input.email, input.contactName, id, input.title, agent?.name ?? 'Bureau concierge', quoteWorkValueCents),
     sendOperationsNotification(
       available ? `Automatic bounded Bureau quote: ${input.title}` : `Upwork-referenced request needs review: ${input.title}`,
-      `${input.contactName}${input.businessName ? ` at ${input.businessName}` : ''} submitted an authorized Upwork job reference for ${input.scopeUnits.toLocaleString()} ${service.unitLabel}. ${available ? `Bureau applied its $${(quoteWorkValueCents! / 100).toFixed(2)} bounded catalog work value.` : quoteSummary} No external price or savings claim was made. Reference: ${id}.`,
+      `${input.contactName}${input.businessName ? ` at ${input.businessName}` : ''} submitted an authorized Upwork job reference for ${input.scopeUnits.toLocaleString()} ${requestedUnitLabel}. ${available ? `Bureau applied its $${(quoteWorkValueCents! / 100).toFixed(2)} bounded catalog work value.` : quoteSummary} No external price or savings claim was made. Reference: ${id}.`,
       '/admin',
     ),
   ]).catch((error) => console.error(`[${req.requestId}] transfer quote notification failed:`, error instanceof Error ? error.message : 'unknown error'))
