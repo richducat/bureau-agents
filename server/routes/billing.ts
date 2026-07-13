@@ -169,7 +169,7 @@ billingRouter.post('/milestones/:milestoneId/checkout', asyncRoute(async (req, r
   const milestone = await one<GenericRow>(
     `SELECT m.*, c.client_org_id, c.operator_org_id, c.client_fee_basis_points, c.operator_fee_basis_points,
       c.title AS contract_title, co.name AS client_name, co.stripe_customer_id,
-      oo.name AS operator_name, oo.stripe_account_id, oo.stripe_payouts_enabled
+      oo.name AS operator_name, oo.kind AS operator_kind, oo.stripe_account_id, oo.stripe_payouts_enabled
      FROM milestones m JOIN contracts c ON c.id = m.contract_id
      JOIN organizations co ON co.id = c.client_org_id JOIN organizations oo ON oo.id = c.operator_org_id
      WHERE m.id = ?`,
@@ -177,7 +177,7 @@ billingRouter.post('/milestones/:milestoneId/checkout', asyncRoute(async (req, r
   )
   if (!milestone) throw new HttpError(404, 'Milestone not found.', 'milestone_not_found')
   membershipFor(req, String(milestone.client_org_id), ['owner', 'admin', 'billing'])
-  if (!milestone.stripe_account_id || !milestone.stripe_payouts_enabled) {
+  if (milestone.operator_kind !== 'platform' && (!milestone.stripe_account_id || !milestone.stripe_payouts_enabled)) {
     throw new HttpError(409, 'The agent operator must finish payout verification before this milestone can be funded.', 'operator_payouts_not_ready')
   }
   if (!['unfunded', 'funding'].includes(String(milestone.status))) throw new HttpError(409, 'This milestone has already been funded.', 'milestone_already_funded')
@@ -259,7 +259,7 @@ billingRouter.post('/milestones/:milestoneId/approve', asyncRoute(async (req, re
   const milestoneId = uuid.parse(req.params.milestoneId)
   const payment = await one<GenericRow>(
     `SELECT p.*, m.status AS milestone_status, m.contract_id, c.client_org_id, c.agent_id,
-      o.stripe_account_id, o.stripe_payouts_enabled
+      o.kind AS operator_kind, o.stripe_account_id, o.stripe_payouts_enabled
      FROM payments p JOIN milestones m ON m.id = p.milestone_id JOIN contracts c ON c.id = m.contract_id
      JOIN organizations o ON o.id = c.operator_org_id
      WHERE p.milestone_id = ? AND p.status IN ('paid','release_pending') ORDER BY p.created_at DESC LIMIT 1`,
@@ -268,24 +268,25 @@ billingRouter.post('/milestones/:milestoneId/approve', asyncRoute(async (req, re
   if (!payment) throw new HttpError(409, 'No paid milestone is ready for approval.', 'payment_not_ready')
   membershipFor(req, String(payment.client_org_id), ['owner', 'admin', 'member'])
   if (payment.milestone_status !== 'submitted') throw new HttpError(409, 'The operator must submit a deliverable before approval.', 'deliverable_not_submitted')
-  if (!payment.stripe_charge_id || !payment.stripe_account_id || !payment.stripe_payouts_enabled) {
+  const platformManaged = payment.operator_kind === 'platform'
+  if (!payment.stripe_charge_id || (!platformManaged && (!payment.stripe_account_id || !payment.stripe_payouts_enabled))) {
     throw new HttpError(409, 'Payout details are not ready.', 'payout_not_ready')
   }
-  if (payment.stripe_transfer_id) return res.json({ released: true, transferId: payment.stripe_transfer_id, reused: true })
+  if (payment.stripe_transfer_id || (platformManaged && payment.status === 'released')) return res.json({ released: true, transferId: payment.stripe_transfer_id ?? null, reused: true })
 
   await execute(`UPDATE payments SET status = 'release_pending' WHERE id = ? AND status = 'paid'`, [payment.id])
-  const transfer = await stripeClient().transfers.create({
-    amount: Number(payment.operator_net_cents),
-    currency: 'usd',
-    destination: String(payment.stripe_account_id),
-    source_transaction: String(payment.stripe_charge_id),
-    transfer_group: `bureau_contract_${payment.contract_id}`,
-    metadata: { bureau_payment_id: String(payment.id), bureau_milestone_id: milestoneId, bureau_contract_id: String(payment.contract_id) },
-  }, { idempotencyKey: `bureau_release_${payment.id}` })
+  const transfer = platformManaged ? null : await stripeClient().transfers.create({
+      amount: Number(payment.operator_net_cents),
+      currency: 'usd',
+      destination: String(payment.stripe_account_id),
+      source_transaction: String(payment.stripe_charge_id),
+      transfer_group: `bureau_contract_${payment.contract_id}`,
+      metadata: { bureau_payment_id: String(payment.id), bureau_milestone_id: milestoneId, bureau_contract_id: String(payment.contract_id) },
+    }, { idempotencyKey: `bureau_release_${payment.id}` })
   await transaction(async (connection) => {
     await connection.execute(
       `UPDATE payments SET stripe_transfer_id = ?, status = 'released', released_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-      [transfer.id, payment.id],
+      [transfer?.id ?? null, payment.id],
     )
     await connection.execute(
       `UPDATE milestones SET status = 'released', approved_at = UTC_TIMESTAMP(3), released_at = UTC_TIMESTAMP(3) WHERE id = ?`,
@@ -306,7 +307,7 @@ billingRouter.post('/milestones/:milestoneId/approve', asyncRoute(async (req, re
     )
   })
   await enqueueAgentWebhook(String(payment.agent_id), 'milestone.released', { contractId: String(payment.contract_id), milestoneId, paymentId: String(payment.id), operatorNetCents: Number(payment.operator_net_cents) })
-  res.json({ released: true, transferId: transfer.id, operatorNetCents: payment.operator_net_cents })
+  res.json({ released: true, transferId: transfer?.id ?? null, operatorNetCents: payment.operator_net_cents, platformManaged })
 }))
 
 async function markSubscription(subscription: Stripe.Subscription) {

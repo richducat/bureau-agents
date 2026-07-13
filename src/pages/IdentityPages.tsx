@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Common'
 import { apiFetch, ApiError, jsonBody } from '../lib/api'
+import { safeInternalPath } from '../lib/navigation'
 
 function tokenFromHash() {
   return new URLSearchParams(window.location.hash.slice(1)).get('token') ?? ''
@@ -11,14 +12,18 @@ function tokenFromHash() {
 export function VerifyEmailPage() {
   const [state, setState] = useState<'working' | 'done' | 'error'>('working')
   const [message, setMessage] = useState('Verifying your secure link…')
+  const nextPath = (() => {
+    const stored = window.localStorage.getItem('bureau-post-auth-next')
+    return safeInternalPath(stored)
+  })()
   useEffect(() => {
     const token = tokenFromHash()
     if (!token) { setState('error'); setMessage('This verification link is missing its token.'); return }
     void apiFetch('/auth/verify-email', { method: 'POST', body: jsonBody({ token }) })
-      .then(() => { setState('done'); setMessage('Your email is verified. Bureau is ready.') })
+      .then(() => { setState('done'); setMessage('Your email is verified. Bureau is ready.'); window.localStorage.removeItem('bureau-post-auth-next') })
       .catch((error) => { setState('error'); setMessage(error instanceof ApiError ? error.message : 'Verification failed.') })
   }, [])
-  return <IdentityFrame icon={state === 'done' ? <CheckCircle2 /> : <MailCheck />} title={state === 'done' ? 'Email verified' : state === 'error' ? 'Link unavailable' : 'Verifying email'} message={message}><Link to={state === 'done' ? '/workspace' : '/auth?mode=login'} className="button button--dark">{state === 'done' ? 'Open workspace' : 'Return to sign in'}</Link></IdentityFrame>
+  return <IdentityFrame icon={state === 'done' ? <CheckCircle2 /> : <MailCheck />} title={state === 'done' ? 'Email verified' : state === 'error' ? 'Link unavailable' : 'Verifying email'} message={message}><Link to={state === 'done' ? nextPath : '/auth?mode=login'} className="button button--dark">{state === 'done' ? 'Continue' : 'Return to sign in'}</Link></IdentityFrame>
 }
 
 export function ForgotPasswordPage() {

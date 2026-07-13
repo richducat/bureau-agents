@@ -13,3 +13,19 @@ export function safeHttpsUrl(raw: string | null | undefined) {
     return url.protocol === 'https:' ? url.toString() : null
   } catch { return null }
 }
+
+export function safeInternalPath(value: string | null | undefined, fallback = '/workspace') {
+  if (!value || value.length > 2_048 || !value.startsWith('/') || value.startsWith('//')) return fallback
+  if (value.includes('\\') || [...value].some((character) => {
+    const code = character.charCodeAt(0)
+    return code <= 31 || code === 127
+  })) return fallback
+
+  try {
+    const url = new URL(value, window.location.origin)
+    if (url.origin !== window.location.origin) return fallback
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch {
+    return fallback
+  }
+}

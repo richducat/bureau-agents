@@ -32,6 +32,15 @@ export interface AuthenticatedAgent {
   scopes: string[]
 }
 
+export interface AuthenticatedClientAgent {
+  organizationId: string
+  organizationName: string
+  createdByUserId: string
+  email: string
+  keyId: string
+  scopes: string[]
+}
+
 interface SessionRow extends RowDataPacket {
   id: string
   email: string
@@ -55,6 +64,15 @@ interface AgentKeyRow extends RowDataPacket {
   agent_id: string
   agent_name: string
   operator_org_id: string
+  scopes: string | string[]
+}
+
+interface ClientKeyRow extends RowDataPacket {
+  key_id: string
+  organization_id: string
+  organization_name: string
+  created_by_user_id: string
+  email: string
   scopes: string | string[]
 }
 
@@ -249,6 +267,46 @@ export function requireAgentScope(scope: string) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.authAgent?.scopes.includes(scope) && !req.authAgent?.scopes.includes('*')) {
       return next(new HttpError(403, `Agent API key requires the ${scope} scope.`, 'agent_scope_required'))
+    }
+    next()
+  }
+}
+
+export async function authenticateClientAgent(req: Request, _res: Response, next: NextFunction) {
+  try {
+    const authorization = req.get('authorization') ?? ''
+    if (!authorization.startsWith('Bearer bc_live_')) throw new HttpError(401, 'Valid client agent API key required.', 'client_agent_authentication_required')
+    const key = authorization.slice('Bearer '.length)
+    const record = await one<ClientKeyRow>(
+      `SELECT k.id AS key_id, k.organization_id, o.name AS organization_name,
+        k.created_by_user_id, u.email, k.scopes
+       FROM client_api_keys k JOIN organizations o ON o.id = k.organization_id
+       JOIN users u ON u.id = k.created_by_user_id
+       WHERE k.key_hash = ? AND k.revoked_at IS NULL AND (k.expires_at IS NULL OR k.expires_at > UTC_TIMESTAMP(3))
+         AND o.kind = 'client' AND o.status = 'active' AND u.email_verified_at IS NOT NULL`,
+      [sha256(key)],
+    )
+    if (!record) throw new HttpError(401, 'Client agent API key is invalid, revoked, or awaiting owner verification.', 'client_agent_authentication_required')
+    const scopes = typeof record.scopes === 'string' ? JSON.parse(record.scopes) as string[] : record.scopes
+    req.authClientAgent = {
+      organizationId: record.organization_id,
+      organizationName: record.organization_name,
+      createdByUserId: record.created_by_user_id,
+      email: record.email,
+      keyId: record.key_id,
+      scopes,
+    }
+    void execute('UPDATE client_api_keys SET last_used_at = UTC_TIMESTAMP(3) WHERE id = ?', [record.key_id])
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+
+export function requireClientAgentScope(scope: string) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.authClientAgent?.scopes.includes(scope) && !req.authClientAgent?.scopes.includes('*')) {
+      return next(new HttpError(403, `Client agent API key requires the ${scope} scope.`, 'client_agent_scope_required'))
     }
     next()
   }

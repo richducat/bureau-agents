@@ -97,15 +97,50 @@ authRouter.post('/signup', authLimiter, asyncRoute(async (req, res) => {
        VALUES (?, ?, 'account.created', 'user', ?)`,
       [userId, organizationId, userId],
     )
+    if (input.accountType === 'client') {
+      await connection.execute(
+        `UPDATE task_requests SET user_id = ?, client_org_id = ?
+         WHERE LOWER(email) = ? AND user_id IS NULL`,
+        [userId, organizationId, input.email],
+      )
+    }
   })
 
   await createSession(req, res, userId)
-  const emailDelivered = await sendEmailVerification(input.email, input.displayName, verificationToken)
+  let emailDelivered = false
+  try {
+    emailDelivered = await sendEmailVerification(input.email, input.displayName, verificationToken)
+  } catch (error) {
+    console.error(`[signup-email] ${error instanceof Error ? error.message : 'Verification email failed'}`)
+  }
   res.status(201).json({
     user: { id: userId, email: input.email, displayName: input.displayName, emailVerified: false },
     organization: { id: organizationId, name: input.organizationName, kind: input.accountType, plan: organizationPlan },
     emailDelivered,
   })
+}))
+
+authRouter.post('/resend-verification', requireAuth, authLimiter, asyncRoute(async (req, res) => {
+  if (req.authUser!.emailVerified) return res.json({ delivered: true, alreadyVerified: true })
+  const verificationToken = createOpaqueToken()
+  await transaction(async (connection) => {
+    await connection.execute(
+      `UPDATE identity_tokens SET used_at = UTC_TIMESTAMP(3)
+       WHERE user_id = ? AND purpose = 'verify_email' AND used_at IS NULL`,
+      [req.authUser!.id],
+    )
+    await connection.execute(
+      `INSERT INTO identity_tokens (token_hash, user_id, purpose, expires_at)
+       VALUES (?, ?, 'verify_email', DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 24 HOUR))`,
+      [sha256(verificationToken), req.authUser!.id],
+    )
+  })
+  try {
+    await sendEmailVerification(req.authUser!.email, req.authUser!.displayName, verificationToken)
+  } catch {
+    throw new HttpError(503, 'Verification email is temporarily unavailable. Your account and request are saved.', 'email_unavailable')
+  }
+  res.json({ delivered: true })
 }))
 
 authRouter.post('/verify-email', authLimiter, asyncRoute(async (req, res) => {

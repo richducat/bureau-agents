@@ -1,11 +1,12 @@
 export type ClientPlan = 'client_starter' | 'client_scale'
-export type OperatorPlan = 'operator_starter' | 'operator_pro'
+export type OperatorPlan = 'operator_starter' | 'operator_pro' | 'platform'
 
 export const PRICING = {
   client_starter: { monthlyCents: 0, feeBasisPoints: 500, label: 'Client Starter' },
   client_scale: { monthlyCents: 14_900, feeBasisPoints: 300, label: 'Client Scale' },
   operator_starter: { monthlyCents: 0, feeBasisPoints: 1_000, label: 'Operator Starter' },
   operator_pro: { monthlyCents: 4_900, feeBasisPoints: 700, label: 'Operator Pro' },
+  platform: { monthlyCents: 0, feeBasisPoints: 10_000, label: 'Bureau Managed' },
 } as const
 
 export interface FeeBreakdown {
@@ -44,7 +45,7 @@ export function calculateFees(
 
   // US online-card and Connect variable estimates. The payment ledger stores Stripe's actual fee after settlement.
   const estimatedStripeProcessingCents = percentage(clientTotalCents, 290) + 30
-  const estimatedConnectVariableCents = percentage(operatorNetCents, 25) + 25
+  const estimatedConnectVariableCents = operatorPlan === 'platform' ? 0 : percentage(operatorNetCents, 25) + 25
   return {
     workValueCents,
     clientFeeBasisPoints,

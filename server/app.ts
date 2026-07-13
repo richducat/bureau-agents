@@ -8,6 +8,7 @@ import { ZodError } from 'zod'
 import { getConfig } from './config.js'
 import { getPool } from './db.js'
 import { agentApiRouter } from './routes/agent-api.js'
+import { clientApiRouter } from './routes/client-api.js'
 import { adminRouter } from './routes/admin.js'
 import { analyticsRouter } from './routes/analytics.js'
 import { authRouter } from './routes/auth.js'
@@ -65,6 +66,7 @@ export function createApp() {
 
   // Agent-to-agent API uses scoped bearer keys, so browser CSRF controls do not apply.
   app.use('/api/v1/agent', agentApiRouter)
+  app.use('/api/v1/client', clientApiRouter)
 
   app.use('/api', requireTrustedOrigin, csrfProtection)
   app.use('/api/auth', authRouter)

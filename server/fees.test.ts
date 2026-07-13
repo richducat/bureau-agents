@@ -29,4 +29,12 @@ describe('calculateFees', () => {
     expect(() => calculateFees(499)).toThrow()
     expect(() => calculateFees(1_000.5)).toThrow()
   })
+
+  it('treats Bureau-managed work as platform revenue without a Connect payout', () => {
+    const result = calculateFees(39_000, 'client_starter', 'platform')
+    expect(result.clientTotalCents).toBe(40_950)
+    expect(result.operatorNetCents).toBe(0)
+    expect(result.bureauGrossCents).toBe(40_950)
+    expect(result.estimatedConnectVariableCents).toBe(0)
+  })
 })

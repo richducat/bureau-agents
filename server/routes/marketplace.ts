@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { execute, one, rows, transaction } from '../db.js'
 import { encryptSecret } from '../crypto.js'
 import { calculateFees, type ClientPlan, type OperatorPlan } from '../fees.js'
+import { acceptManagedRequest, managedService, suggestedManagedAgent } from '../managed.js'
 import {
   asyncRoute,
   createOpaqueToken,
@@ -213,17 +214,33 @@ publicRouter.post('/task-requests', managedTaskLimiter, asyncRoute(async (req, r
     budgetRange: z.enum(['not-sure', 'under-250', '250-500', '500-1000', '1000-2500', '2500-plus']),
     desiredTiming: z.enum(['As soon as possible', 'Within 48 hours', 'Within one week', 'Within one month', 'Flexible']),
     source: z.string().trim().max(120).optional(),
+    requesterType: z.enum(['human', 'agent']).default('human'),
+    hiringMode: z.enum(['managed', 'marketplace']).default('managed'),
     website: z.string().max(0).optional().default(''),
     consent: z.literal(true),
   }).parse(req.body)
   const id = randomUUID()
+  const service = input.hiringMode === 'managed' ? managedService(input.serviceId) : null
+  const suggestedAgent = service ? await suggestedManagedAgent(input.serviceId) : null
+  const clientOrganization = req.authUser?.organizations.find((organization) => organization.kind === 'client')
   await execute(
     `INSERT INTO task_requests
-      (id, user_id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing, source, consent_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`,
-    [id, req.authUser?.id ?? null, input.contactName, input.businessName || null, input.email, input.serviceId, input.title, input.details, input.budgetRange, input.desiredTiming, input.source ?? null],
+      (id, user_id, client_org_id, contact_name, business_name, email, service_id, title, details, budget_range,
+       desired_timing, source, requester_type, hiring_mode, assigned_agent_id, quote_work_value_cents, quote_summary,
+       status, consent_at, quoted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
+    [id, req.authUser?.id ?? null, clientOrganization?.id ?? null, input.contactName, input.businessName || null,
+      input.email, input.serviceId, input.title, input.details, input.budgetRange, input.desiredTiming,
+      input.source ?? null, input.requesterType, input.hiringMode, suggestedAgent?.id ?? null,
+      service?.startingPriceCents ?? null,
+      service ? `${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround}.` : null,
+      service && suggestedAgent ? 'quoted' : 'new', service && suggestedAgent ? new Date() : null],
   )
-  res.status(201).json({ request: { id, status: 'new' } })
+  res.status(201).json({
+    request: { id, status: service && suggestedAgent ? 'quoted' : 'new' },
+    match: suggestedAgent ? { agentId: suggestedAgent.id, name: suggestedAgent.name } : null,
+    quote: service ? { workValueCents: service.startingPriceCents, turnaround: service.turnaround, deliverables: service.deliverables } : null,
+  })
 }))
 
 publicRouter.post('/support', asyncRoute(async (req, res) => {
@@ -255,6 +272,86 @@ marketplaceRouter.post('/organizations', asyncRoute(async (req, res) => {
     await connection.execute(`INSERT INTO organization_members (organization_id, user_id, member_role) VALUES (?, ?, 'owner')`, [id, req.authUser!.id])
   })
   res.status(201).json({ organization: { id, name: input.name, slug, kind: input.kind, plan, memberRole: 'owner' } })
+}))
+
+marketplaceRouter.get('/organizations/:organizationId/task-requests', asyncRoute(async (req, res) => {
+  const organizationId = uuid.parse(req.params.organizationId)
+  const membership = membershipFor(req, organizationId)
+  if (membership.kind !== 'client') throw new HttpError(400, 'A client organization is required.', 'invalid_organization_kind')
+  await execute(
+    `UPDATE task_requests SET user_id = ?, client_org_id = ?
+     WHERE client_org_id IS NULL AND LOWER(email) = LOWER(?)`,
+    [req.authUser!.id, organizationId, req.authUser!.email],
+  )
+  const requests = await rows<GenericRow>(
+    `SELECT tr.id, tr.service_id, tr.title, tr.details, tr.budget_range, tr.desired_timing, tr.requester_type,
+      tr.hiring_mode, tr.status, tr.quote_work_value_cents, tr.quote_summary, tr.contract_id, tr.created_at,
+      a.name AS assigned_agent_name, a.slug AS assigned_agent_slug
+     FROM task_requests tr LEFT JOIN agents a ON a.id = tr.assigned_agent_id
+     WHERE tr.client_org_id = ? ORDER BY tr.created_at DESC LIMIT 200`,
+    [organizationId],
+  )
+  res.json({ requests })
+}))
+
+marketplaceRouter.post('/task-requests/:requestId/accept', asyncRoute(async (req, res) => {
+  const requestId = uuid.parse(req.params.requestId)
+  const input = z.object({ organizationId: uuid }).parse(req.body)
+  const membership = membershipFor(req, input.organizationId, ['owner', 'admin', 'member'])
+  if (membership.kind !== 'client') throw new HttpError(400, 'A client organization is required.', 'invalid_organization_kind')
+  const request = await one<GenericRow>('SELECT email, client_org_id FROM task_requests WHERE id = ?', [requestId])
+  if (!request) throw new HttpError(404, 'Managed request not found.', 'task_request_not_found')
+  if (!request.client_org_id && String(request.email).toLowerCase() !== req.authUser!.email.toLowerCase()) {
+    throw new HttpError(403, 'Sign in with the email used for this request.', 'task_request_access_denied')
+  }
+  const result = await acceptManagedRequest(requestId, input.organizationId, req.authUser!.id, membership.plan as ClientPlan)
+  res.status(201).json({ contract: { id: result.contractId, milestoneId: result.milestoneId, status: 'pending_funding', economics: result.fees }, reused: 'reused' in result ? result.reused : false })
+}))
+
+const clientKeyScopes = z.enum(['agents:read', 'tasks:write', 'tasks:read', 'tasks:approve', 'contracts:read'])
+
+marketplaceRouter.get('/organizations/:organizationId/client-api-keys', asyncRoute(async (req, res) => {
+  const organizationId = uuid.parse(req.params.organizationId)
+  const membership = membershipFor(req, organizationId, ['owner', 'admin'])
+  if (membership.kind !== 'client') throw new HttpError(400, 'Client agent keys belong to client organizations.', 'invalid_organization_kind')
+  const keys = await rows<GenericRow>(
+    `SELECT id, name, key_prefix, scopes, last_used_at, expires_at, created_at FROM client_api_keys
+     WHERE organization_id = ? AND revoked_at IS NULL ORDER BY created_at DESC`,
+    [organizationId],
+  )
+  res.json({ keys: keys.map((key) => ({ ...key, scopes: parseJson(key.scopes, []) })) })
+}))
+
+marketplaceRouter.post('/organizations/:organizationId/client-api-keys', asyncRoute(async (req, res) => {
+  const organizationId = uuid.parse(req.params.organizationId)
+  const membership = membershipFor(req, organizationId, ['owner', 'admin'])
+  if (membership.kind !== 'client') throw new HttpError(400, 'Client agent keys belong to client organizations.', 'invalid_organization_kind')
+  const input = z.object({
+    name: z.string().trim().min(2).max(120),
+    scopes: z.array(clientKeyScopes).min(1).max(5),
+    expiresInDays: z.number().int().min(1).max(365).nullable().optional(),
+  }).parse(req.body)
+  const activeKeys = await one<GenericRow>('SELECT COUNT(*) AS count FROM client_api_keys WHERE organization_id = ? AND revoked_at IS NULL', [organizationId])
+  if (Number(activeKeys?.count ?? 0) >= 10) throw new HttpError(409, 'Revoke an existing key before creating another.', 'client_key_limit_reached')
+  const secret = `bc_live_${createOpaqueToken(32)}`
+  const keyId = randomUUID()
+  await execute(
+    `INSERT INTO client_api_keys (id, organization_id, created_by_user_id, name, key_prefix, key_hash, scopes, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ${input.expiresInDays ? 'DATE_ADD(UTC_TIMESTAMP(3), INTERVAL ? DAY)' : 'NULL'})`,
+    input.expiresInDays
+      ? [keyId, organizationId, req.authUser!.id, input.name, secret.slice(0, 20), sha256(secret), JSON.stringify([...new Set(input.scopes)]), input.expiresInDays]
+      : [keyId, organizationId, req.authUser!.id, input.name, secret.slice(0, 20), sha256(secret), JSON.stringify([...new Set(input.scopes)])],
+  )
+  res.status(201).json({ apiKey: { id: keyId, prefix: secret.slice(0, 20), secret, scopes: input.scopes } })
+}))
+
+marketplaceRouter.delete('/organizations/:organizationId/client-api-keys/:keyId', asyncRoute(async (req, res) => {
+  const organizationId = uuid.parse(req.params.organizationId)
+  const keyId = uuid.parse(req.params.keyId)
+  const membership = membershipFor(req, organizationId, ['owner', 'admin'])
+  if (membership.kind !== 'client') throw new HttpError(400, 'Client agent keys belong to client organizations.', 'invalid_organization_kind')
+  await execute('UPDATE client_api_keys SET revoked_at = UTC_TIMESTAMP(3) WHERE id = ? AND organization_id = ?', [keyId, organizationId])
+  res.status(204).end()
 }))
 
 const agentSchema = z.object({

@@ -1,17 +1,18 @@
 import { ArrowRight, Bot, BriefcaseBusiness, CheckCircle2, ShieldCheck } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../components/Common'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../lib/api'
 import { track } from '../lib/analytics'
+import { safeInternalPath } from '../lib/navigation'
 
 export default function AuthPage() {
   const { user, login, signup } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const mode = params.get('mode') === 'login' ? 'login' : 'signup'
-  const nextPath = params.get('next')?.startsWith('/') && !params.get('next')?.startsWith('//') ? params.get('next')! : '/workspace'
+  const nextPath = safeInternalPath(params.get('next'))
   const [accountType, setAccountType] = useState<'client' | 'operator'>(params.get('type') === 'operator' ? 'operator' : 'client')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,6 +21,10 @@ export default function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (nextPath !== '/workspace') window.localStorage.setItem('bureau-post-auth-next', nextPath)
+  }, [nextPath])
 
   if (user) return <Navigate to={nextPath} replace />
 

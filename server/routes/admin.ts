@@ -1,8 +1,9 @@
+import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
 import type { RowDataPacket } from 'mysql2'
 import { z } from 'zod'
 import { execute, one, rows, transaction } from '../db.js'
-import { asyncRoute, HttpError, requireAuth, requirePlatformRole, requireVerifiedEmail } from '../security.js'
+import { asyncRoute, createOpaqueToken, HttpError, requireAuth, requirePlatformRole, requireVerifiedEmail, sha256 } from '../security.js'
 import { stripeClient } from '../stripe.js'
 
 type GenericRow = RowDataPacket
@@ -53,6 +54,52 @@ adminRouter.get('/agents/review', asyncRoute(async (_req, res) => {
      FROM agents a JOIN organizations o ON o.id = a.operator_org_id WHERE a.status = 'review' ORDER BY a.created_at ASC`,
   )
   res.json({ agents })
+}))
+
+const agentRuntimeScopes = ['jobs:read', 'proposals:write', 'messages:read', 'messages:write', 'deliverables:write', 'heartbeat:write'] as const
+
+adminRouter.get('/platform-agents', asyncRoute(async (_req, res) => {
+  const agents = await rows<GenericRow>(
+    `SELECT a.id, a.slug, a.name, a.tagline, a.category, a.status, a.verification_level,
+      (SELECT COUNT(*) FROM agent_api_keys k WHERE k.agent_id = a.id AND k.revoked_at IS NULL
+        AND (k.expires_at IS NULL OR k.expires_at > UTC_TIMESTAMP(3))) AS active_key_count
+     FROM agents a JOIN organizations o ON o.id = a.operator_org_id
+     WHERE o.kind = 'platform' ORDER BY a.name ASC`,
+  )
+  res.json({ agents })
+}))
+
+adminRouter.post('/platform-agents/:agentId/api-keys', requirePlatformRole('admin'), asyncRoute(async (req, res) => {
+  const agentId = uuid.parse(req.params.agentId)
+  const input = z.object({ name: z.string().trim().min(2).max(120).default('Primary runtime') }).parse(req.body)
+  const agent = await one<GenericRow>(
+    `SELECT a.id, a.name FROM agents a JOIN organizations o ON o.id = a.operator_org_id
+     WHERE a.id = ? AND o.kind = 'platform'`,
+    [agentId],
+  )
+  if (!agent) throw new HttpError(404, 'Bureau platform agent not found.', 'agent_not_found')
+  const activeKeys = await one<GenericRow>(
+    `SELECT COUNT(*) AS count FROM agent_api_keys WHERE agent_id = ? AND revoked_at IS NULL
+      AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(3))`,
+    [agentId],
+  )
+  if (Number(activeKeys?.count ?? 0) >= 10) throw new HttpError(409, 'Revoke an existing runtime key before creating another.', 'agent_key_limit_reached')
+
+  const secret = `br_live_${createOpaqueToken(32)}`
+  const keyId = randomUUID()
+  await transaction(async (connection) => {
+    await connection.execute(
+      `INSERT INTO agent_api_keys (id, agent_id, name, key_prefix, key_hash, scopes)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [keyId, agentId, input.name, secret.slice(0, 20), sha256(secret), JSON.stringify(agentRuntimeScopes)],
+    )
+    await connection.execute(
+      `INSERT INTO audit_log (actor_user_id, action, target_type, target_id, metadata)
+       VALUES (?, 'platform_agent.api_key_created', 'agent', ?, ?)`,
+      [req.authUser!.id, agentId, JSON.stringify({ keyId, name: input.name, scopes: agentRuntimeScopes })],
+    )
+  })
+  res.status(201).json({ apiKey: { id: keyId, agentId, agentName: agent.name, prefix: secret.slice(0, 20), secret, scopes: agentRuntimeScopes } })
 }))
 
 adminRouter.post('/agents/:agentId/decision', asyncRoute(async (req, res) => {
@@ -184,11 +231,13 @@ adminRouter.get('/waitlist', asyncRoute(async (_req, res) => {
   res.json({ leads })
 }))
 
+const taskRequestStatus = z.enum(['new','reviewing','quoted','accepted','payment_ready','funded','in_progress','delivered','declined','completed'])
+
 adminRouter.get('/task-requests', asyncRoute(async (req, res) => {
-  const status = z.enum(['new','reviewing','quoted','accepted','declined','completed']).optional().parse(req.query.status)
+  const status = taskRequestStatus.optional().parse(req.query.status)
   const requests = await rows<GenericRow>(
     `SELECT id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing, source, status, admin_note, created_at, updated_at
-     FROM task_requests WHERE (? IS NULL OR status = ?) ORDER BY FIELD(status, 'new','reviewing','quoted','accepted','completed','declined'), created_at DESC LIMIT 1000`,
+     FROM task_requests WHERE (? IS NULL OR status = ?) ORDER BY FIELD(status, 'new','reviewing','quoted','accepted','payment_ready','funded','in_progress','delivered','completed','declined'), created_at DESC LIMIT 1000`,
     [status ?? null, status ?? null],
   )
   res.json({ requests })
@@ -197,7 +246,7 @@ adminRouter.get('/task-requests', asyncRoute(async (req, res) => {
 adminRouter.patch('/task-requests/:requestId', asyncRoute(async (req, res) => {
   const requestId = uuid.parse(req.params.requestId)
   const input = z.object({
-    status: z.enum(['new','reviewing','quoted','accepted','declined','completed']),
+    status: taskRequestStatus,
     adminNote: z.string().trim().max(10_000).optional().default(''),
   }).parse(req.body)
   const result = await execute(

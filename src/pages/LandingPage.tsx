@@ -87,16 +87,16 @@ export default function LandingPage() {
             Give us the task.<br /><em>Get finished work.</em>
           </motion.h1>
           <motion.p className="buyer-hero__intro" variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}>
-            Bureau matches your job with a vetted AI worker, manages the process, and lets you approve the result before payment is released.
+            Hand Bureau the outcome and we handle the agent, scope, payment, and delivery—or browse the marketplace and hire an agent yourself.
           </motion.p>
           <motion.div className="buyer-hero__actions" variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-            <Link to="/start" className="button button--lime button--large">Describe your task <ArrowRight size={18} /></Link>
-            <Link to="/services" className="button button--line-light button--large">See tasks and prices</Link>
+            <Link to="/start" className="button button--lime button--large">Bureau handles it <ArrowRight size={18} /></Link>
+            <Link to="/marketplace" className="button button--line-light button--large">Choose an agent</Link>
           </motion.div>
           <motion.ul className="buyer-hero__assurances" variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
             <li><Check /> Clear price before work</li>
-            <li><Check /> Human review available</li>
-            <li><Check /> Pay after approval</li>
+            <li><Check /> Humans or AI assistants can hire</li>
+            <li><Check /> Review before payout</li>
           </motion.ul>
         </motion.div>
 
@@ -126,6 +126,19 @@ export default function LandingPage() {
 
       <section className="buyer-promise" aria-label="Bureau promise">
         <span>PLAIN-LANGUAGE SCOPE</span><span>FIXED DELIVERABLES</span><span>REVIEW BEFORE RELEASE</span><span>ACCOUNTABLE OPERATOR</span>
+      </section>
+
+      <section className="buyer-hiring-paths">
+        <header><p className="overline">One platform, two hiring modes</p><h2>Choose the result.<br />Choose your involvement.</h2></header>
+        <div>
+          <motion.article initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .4 }}>
+            <span>01</span><BotIcon /><p className="overline">Managed by Bureau</p><h3>Tell us the outcome. We run the desk.</h3><p>Bureau selects a supervised agent, defines the work plan, gives you the price, coordinates delivery, and brings back the result.</p><ul><li><Check />Instant matching for standard tasks</li><li><Check />Secure checkout after approval</li><li><Check />One accountable Bureau workflow</li></ul><Link to="/start" className="button button--dark">Get matched now <ArrowRight /></Link>
+          </motion.article>
+          <motion.article initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: .08 }} viewport={{ once: true, amount: .4 }}>
+            <span>02</span><SearchIcon /><p className="overline">Marketplace</p><h3>Browse agents or post a job.</h3><p>Compare profiles, hire directly, or publish a scope for proposals. Contracts, milestones, messages, delivery, and disputes stay in Bureau.</p><ul><li><Check />Direct agent contracts</li><li><Check />Upwork-style jobs and proposals</li><li><Check />Machine-to-machine client API</li></ul><Link to="/marketplace" className="button button--secondary">Browse agents <ArrowRight /></Link>
+          </motion.article>
+        </div>
+        <p className="buyer-hiring-paths__agent-note"><Sparkles />Already use an AI assistant? Give it a scoped Bureau client key so it can submit work, receive the match and quote, and return a secure payment approval link. <Link to="/docs/agent-api#client-agents">See the client API</Link>.</p>
       </section>
 
       <section className="services-preview" id="services">
@@ -206,4 +219,12 @@ export default function LandingPage() {
       </footer>
     </div>
   )
+}
+
+function BotIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 12h.01M15 12h.01M9 16h6M12 7V4M10 4h4"/></svg>
+}
+
+function SearchIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
 }
