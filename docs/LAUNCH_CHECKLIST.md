@@ -18,7 +18,7 @@ Last production verification: 2026-07-13.
 - [x] Production DKIM saved in Namecheap, returned by Cloudflare and Google public resolvers, and reported **DKIM Valid** by cPanel Email Deliverability
 - [x] Named founding-beta owner assigned through the live admin alert address with one-business-day ordinary triage and same-business-day critical review targets
 - [x] Production dependency audit currently clean
-- [ ] Upwork job-transfer page, guarantee policy, preview API, manual repricing control, and account-to-Stripe conversion verified on the live production domains
+- [x] Upwork job-transfer page, guarantee policy, preview API, manual repricing control, and account-to-Stripe conversion verified on the live production domains; Namecheap API migration/readiness/active-agent quote smoke passed in [run 29225066256](https://github.com/richducat/bureau-agents/actions/runs/29225066256), and GitHub Pages route/policy smoke passed in [run 29225066274](https://github.com/richducat/bureau-agents/actions/runs/29225066274)
 
 ## Required before unrestricted paid promotion
 
