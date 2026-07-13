@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Bureau Social Launch Campaign</title>
+  <style>
+    :root { color-scheme: light; --ink: #10110e; --cream: #f4f1e8; --paper: #ebe7dc; --lime: #d8ff3e; --muted: #70726a; --line: #d9d5ca; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--cream); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    a { color: inherit; }
+    header { padding: 28px clamp(24px, 5vw, 80px); color: white; background: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .11em; }
+    .brand b { display: grid; width: 34px; height: 34px; place-items: center; color: var(--ink); background: var(--lime); border-radius: 6px; letter-spacing: 0; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border: 1px solid transparent; border-radius: 8px; color: var(--ink); background: var(--lime); font-weight: 750; text-decoration: none; cursor: pointer; }
+    .button.secondary { color: white; border-color: #45463f; background: transparent; }
+    main { width: min(1440px, 100%); margin: 0 auto; padding: clamp(48px, 7vw, 100px) clamp(24px, 5vw, 80px) 100px; }
+    .intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 32px; margin-bottom: 70px; }
+    h1 { max-width: 850px; margin: 0; font-size: clamp(54px, 8vw, 114px); line-height: .92; letter-spacing: -.065em; }
+    .intro p { max-width: 660px; margin: 28px 0 0; color: var(--muted); font-size: 20px; line-height: 1.55; }
+    .intro aside { display: grid; gap: 12px; min-width: 230px; }
+    .intro .button.secondary { color: var(--ink); border-color: var(--line); background: white; }
+    .campaign-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+    article { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
+    article img { display: block; width: 100%; height: auto; background: var(--paper); }
+    .copy { padding: 26px; }
+    .copy header { padding: 0; color: var(--ink); background: none; align-items: flex-start; }
+    .copy h2 { margin: 0; font-size: 27px; letter-spacing: -.035em; }
+    .number { color: var(--muted); font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+    .copy p { min-height: 76px; margin: 18px 0; color: #474942; line-height: 1.55; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .meta span { padding: 7px 10px; border-radius: 999px; background: var(--cream); color: var(--muted); font-size: 12px; font-weight: 700; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .actions .button { min-height: 42px; padding: 0 14px; font-size: 14px; }
+    .actions .download { color: white; background: var(--ink); }
+    .actions .button.secondary { color: var(--ink); border-color: var(--line); background: white; }
+    .video-section { display: grid; grid-template-columns: minmax(280px, 430px) minmax(0, 1fr); gap: clamp(38px, 7vw, 100px); align-items: center; margin-top: 110px; padding: clamp(34px, 6vw, 76px); border-radius: 24px; color: white; background: var(--ink); }
+    video { display: block; width: 100%; border-radius: 18px; background: #000; box-shadow: 0 34px 70px rgba(0,0,0,.35); }
+    .video-copy h2 { margin: 0 0 24px; font-size: clamp(44px, 6vw, 80px); line-height: .96; letter-spacing: -.055em; }
+    .video-copy em { color: var(--lime); font-family: Georgia, serif; font-weight: 400; }
+    .video-copy p { max-width: 620px; color: #c9cbc2; font-size: 20px; line-height: 1.55; }
+    .video-copy .actions { margin-top: 28px; }
+    .video-copy .actions .button.secondary { color: white; border-color: #45463f; background: transparent; }
+    footer { padding: 36px clamp(24px, 5vw, 80px); color: #c9cbc2; background: var(--ink); border-top: 1px solid #33342f; }
+    .toast { position: fixed; right: 24px; bottom: 24px; padding: 14px 18px; border-radius: 9px; color: var(--ink); background: var(--lime); font-weight: 750; opacity: 0; transform: translateY(12px); transition: .2s ease; pointer-events: none; }
+    .toast.show { opacity: 1; transform: none; }
+    @media (max-width: 800px) {
+      header { align-items: flex-start; }
+      header > .button { display: none; }
+      .intro, .campaign-grid, .video-section { grid-template-columns: 1fr; }
+      .intro aside { grid-template-columns: 1fr 1fr; }
+      .copy p { min-height: auto; }
+      .video-section { margin-top: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/"><b>B</b> BUREAU</a>
+    <a class="button" href="bureau-social-launch-campaign.zip" download>Download complete campaign</a>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <h1>Social launch campaign.</h1>
+        <p>Ten finished feed advertisements, platform-ready copy, and one vertical video for Reels, TikTok, and Shorts. Use the download button for the complete package.</p>
+      </div>
+      <aside>
+        <a class="button" href="bureau-social-launch-campaign.zip" download>Download all</a>
+        <a class="button secondary" href="captions.md">Open captions</a>
+      </aside>
+    </section>
+    <section class="campaign-grid" id="campaign-grid" aria-label="Social campaign posts"></section>
+    <section class="video-section" id="video-ad">
+      <video controls playsinline preload="metadata" poster="bureau-work-store-ad-cover.jpg">
+        <source src="bureau-work-store-ad-vertical.mp4" type="video/mp4" />
+      </video>
+      <div class="video-copy">
+        <p class="number">VERTICAL PRODUCT AD · 1080×1920 · 18.4 SEC</p>
+        <h2>Your business task. <em>Done.</em></h2>
+        <p>Built for Reels, TikTok, Shorts, and Stories with readable sound-off messaging, real Bureau product imagery, and an original instrumental audio bed.</p>
+        <div class="actions">
+          <a class="button" href="bureau-work-store-ad-vertical.mp4" download>Download MP4</a>
+          <button class="button secondary" type="button" data-copy-video>Copy video caption</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>Campaign destination: <a href="https://ai.eb28.co">ai.eb28.co</a> · Bureau Work Store</footer>
+  <div class="toast" role="status" aria-live="polite">Copied</div>
+  <script>
+    const grid = document.querySelector('#campaign-grid');
+    const toast = document.querySelector('.toast');
+    let campaign;
+
+    function flash(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1400);
+    }
+
+    function fullCaption(post) {
+      return `${post.primaryText}\n\n${post.hashtags.join(' ')}\n\n${post.destination}`;
+    }
+
+    async function copyText(value) {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(value);
+          return true;
+        }
+      } catch (_) {
+        // Fall through to the selection-based copy path.
+      }
+      const field = document.createElement('textarea');
+      field.value = value;
+      field.setAttribute('readonly', '');
+      field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(field);
+      field.select();
+      const copied = document.execCommand('copy');
+      field.remove();
+      return copied;
+    }
+
+    fetch('campaign.json')
+      .then((response) => response.json())
+      .then((data) => {
+        campaign = data;
+        grid.innerHTML = data.posts.map((post, index) => `
+          <article>
+            <img src="${post.asset}" alt="${post.altText}" width="1080" height="1080" loading="${index < 2 ? 'eager' : 'lazy'}" />
+            <div class="copy">
+              <header><div><p class="number">POST ${String(index + 1).padStart(2, '0')}</p><h2>${post.title}</h2></div></header>
+              <p>${post.primaryText}</p>
+              <div class="meta"><span>${post.cta}</span><span>${post.hashtags.length} hashtags</span><span>1080×1080 PNG</span></div>
+              <div class="actions">
+                <a class="button download" href="${post.asset}" download>Download PNG</a>
+                <button class="button" type="button" data-copy="${index}">Copy caption</button>
+                <a class="button secondary" href="${post.destination}" target="_blank" rel="noreferrer">Open destination</a>
+              </div>
+            </div>
+          </article>`).join('');
+      });
+
+    document.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-copy]');
+      if (button && campaign) {
+        const copied = await copyText(fullCaption(campaign.posts[Number(button.dataset.copy)]));
+        flash(copied ? 'Caption copied' : 'Open captions to copy');
+      }
+      if (event.target.closest('[data-copy-video]') && campaign) {
+        const copied = await copyText(`${campaign.video.caption}\n\n${campaign.video.destination}`);
+        flash(copied ? 'Video caption copied' : 'Open captions to copy');
+      }
+    });
+  </script>
+</body>
+</html>
