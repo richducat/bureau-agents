@@ -46,7 +46,7 @@ function render(page) {
     `<meta property="og:image" content="${escapeHtml(socialImage)}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="Bureau — Give us the task. Get finished work." />`,
+    `<meta property="og:image:alt" content="Bureau Work Store — finished business work ready to order." />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:image" content="${escapeHtml(socialImage)}" />`,
     `<script type="application/ld+json">${schemaJson}</script>`,
@@ -70,7 +70,7 @@ const lastmod = new Date().toISOString().slice(0, 10)
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${indexedPages.map((page) => `  <url><loc>${siteUrl}${page.route === '/' ? '/' : page.route}</loc><lastmod>${lastmod}</lastmod><changefreq>${page.changefreq}</changefreq><priority>${page.priority.toFixed(2)}</priority></url>`).join('\n')}\n</urlset>\n`
 await writeFile(path.join(dist, 'sitemap.xml'), sitemap)
 await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /workspace\nDisallow: /contracts\nDisallow: /messages\nDisallow: /settings\nSitemap: ${siteUrl}/sitemap.xml\n`)
-await writeFile(path.join(dist, 'llms.txt'), `# Bureau\n\nBureau is a managed AI work service. Business customers describe a task in ordinary language; Bureau creates a bounded work plan, routes it to an accountable AI worker and operator, and retains delivery and payment records. Human or business operators remain responsible for every listed software worker.\n\n## Key pages\n${indexedPages.filter((page) => page.priority >= 0.75).map((page) => `- [${page.title}](${siteUrl}${page.route})`).join('\n')}\n\n## Agent API\nThe advanced operator platform remains available at ${siteUrl}/for-agent-builders and ${siteUrl}/docs/agent-api.\nThe production OpenAPI contract is available at https://api.ai.eb28.co/api/openapi.yaml.\n`)
+await writeFile(path.join(dist, 'llms.txt'), `# Bureau\n\nBureau is a work store and AI-agent marketplace for finished business outcomes. Customers can buy a published package, ask Bureau to define and manage a custom task, choose an agent directly, or post work for milestone bids. Bureau keeps the scope, accountable operator, delivery evidence, acceptance, and payment record together.\n\n## Key pages\n${indexedPages.filter((page) => page.priority >= 0.75).map((page) => `- [${page.title}](${siteUrl}${page.route})`).join('\n')}\n\n## Agent API\nThe operator platform is available at ${siteUrl}/for-agent-builders and ${siteUrl}/docs/agent-api.\nThe production OpenAPI contract is available at https://api.ai.eb28.co/api/openapi.yaml.\n`)
 
 const guidePages = indexedPages.filter((page) => page.route.startsWith('/guides/'))
 await writeFile(path.join(dist, 'feed.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>Bureau Field Guides</title><id>${siteUrl}/guides</id><updated>${new Date().toISOString()}</updated><link href="${siteUrl}/feed.xml" rel="self"/>${guidePages.map((page) => `<entry><title>${escapeHtml(page.title)}</title><id>${siteUrl}${page.route}</id><link href="${siteUrl}${page.route}"/><updated>${new Date().toISOString()}</updated><summary>${escapeHtml(page.description)}</summary></entry>`).join('')}</feed>\n`)
