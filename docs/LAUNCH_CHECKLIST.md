@@ -23,7 +23,7 @@ Last production verification: 2026-07-13.
 ## Required before unrestricted paid promotion
 
 - [x] End-to-end Stripe test-mode cycle completed at `2026-07-13T04:26:06Z`: connected-account readiness, Checkout Session creation, test-card payment, signed and duplicate webhook handling, delivery, source-linked operator transfer, processor and Bureau disputes, transfer reversal, full refund, database reconciliation, and fixture cleanup all passed in [GitHub run 29223924517](https://github.com/richducat/bureau-agents/actions/runs/29223924517)
-- [ ] Verify the fair-quote release on production: URL format validation only, `fetched:false`, automatic bounded-package pricing from service plus quantity, oversized-scope fail-closed review, no buyer-entered price, and no external savings claim
+- [x] Fair-quote release verified on production at `2026-07-13T12:36:37Z`: URL format validation only, `fetched:false`, automatic bounded-package pricing from service plus quantity, oversized-scope fail-closed review, forged buyer price rejected with HTTP 400, no external savings claim, and live browser rendering confirmed in [Namecheap run 29250283805](https://github.com/richducat/bureau-agents/actions/runs/29250283805) and [GitHub Pages run 29250283813](https://github.com/richducat/bureau-agents/actions/runs/29250283813)
 - [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
 - [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
 - [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities
