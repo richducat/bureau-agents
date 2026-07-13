@@ -143,6 +143,16 @@ export default function TaskIntakePage() {
   const valid = draft.contactName.trim().length >= 2 &&
     draft.email.includes("@") && draft.title.trim().length >= 8 &&
     draft.details.trim().length >= 80 && consent;
+  const missingItems = [
+    draft.contactName.trim().length < 2 ? "your name" : null,
+    !draft.email.includes("@") ? "a valid work email" : null,
+    draft.title.trim().length < 8 ? "the result you need" : null,
+    draft.details.trim().length < 80 ? "a little more task detail" : null,
+    !consent ? "privacy consent" : null,
+  ].filter(Boolean) as string[];
+  const readinessMessage = missingItems.length
+    ? `To continue, add ${missingItems.slice(0, 2).join(" and ")}${missingItems.length > 2 ? ` plus ${missingItems.length - 2} more ${missingItems.length - 2 === 1 ? "item" : "items"}` : ""}.`
+    : "Your request is ready for a free work plan.";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -326,23 +336,23 @@ export default function TaskIntakePage() {
       <MarketingHeader />
       <section className="intake-path-picker" aria-label="Choose how to hire">
         <div>
-          <p className="overline">Two ways to hire</p>
-          <h1>How involved do you want to be?</h1>
+          <p className="overline">Start here · about 2 minutes</p>
+          <h1>Choose how you want to hire.</h1>
         </div>
         <div>
           <button className="is-selected">
             <Bot />
             <span>
-              <strong>Bureau handles it</strong>
-              <small>We match, scope, coordinate, and deliver.</small>
+              <strong>Handle it for me</strong>
+              <small>Bureau matches, scopes, and coordinates.</small>
             </span>
             <CheckCircle2 />
           </button>
           <Link to="/marketplace">
             <Search />
             <span>
-              <strong>I’ll choose the agent</strong>
-              <small>Browse profiles or post a job for proposals.</small>
+              <strong>I want to choose</strong>
+              <small>Compare agents or post a job for bids.</small>
             </span>
             <ArrowRight />
           </Link>
@@ -350,37 +360,12 @@ export default function TaskIntakePage() {
       </section>
       <main className="intake-layout">
         <section className="intake-intro">
-          <p className="overline">Managed hiring</p>
-          <h2>Tell us the outcome. We handle the agent.</h2>
+          <p className="overline">What happens next</p>
+          <h2>You describe it. Bureau turns it into a work plan.</h2>
           <p>
-            Use ordinary language. Bureau matches the right supervised worker,
-            returns a clear plan and starting quote, then sends you to secure
-            payment.
+            Use ordinary language. You will see the scope, agent, timing, and
+            price before anything starts.
           </p>
-          <div className="intake-requester-toggle">
-            <span>Who is submitting?</span>
-            <div>
-              <button
-                className={requesterType === "human" ? "is-active" : ""}
-                onClick={() => setRequesterType("human")}
-              >
-                Me
-              </button>
-              <button
-                className={requesterType === "agent" ? "is-active" : ""}
-                onClick={() => setRequesterType("agent")}
-              >
-                My AI assistant
-              </button>
-            </div>
-            {requesterType === "agent" && (
-              <p>
-                For fully automated submission and status tracking, create a
-                client agent key in Settings or use the{" "}
-                <Link to="/docs/agent-api#client-agents">client API</Link>.
-              </p>
-            )}
-          </div>
           <div className="intake-expectations">
             <div>
               <FileText />
@@ -413,15 +398,46 @@ export default function TaskIntakePage() {
         </section>
         <form className="intake-form" onSubmit={submit}>
           <header>
-            <p className="overline">Your work request</p>
+            <ol className="intake-progress" aria-label="Hiring progress">
+              <li className="is-active"><span>1</span>Describe</li>
+              <li><span>2</span>Review plan</li>
+              <li><span>3</span>Pay &amp; start</li>
+            </ol>
+            <p className="overline">Your work request · draft saves automatically</p>
             <h2>{selectedService?.title ?? "Describe the result you need"}</h2>
             {selectedService && (
               <p>
-                Starting quote: ${selectedService.startingPrice} ·{" "}
-                {selectedService.turnaround}
+                From ${selectedService.startingPrice} · {selectedService.turnaround} ·{" "}
+                {selectedService.deliverables.slice(0, 2).join(" + ")}
               </p>
             )}
           </header>
+          <div className="intake-requester-toggle">
+            <span>Who is submitting this request?</span>
+            <div>
+              <button
+                type="button"
+                className={requesterType === "human" ? "is-active" : ""}
+                onClick={() => setRequesterType("human")}
+              >
+                Me
+              </button>
+              <button
+                type="button"
+                className={requesterType === "agent" ? "is-active" : ""}
+                onClick={() => setRequesterType("agent")}
+              >
+                My AI assistant
+              </button>
+            </div>
+            {requesterType === "agent" && (
+              <p>
+                Your assistant can submit here, or use a scoped{" "}
+                <Link to="/docs/agent-api#client-agents">client API key</Link>{" "}
+                for hands-free requests and status tracking.
+              </p>
+            )}
+          </div>
           <div className="intake-form__fields">
             <label className="field">
               <span>Your name</span>
@@ -541,11 +557,15 @@ export default function TaskIntakePage() {
             </span>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}
+          <p className={`intake-readiness ${valid ? "is-ready" : ""}`} aria-live="polite">
+            {valid ? <CheckCircle2 /> : <Clock3 />}
+            {readinessMessage}
+          </p>
           <button
             className="button button--lime button--large intake-submit"
             disabled={!valid || submitting}
           >
-            {submitting ? "Matching securely…" : "Match my task"} <ArrowRight />
+            {submitting ? "Creating your work plan…" : "Get my free work plan"} <ArrowRight />
           </button>
           <p className="intake-form__foot">
             <Check /> No charge until you approve the work plan.

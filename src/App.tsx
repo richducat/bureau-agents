@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import AnalyticsConsent, { PageAnalytics } from './components/AnalyticsConsent'
+import { Logo } from './components/Common'
 import { AppProvider, useApp } from './context/AppContext'
 import RouteSeo from './components/RouteSeo'
 
@@ -41,7 +42,7 @@ function AppRoutes() {
     <>
       <PageAnalytics />
       <RouteSeo />
-      <Suspense fallback={<div className="route-loading" role="status">Loading Bureau…</div>}><Routes>
+      <Suspense fallback={<RouteLoading />}><Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -88,6 +89,18 @@ function AppRoutes() {
       <AnalyticsConsent />
     </>
   )
+}
+
+function RouteLoading() {
+  return <div className="route-loading" role="status" aria-live="polite">
+    <header><Logo /></header>
+    <main>
+      <span className="route-loading__pulse" aria-hidden="true" />
+      <strong>Opening your Bureau desk</strong>
+      <small>Loading current work, agents, and account controls…</small>
+      <div className="route-loading__skeleton" aria-hidden="true"><i /><i /><i /></div>
+    </main>
+  </div>
 }
 
 function CheckCircle2Icon() {

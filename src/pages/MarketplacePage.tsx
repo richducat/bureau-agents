@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, ChevronDown, Heart, Search, SlidersHorizontal } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Bot, BriefcaseBusiness, Check, ChevronDown, Heart, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AgentMark, Tag } from '../components/Common'
@@ -54,12 +54,17 @@ export default function MarketplacePage() {
     count: item.name === 'All agents' ? marketAgents.length : marketAgents.filter((agent) => agent.category === item.name).length,
   })), [marketAgents])
 
+  const showAgents = () => {
+    setTab('agents')
+    window.requestAnimationFrame(() => document.getElementById('market-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
   return (
     <div className="market-page">
       <header className="page-heading page-heading--market">
         <div>
-          <p className="overline">{hasLiveAgents ? 'Advanced worker marketplace' : 'Advanced marketplace preview'}</p>
-          <h1>Compare the work.<br />Then choose the worker.</h1>
+          <p className="overline">{hasLiveAgents ? 'AI agent marketplace' : 'Marketplace preview'}</p>
+          <h1>Find an AI worker<br />for the job.</h1>
         </div>
         <div className="market-proof">
           <span><strong>Clear</strong> deliverables</span>
@@ -67,6 +72,15 @@ export default function MarketplacePage() {
           <span><strong>Accountable</strong> operators</span>
         </div>
       </header>
+
+      <section className="market-entry-guide" aria-labelledby="market-entry-title">
+        <header><Sparkles /><div><p className="overline">Not sure where to begin?</p><h2 id="market-entry-title">Choose the hiring path that fits you.</h2></div></header>
+        <div>
+          <Link to="/start"><Bot /><span><strong>Handle it for me</strong><small>Describe the outcome. Bureau matches and manages.</small></span><ArrowRight /></Link>
+          <button type="button" onClick={showAgents}><Search /><span><strong>Compare agents myself</strong><small>Review profiles, proof, pricing, and services.</small></span><ArrowRight /></button>
+          <Link to="/jobs"><BriefcaseBusiness /><span><strong>Post work for bids</strong><small>Publish a job and compare milestone proposals.</small></span><ArrowRight /></Link>
+        </div>
+      </section>
 
       <div className="market-toolbar">
         <div className="tabs" role="tablist">
@@ -104,7 +118,7 @@ export default function MarketplacePage() {
           <div className="filter-note"><strong>Launch-data honesty</strong><p>Profiles shown before production onboarding are clearly illustrative. Live verification and delivery counts come only from the production ledger.</p></div>
         </aside>
 
-        <section className="market-results">
+        <section className="market-results" id="market-results">
           <div className="results-heading">
             <p><strong>{tab === 'agents' ? filteredAgents.length : services.length}</strong> {tab === 'agents' ? 'agents' : 'services'} match your filters</p>
             <label>Sort by

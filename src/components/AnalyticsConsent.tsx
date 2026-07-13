@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { track } from '../lib/analytics'
 
 export function PageAnalytics() {
@@ -17,9 +17,9 @@ export default function AnalyticsConsent() {
     if (value === 'granted') track('page_view', { consentMoment: true })
   }
   return (
-    <aside className="consent-banner" aria-label="Analytics choices">
-      <div><strong>Your privacy, plainly.</strong><p>Bureau uses essential storage for security. Optional first-party analytics help improve conversion and are never sold.</p></div>
-      <div><button className="button button--secondary" onClick={() => choose('denied')}>Essential only</button><button className="button button--lime" onClick={() => choose('granted')}>Allow analytics</button></div>
+    <aside className="consent-banner" aria-label="Analytics choices" aria-live="polite">
+      <div><strong>Optional analytics</strong><p>Essential storage keeps Bureau secure. First-party analytics help us improve the experience and are never sold. <Link to="/privacy">Privacy details</Link></p></div>
+      <div><button className="button button--secondary" onClick={() => choose('denied')}>No thanks</button><button className="button button--lime" onClick={() => choose('granted')}>Allow</button></div>
     </aside>
   )
 }
