@@ -89,7 +89,7 @@ Repository variables:
 - `NAMECHEAP_API_DEPLOY_ENABLED=true` only after the first manual API deployment succeeds
 - `NAMECHEAP_APP_ROOT`
 - `NAMECHEAP_NODE_VERSION=22`
-- `NAMECHEAP_API_HEALTH_URL` set to the exact public HTTPS `/health/live` URL
+- `NAMECHEAP_API_HEALTH_URL` set to the exact public HTTPS `/health/ready` URL
 
 Repository production-environment secrets:
 

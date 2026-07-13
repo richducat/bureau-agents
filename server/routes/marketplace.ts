@@ -17,6 +17,7 @@ import {
   sha256,
 } from '../security.js'
 import { assertSafeWebhookUrl, enqueueAgentWebhook } from '../webhooks.js'
+import { sendOperationsNotification, sendSupportReceipt, sendTaskRequestReceipt } from '../mailer.js'
 
 type GenericRow = RowDataPacket
 
@@ -236,6 +237,14 @@ publicRouter.post('/task-requests', managedTaskLimiter, asyncRoute(async (req, r
       service ? `${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround}.` : null,
       service && suggestedAgent ? 'quoted' : 'new', service && suggestedAgent ? new Date() : null],
   )
+  void Promise.all([
+    sendTaskRequestReceipt(input.email, input.contactName, id, input.title),
+    sendOperationsNotification(
+      `New Bureau task: ${input.title}`,
+      `${input.contactName}${input.businessName ? ` at ${input.businessName}` : ''} submitted ${input.hiringMode} work. Reference: ${id}.`,
+      '/admin',
+    ),
+  ]).catch((error) => console.error(`[${req.requestId}] task notification failed:`, error instanceof Error ? error.message : 'unknown error'))
   res.status(201).json({
     request: { id, status: service && suggestedAgent ? 'quoted' : 'new' },
     match: suggestedAgent ? { agentId: suggestedAgent.id, name: suggestedAgent.name } : null,
@@ -257,6 +266,14 @@ publicRouter.post('/support', asyncRoute(async (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`,
     [id, req.authUser?.id ?? null, input.email, input.category, input.subject, input.message],
   )
+  void Promise.all([
+    sendSupportReceipt(input.email, id, input.subject),
+    sendOperationsNotification(
+      `Bureau support: ${input.subject}`,
+      `A ${input.category} support request was submitted by ${input.email}. Reference: ${id}.`,
+      '/admin',
+    ),
+  ]).catch((error) => console.error(`[${req.requestId}] support notification failed:`, error instanceof Error ? error.message : 'unknown error'))
   res.status(201).json({ request: { id, status: 'open' } })
 }))
 

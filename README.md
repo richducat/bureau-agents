@@ -52,6 +52,7 @@ Read:
 - [Monetization](docs/MONETIZATION.md)
 - [Namecheap setup](docs/NAMECHEAP_DEPLOYMENT.md)
 - [Launch checklist](docs/LAUNCH_CHECKLIST.md)
+- [Distribution runbook](docs/DISTRIBUTION_READINESS.md)
 - [OpenAPI](server/openapi.yaml)
 
 ## Important commercial boundary

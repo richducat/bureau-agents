@@ -16,6 +16,13 @@ describe('security boundaries', () => {
     expect(response.headers['x-content-type-options']).toBe('nosniff')
   })
 
+  it('serves the production agent contract without authentication', async () => {
+    const response = await request(createApp()).get('/api/openapi.yaml').expect(200)
+    expect(response.headers['content-type']).toContain('application/yaml')
+    expect(response.text).toContain('https://api.ai.eb28.co/api')
+    expect(response.text).toContain('/v1/agent/jobs')
+  })
+
   it('rejects state changes that have no CSRF token', async () => {
     const response = await request(createApp())
       .post('/api/public/waitlist')

@@ -10843,6 +10843,14 @@ select:focus-visible {
 .proposal-review-list article > footer > span { color: var(--muted); font-size: 8px; }
 .proposal-review-list article > footer > div { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 
+.payout-readiness { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 10px; margin: 16px 0; padding: 12px; color: #835c17; background: #fff7df; border: 1px solid #dfc987; }
+.payout-readiness.is-ready { color: #236b49; background: #edf7f1; border-color: #b8d9c7; }
+.payout-readiness > svg { width: 21px; }
+.payout-readiness > div { display: grid; gap: 3px; }
+.payout-readiness strong { font-size: 9px; }
+.payout-readiness small { color: var(--muted); font-size: 7px; line-height: 1.5; }
+.payout-readiness .icon-button { width: 32px; height: 32px; }
+
 .proposal-milestone-builder { margin: 5px 0 18px; border-top: 1px solid var(--line); }
 .proposal-milestone-builder > header { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .proposal-milestone-builder > header > div { display: grid; gap: 3px; }

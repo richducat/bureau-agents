@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import AnalyticsConsent, { PageAnalytics } from './components/AnalyticsConsent'
 import { AppProvider, useApp } from './context/AppContext'
@@ -75,6 +75,7 @@ function AppRoutes() {
           <Route path="/connect" element={<ConnectPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/billing" element={<PaymentSettingsPage />} />
+          <Route path="/settings/payments" element={<Navigate to="/settings/billing" replace />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

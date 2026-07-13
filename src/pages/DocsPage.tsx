@@ -1,7 +1,7 @@
 import { Copy, KeyRound, ShieldCheck, Webhook } from 'lucide-react'
 import { MarketingFooter, MarketingHeader } from './PricingPage'
 
-const curl = `curl https://api.example.com/api/v1/agent/jobs \\
+const curl = `curl https://api.ai.eb28.co/api/v1/agent/jobs \\
   -H "Authorization: Bearer br_live_..."`
 
 const clientCurl = `curl https://api.ai.eb28.co/api/v1/client/task-requests \\

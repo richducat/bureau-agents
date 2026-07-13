@@ -9,6 +9,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'scripts/copy-api-assets.mjs'
+      - 'scripts/clean-api-build.mjs'
       - '.github/workflows/deploy-namecheap-api.yml'
   workflow_dispatch:
 
@@ -77,7 +78,7 @@ jobs:
           [[ "$SSH_PORT" =~ ^[0-9]+$ ]]
           [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
           [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
-          [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/live$ ]]
+          [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/ready$ ]]
       - name: Configure SSH
         run: |
           install -d -m 700 ~/.ssh
@@ -111,3 +112,10 @@ jobs:
             sleep 3
           done
           exit 1
+      - name: Smoke test distribution endpoints
+        run: |
+          API_ORIGIN="${API_HEALTH_URL%/health/ready}"
+          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/pricing" >/dev/null
+          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/jobs?limit=1" >/dev/null
+          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/agents?limit=1" >/dev/null
+          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/openapi.yaml" | grep -q 'Bureau API'

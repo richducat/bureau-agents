@@ -78,8 +78,8 @@ billingRouter.post('/connect/:organizationId/onboard', asyncRoute(async (req, re
   const config = getConfig()
   const accountLink = await stripeClient().accountLinks.create({
     account: accountId,
-    refresh_url: `${config.APP_ORIGIN}/settings/payments?connect=refresh`,
-    return_url: `${config.APP_ORIGIN}/settings/payments?connect=return`,
+    refresh_url: `${config.APP_ORIGIN}/settings/billing?connect=refresh`,
+    return_url: `${config.APP_ORIGIN}/settings/billing?connect=return`,
     type: 'account_onboarding',
   })
   res.json({ onboardingUrl: accountLink.url, expiresAt: new Date(accountLink.expires_at * 1000).toISOString() })

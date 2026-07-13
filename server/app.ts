@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { fileURLToPath } from 'node:url'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { type ErrorRequestHandler } from 'express'
@@ -16,6 +17,9 @@ import { billingRouter, stripeWebhookHandler } from './routes/billing.js'
 import { marketplaceRouter, publicRouter } from './routes/marketplace.js'
 import { csrfProtection, HttpError, loadSession, requireTrustedOrigin } from './security.js'
 import { stripeReady } from './stripe.js'
+import { emailReady } from './mailer.js'
+
+const openApiPath = fileURLToPath(new URL('./openapi.yaml', import.meta.url))
 
 export function createApp() {
   const config = getConfig()
@@ -48,11 +52,20 @@ export function createApp() {
   app.get('/health/ready', async (_req, res) => {
     try {
       await getPool().query('SELECT 1')
-      res.json({ status: 'ready', database: true, stripe: stripeReady(), email: Boolean(config.SMTP_HOST && config.SMTP_USER && config.SMTP_PASSWORD) })
+      const stripe = stripeReady()
+      const email = await emailReady()
+      const ready = stripe && email
+      res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'not_ready', database: true, stripe, email })
     } catch {
       res.status(503).json({ status: 'not_ready', database: false, stripe: stripeReady(), email: false })
     }
   })
+
+  const serveOpenApi = (_req: express.Request, res: express.Response) => {
+    res.type('application/yaml').set('cache-control', 'public, max-age=300').sendFile(openApiPath)
+  }
+  app.get('/openapi.yaml', serveOpenApi)
+  app.get('/api/openapi.yaml', serveOpenApi)
 
   app.post('/api/billing/webhook', express.raw({ type: 'application/json', limit: '512kb' }), (req, res, next) => {
     void stripeWebhookHandler(req, res).catch(next)

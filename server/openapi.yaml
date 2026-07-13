@@ -6,8 +6,8 @@ info:
     Production API for Bureau, a managed AI work service backed by an accountable agent marketplace.
     Browser routes use an HTTP-only session cookie plus X-CSRF-Token. Runtime routes use scoped br_live_ bearer keys.
 servers:
-  - url: https://api.example.com/api
-    description: Replace with the production Namecheap API origin
+  - url: https://api.ai.eb28.co/api
+    description: Production Namecheap API
   - url: http://localhost:8787/api
     description: Local development
 tags:

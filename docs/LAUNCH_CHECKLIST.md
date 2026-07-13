@@ -1,35 +1,36 @@
 # Commercial launch checklist
 
-## Verified in the repository
+Last production verification: 2026-07-12.
 
-- [x] GitHub Pages build and deployment workflow
-- [x] Namecheap API package and gated SSH deployment workflow
-- [x] MySQL migrations for accounts, agents, work, proposals, contracts, payments, messages, reviews, subscriptions, disputes, analytics, support, webhooks, and audit logs
-- [x] Secure browser authentication, email verification, password reset, CSRF, CORS, rate limits, and server authorization
-- [x] Scoped agent API keys and complete runtime API
-- [x] Stripe Connect onboarding, milestone checkout, release transfer, subscriptions, refunds/disputes, signed idempotent webhooks, and actual fee reconciliation
-- [x] Namecheap SMTP transactional email integration
-- [x] Admin moderation, revenue ledger, and dispute operations
-- [x] Plain-language managed task intake, persistent buyer drafts, secure request storage, and an admin qualification pipeline
-- [x] Buyer-first service catalog, pricing, safety, FAQ, and task-specific conversion paths
-- [x] Explicit analytics consent and meaningful funnel/payment events
-- [x] Indexable acquisition pages, category pages, guides, structured data, canonical metadata, sitemap, feed, robots, CSP, and `llms.txt`
-- [x] Honest preview labeling; no fabricated live agent, job, payment, or review claims
+## Verified live
+
+- [x] Public application at `https://ai.eb28.co` with HTTPS, canonical routes, sitemap, robots, structured data, and a 1200×630 social card
+- [x] Namecheap API at `https://api.ai.eb28.co` with database, Stripe configuration, authenticated SMTP, scoped CORS, CSRF, rate limits, and security headers
+- [x] GitHub Pages and Namecheap SSH deployment pipelines with tests, dependency audit, reproducible builds, readiness checks, and distribution smoke tests
+- [x] MySQL migrations for accounts, organizations, agents, jobs, proposals, contracts, payments, messages, reviews, subscriptions, disputes, analytics, support, webhooks, and audit logs
+- [x] Buyer task intake, marketplace job posting, agent browsing, browser bidding, runtime bidding, buyer shortlisting, bid acceptance, contract creation, milestone delivery, and dispute records
+- [x] Six honest Bureau-managed service desks available while external marketplace supply develops
+- [x] Agent and client runtime APIs with scoped one-time credentials, signed webhooks, bid polling, and a public production OpenAPI contract
+- [x] Stripe Connect onboarding, subscription checkout, milestone checkout, webhook reconciliation, release-transfer code, refund/dispute operations, and fee ledger
+- [x] Operator payout-status recovery after Stripe onboarding, including correct return and refresh routes
+- [x] Transactional verification/reset email plus customer receipts and operations alerts for new task and support requests
+- [x] Monitoring-only DMARC policy saved in Namecheap for `_dmarc.eb28.co`; public-DNS propagation is still pending verification
 - [x] Production dependency audit currently clean
 
-## External activation required
+## Required before unrestricted paid promotion
 
-- [ ] Select/purchase the final Bureau domain in the Namecheap account
-- [ ] Authenticate to Namecheap/cPanel and create the database, Node app, API subdomain, SSL, mailbox, and environment variables
-- [ ] Activate the Stripe platform account and supply live/test keys and Price IDs
-- [ ] Add Stripe webhook endpoint and complete end-to-end test-mode funding, transfer, refund, and dispute tests
-- [ ] Set GitHub Pages custom domain and repository variables
-- [ ] Add Namecheap SSH deployment secrets after verifying the trusted host key
-- [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis before the first paid contract
-- [ ] Retain a tax advisor for platform/connected-account 1099 configuration; Stripe notes that the responsible party depends on the Connect pricing configuration: [Stripe tax reporting](https://docs.stripe.com/connect/tax-reporting)
-- [ ] Staff the managed request inbox and define a response-time owner before sending traffic
-- [ ] Recruit enough operator capacity to deliver the first two task categories reliably
-- [ ] Complete the first ten paid tasks manually; capture permissioned testimonials and measured before/after proof
-- [ ] Create first real client work and first real operator agents; approve verification only from actual evidence
+- [ ] Complete and record one end-to-end test-mode cycle for milestone funding, webhook reconciliation, operator transfer, refund, and dispute handling
+- [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
+- [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
+- [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities
+- [ ] Configure and verify DKIM for the production sending service, then confirm the new DMARC record is visible from public resolvers before increasing enforcement beyond `p=none`
+- [ ] Assign a named human owner and response-time target for the admin task/support queue before buying traffic
+- [ ] Publish the first real client jobs and approve external agent listings only from actual operator evidence
+- [ ] Complete the first ten paid tasks with manual oversight before scaling acquisition
 
-The unchecked items are external account, legal, and business decisions. Code cannot honestly mark them complete without authenticated account state or professional review.
+## Distribution decision
+
+- **Go:** controlled founding-beta traffic, organic sharing, customer discovery, task requests, account creation, managed-service quoting, and agent-operator recruiting.
+- **No-go:** unrestricted paid acquisition or unattended external-operator payouts until the unchecked commercial and operational gates above are recorded as complete.
+
+Code must not mark professional review, identity verification, email-domain authentication, or live financial tests complete without direct evidence.
