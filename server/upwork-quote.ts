@@ -1,8 +1,6 @@
 import type { ManagedServiceDefinition } from './managed.js'
 
-export const UPWORK_GUARANTEE_DISCOUNT_BASIS_POINTS = 1_000
-export const UPWORK_GUARANTEE_TERMS_VERSION = '2026-07-13-v1'
-export const UPWORK_GUARANTEE_HOLD_HOURS = 72
+export const BUREAU_FAIR_QUOTE_TERMS_VERSION = '2026-07-13-v2'
 
 const allowedHosts = new Set(['upwork.com', 'www.upwork.com'])
 const jobPaths = [
@@ -43,42 +41,34 @@ export function normalizeUpworkJobUrl(rawUrl: string) {
   return `https://www.upwork.com${canonicalPath}`
 }
 
-export interface UpworkQuoteCalculation {
-  status: 'eligible' | 'manual_review'
-  discountBasisPoints: number
-  referenceAmountCents: number
-  quoteWorkValueCents: number | null
-  savingsCents: number | null
-  minimumEligibleReferenceCents: number
+export interface BureauCatalogQuote {
+  status: 'available' | 'manual_review'
+  basis: 'catalog'
+  scopeUnits: number
+  packageCount: number
+  workValueCents: number | null
+  reason: string
 }
 
-export function calculateUpworkQuote(
-  service: ManagedServiceDefinition,
-  referenceAmountCents: number,
-): UpworkQuoteCalculation {
-  const discountBasisPoints = UPWORK_GUARANTEE_DISCOUNT_BASIS_POINTS
-  const keptBasisPoints = 10_000 - discountBasisPoints
-  const maximumGuaranteedQuoteCents = Math.floor(referenceAmountCents * keptBasisPoints / 10_000)
-  const minimumEligibleReferenceCents = Math.ceil(service.startingPriceCents * 10_000 / keptBasisPoints)
-
-  if (maximumGuaranteedQuoteCents < service.startingPriceCents) {
+export function calculateBureauCatalogQuote(service: ManagedServiceDefinition, scopeUnits: number): BureauCatalogQuote {
+  const packageCount = Math.ceil(scopeUnits / service.unitCapacity)
+  if (!Number.isSafeInteger(scopeUnits) || scopeUnits < 1 || scopeUnits > service.maximumAutomaticUnits) {
     return {
       status: 'manual_review',
-      discountBasisPoints,
-      referenceAmountCents,
-      quoteWorkValueCents: null,
-      savingsCents: null,
-      minimumEligibleReferenceCents,
+      basis: 'catalog',
+      scopeUnits,
+      packageCount,
+      workValueCents: null,
+      reason: `Automatic pricing covers up to ${service.maximumAutomaticUnits.toLocaleString()} ${service.unitLabel}. This request needs a written scope review.`,
     }
   }
-
   return {
-    status: 'eligible',
-    discountBasisPoints,
-    referenceAmountCents,
-    quoteWorkValueCents: maximumGuaranteedQuoteCents,
-    savingsCents: referenceAmountCents - maximumGuaranteedQuoteCents,
-    minimumEligibleReferenceCents,
+    status: 'available',
+    basis: 'catalog',
+    scopeUnits,
+    packageCount,
+    workValueCents: service.startingPriceCents * packageCount,
+    reason: `${packageCount} bounded catalog ${packageCount === 1 ? 'package' : 'packages'} at the published rate.`,
   }
 }
 

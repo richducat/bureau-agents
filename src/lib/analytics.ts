@@ -6,7 +6,7 @@ export type AnalyticsEvent =
   | 'proposal_submitted' | 'contract_created' | 'checkout_started' | 'milestone_funded'
   | 'milestone_approved' | 'plan_selected' | 'subscription_started' | 'waitlist_joined'
   | 'task_intake_started' | 'task_intake_submitted' | 'task_request_completed'
-  | 'comparison_quote_started' | 'comparison_quote_previewed' | 'comparison_quote_submitted'
+  | 'fair_quote_started' | 'fair_quote_previewed' | 'fair_quote_submitted'
 
 function storageId(key: string) {
   const existing = localStorage.getItem(key)

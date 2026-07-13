@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { calculateUpworkQuote, normalizeUpworkJobUrl } from './upwork-quote.js'
+import type { ManagedServiceDefinition } from './managed.js'
+import { calculateBureauCatalogQuote, normalizeUpworkJobUrl } from './upwork-quote.js'
 
-const service = {
+const service: ManagedServiceDefinition = {
   id: 'website-fix',
   category: 'Engineering',
   startingPriceCents: 28_000,
   turnaround: '1–3 days',
   deliverables: ['Tested change'],
+  unitLabel: 'reproducible website issues',
+  unitCapacity: 1,
+  maximumAutomaticUnits: 3,
+  includedScope: ['One scoped fix'],
+  excludedScope: ['Redesigns'],
 }
 
 describe('Upwork quote URL boundary', () => {
@@ -27,24 +33,24 @@ describe('Upwork quote URL boundary', () => {
   })
 })
 
-describe('Upwork beat-the-quote guarantee', () => {
-  it('quotes at least ten percent below the attested reference while preserving the service floor', () => {
-    expect(calculateUpworkQuote(service, 50_000)).toEqual({
-      status: 'eligible',
-      discountBasisPoints: 1_000,
-      referenceAmountCents: 50_000,
-      quoteWorkValueCents: 45_000,
-      savingsCents: 5_000,
-      minimumEligibleReferenceCents: 31_112,
+describe('Bureau fair catalog quote', () => {
+  it('derives the work value only from bounded units and the published package rate', () => {
+    expect(calculateBureauCatalogQuote(service, 2)).toEqual({
+      status: 'available',
+      basis: 'catalog',
+      scopeUnits: 2,
+      packageCount: 2,
+      workValueCents: 56_000,
+      reason: '2 bounded catalog packages at the published rate.',
     })
   })
 
-  it('routes work to review when the guaranteed price would fall below the service floor', () => {
-    expect(calculateUpworkQuote(service, 30_000)).toMatchObject({
+  it('fails closed when requested volume exceeds the published package boundary', () => {
+    expect(calculateBureauCatalogQuote(service, 4)).toMatchObject({
       status: 'manual_review',
-      quoteWorkValueCents: null,
-      savingsCents: null,
-      minimumEligibleReferenceCents: 31_112,
+      scopeUnits: 4,
+      packageCount: 4,
+      workValueCents: null,
     })
   })
 })

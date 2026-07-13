@@ -10982,6 +10982,40 @@ select:focus-visible {
   font-size: 10px;
 }
 
+.catalog-package-card {
+  display: grid;
+  gap: 11px;
+  padding: 14px;
+  background: #f5f8e8;
+  border: 1px solid #cdd99c;
+}
+
+.catalog-package-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalog-package-card header span,
+.catalog-package-card > p,
+.catalog-unit-field small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.catalog-package-card header strong { color: #526713; font-size: 16px; }
+.catalog-package-card > div { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.catalog-package-card > div > section { display: grid; gap: 6px; }
+.catalog-package-card > div > section > strong { font-size: 7px; letter-spacing: .07em; text-transform: uppercase; }
+.catalog-package-card ul { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.catalog-package-card li { display: flex; align-items: flex-start; gap: 5px; font-size: 7px; line-height: 1.4; }
+.catalog-package-card li svg { width: 12px; height: 12px; flex: 0 0 auto; color: #6d861c; }
+.catalog-package-card li span { width: 12px; flex: 0 0 auto; color: #9d4b42; text-align: center; }
+.catalog-unit-field { display: grid; gap: 7px; }
+.catalog-unit-field input { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); font-weight: 800; }
+
 .upwork-quote-terminal__pair {
   display: grid;
   grid-template-columns: 1.35fr .65fr;
@@ -11516,10 +11550,15 @@ select:focus-visible {
 .admin-guarantee--eligible { color: #40520a; background: #ddf38a; }
 .admin-guarantee--manual_review { color: #714414; background: #f4d5ab; }
 .admin-guarantee--expired { color: #7b3030; background: #f0c3c3; }
+.admin-guarantee--url_validated,
+.admin-guarantee--verified { color: #40520a; background: #ddf38a; }
+.admin-guarantee--legacy_unverified { color: #7b3030; background: #f0c3c3; }
+.admin-guarantee--not_applicable { color: #55574f; background: #e5e3da; }
 .admin-comparison-quote dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .admin-comparison-quote dl > div { display: grid; gap: 3px; }
 .admin-comparison-quote dt { color: var(--muted); font-size: 7px; }
 .admin-comparison-quote dd { font-size: 9px; font-weight: 800; }
+.admin-comparison-quote > p { color: var(--muted); font-size: 8px; line-height: 1.5; }
 .admin-comparison-quote > a { color: var(--ink); font-size: 8px; font-weight: 800; text-decoration: underline; }
 
 .admin-comparison-quote__action {
@@ -11602,6 +11641,7 @@ select:focus-visible {
   .upwork-quote-terminal > header { grid-template-columns: 25px 1fr; }
   .upwork-quote-terminal > header > small { display: none; }
   .upwork-quote-terminal > form { padding: 20px; }
+  .catalog-package-card > div { grid-template-columns: 1fr; }
   .upwork-quote-terminal__pair,
   .upwork-reference-type,
   .upwork-scope-form__fields,

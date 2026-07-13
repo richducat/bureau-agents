@@ -26,6 +26,14 @@ flowchart LR
 - `.github/workflows/deploy-pages.yml`: tested GitHub Pages deployment.
 - `.github/workflows/deploy-namecheap-api.yml`: gated production build, artifact, and SSH deployment to a configured Namecheap Node.js application.
 
+## Upwork job-reference boundary
+
+- Bureau accepts a client-controlled Upwork job URL as a scope reference and format-validates it against allowed public job URL patterns.
+- The application does not fetch or scrape the Upwork page and does not treat the URL as verification of its budget, proposals, identity, or contents.
+- Bureau automatically prices supported requests from the selected service's published unit, package capacity, rate, and buyer-submitted quantity. The server rounds up to a whole package; a buyer cannot supply the price or comparison basis.
+- Each service publishes inclusions, exclusions, and an automatic maximum. Requests above that maximum, outside those boundaries, or without an active matching agent fail closed to nonpayable review.
+- External price and savings claims fail closed unless a future authorized source is verified server-side under a separately approved policy.
+
 ## Identity and authorization
 
 - Human users authenticate with email/password. Passwords use adaptive bcrypt hashing.

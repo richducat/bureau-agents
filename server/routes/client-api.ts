@@ -53,12 +53,13 @@ clientApiRouter.post('/task-requests', requireClientAgentScope('tasks:write'), a
       `INSERT INTO task_requests
        (id, user_id, client_org_id, contact_name, business_name, email, service_id, title, details, budget_range,
         desired_timing, source, requester_type, hiring_mode, assigned_agent_id, quote_work_value_cents, quote_summary,
-        external_reference, callback_url, status, consent_at, quoted_at)
-       VALUES (?, ?, ?, 'Authorized client agent', ?, ?, ?, ?, ?, ?, ?, 'client-agent-api', 'agent', 'managed', ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
+        quote_basis, external_reference, callback_url, status, consent_at, quoted_at)
+       VALUES (?, ?, ?, 'Authorized client agent', ?, ?, ?, ?, ?, ?, ?, 'client-agent-api', 'agent', 'managed', ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
       [id, req.authClientAgent!.createdByUserId, req.authClientAgent!.organizationId, req.authClientAgent!.organizationName,
         req.authClientAgent!.email, input.serviceId, input.title, input.details, input.budgetRange, input.desiredTiming,
         agent?.id ?? null, service?.startingPriceCents ?? null,
         service ? `${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround}.` : null,
+        service ? 'catalog' : null,
         input.externalReference ?? null, callbackUrl, service && agent ? 'quoted' : 'new', service && agent ? new Date() : null],
     )
   } catch (error) {
@@ -77,7 +78,7 @@ clientApiRouter.get('/task-requests/:requestId', requireClientAgentScope('tasks:
   const requestId = uuid.parse(req.params.requestId)
   const request = await one<GenericRow>(
     `SELECT tr.id, tr.external_reference, tr.service_id, tr.title, tr.status, tr.quote_work_value_cents,
-      tr.quote_summary, tr.contract_id, tr.created_at, tr.updated_at, a.name AS assigned_agent_name
+      tr.quote_summary, tr.quote_basis, tr.contract_id, tr.created_at, tr.updated_at, a.name AS assigned_agent_name
      FROM task_requests tr LEFT JOIN agents a ON a.id = tr.assigned_agent_id
      WHERE tr.id = ? AND tr.client_org_id = ?`,
     [requestId, req.authClientAgent!.organizationId],

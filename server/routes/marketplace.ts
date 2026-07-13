@@ -17,13 +17,12 @@ import {
   sha256,
 } from '../security.js'
 import { assertSafeWebhookUrl, enqueueAgentWebhook } from '../webhooks.js'
-import { sendOperationsNotification, sendSupportReceipt, sendTaskRequestReceipt, sendUpworkQuoteReceipt } from '../mailer.js'
+import { sendOperationsNotification, sendSupportReceipt, sendTaskRequestReceipt, sendUpworkTransferReceipt } from '../mailer.js'
 import {
+  BUREAU_FAIR_QUOTE_TERMS_VERSION,
   budgetRangeForCents,
-  calculateUpworkQuote,
+  calculateBureauCatalogQuote,
   normalizeUpworkJobUrl,
-  UPWORK_GUARANTEE_HOLD_HOURS,
-  UPWORK_GUARANTEE_TERMS_VERSION,
 } from '../upwork-quote.js'
 
 type GenericRow = RowDataPacket
@@ -93,9 +92,8 @@ const comparisonQuotePreviewLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limi
 const upworkQuoteCoreSchema = z.object({
   jobUrl: z.string().trim().min(20).max(2_048),
   serviceId: z.string().trim().min(2).max(80),
-  referenceType: z.enum(['posted_budget', 'proposal_total']),
-  referenceAmountCents: z.number().int().min(5_000).max(100_000_000),
-})
+  scopeUnits: z.number().int().min(1).max(1_000_000),
+}).strict()
 
 function normalizedUpworkJobUrl(rawUrl: string) {
   try {
@@ -114,6 +112,19 @@ function publicManagedMatch(agent: GenericRow | null) {
     category: agent.category,
     verificationLevel: agent.verification_level,
     responseTimeMinutes: Number(agent.response_time_minutes),
+  }
+}
+
+function publicCatalogPackage(service: NonNullable<ReturnType<typeof managedService>>, scopeUnits: number, packageCount: number) {
+  return {
+    unitLabel: service.unitLabel,
+    unitCapacity: service.unitCapacity,
+    maximumAutomaticUnits: service.maximumAutomaticUnits,
+    requestedUnits: scopeUnits,
+    packageCount,
+    pricePerPackageCents: service.startingPriceCents,
+    includedScope: service.includedScope,
+    excludedScope: service.excludedScope,
   }
 }
 
@@ -263,13 +274,14 @@ publicRouter.post('/task-requests', managedTaskLimiter, asyncRoute(async (req, r
     `INSERT INTO task_requests
       (id, user_id, client_org_id, contact_name, business_name, email, service_id, title, details, budget_range,
        desired_timing, source, requester_type, hiring_mode, assigned_agent_id, quote_work_value_cents, quote_summary,
-       status, consent_at, quoted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
+       quote_basis, status, consent_at, quoted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
     [id, req.authUser?.id ?? null, clientOrganization?.id ?? null, input.contactName, input.businessName || null,
       input.email, input.serviceId, input.title, input.details, input.budgetRange, input.desiredTiming,
       input.source ?? null, input.requesterType, input.hiringMode, suggestedAgent?.id ?? null,
       service?.startingPriceCents ?? null,
       service ? `${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround}.` : null,
+      service ? 'catalog' : null,
       service && suggestedAgent ? 'quoted' : 'new', service && suggestedAgent ? new Date() : null],
   )
   void Promise.all([
@@ -291,28 +303,40 @@ publicRouter.post('/upwork-quotes/preview', comparisonQuotePreviewLimiter, async
   const input = upworkQuoteCoreSchema.parse(req.body)
   const jobUrl = normalizedUpworkJobUrl(input.jobUrl)
   const service = managedService(input.serviceId)
-  if (!service) throw new HttpError(400, 'Choose a supported Bureau service for an instant comparison.', 'unsupported_quote_service')
+  if (!service) throw new HttpError(400, 'Choose a supported Bureau service for an automatic quote.', 'unsupported_quote_service')
   const agent = await suggestedManagedAgent(service.id)
-  const calculation = calculateUpworkQuote(service, input.referenceAmountCents)
-  const eligible = calculation.status === 'eligible' && Boolean(agent)
+  const catalogQuote = calculateBureauCatalogQuote(service, input.scopeUnits)
+  const available = catalogQuote.status === 'available' && Boolean(agent)
 
   res.json({
-    source: { platform: 'upwork', jobUrl, fetched: false },
-    eligibility: {
-      status: eligible ? 'eligible' : 'manual_review',
-      reason: eligible
-        ? 'The reference amount supports the Bureau service floor and an active agent is available.'
-        : agent
-          ? 'The reference amount is below the instant-guarantee threshold for this service.'
-          : 'No matching Bureau agent is accepting instant-guarantee work right now.',
-      minimumEligibleReferenceCents: calculation.minimumEligibleReferenceCents,
+    source: {
+      platform: 'upwork',
+      jobUrl,
+      fetched: false,
+      verificationStatus: 'url_validated',
+      verificationMethod: 'url_format',
     },
+    pricing: {
+      status: available ? 'available' : 'manual_review',
+      reason: catalogQuote.status === 'manual_review'
+        ? catalogQuote.reason
+        : agent
+          ? 'Bureau applied the published bounded-package rate and found an active matching agent.'
+          : 'The bounded catalog price is known, but no matching Bureau agent is accepting automatic work right now.',
+    },
+    comparison: {
+      status: 'not_verified',
+      savingsClaim: false,
+      reason: 'Bureau does not access or verify Upwork budget or proposal data without authorized source access.',
+    },
+    catalog: publicCatalogPackage(service, input.scopeUnits, catalogQuote.packageCount),
     match: publicManagedMatch(agent),
-    quote: eligible ? {
-      workValueCents: calculation.quoteWorkValueCents,
-      savingsCents: calculation.savingsCents,
-      discountBasisPoints: calculation.discountBasisPoints,
-      holdHours: UPWORK_GUARANTEE_HOLD_HOURS,
+    quote: available ? {
+      workValueCents: catalogQuote.workValueCents,
+      basis: catalogQuote.basis,
+      packageCount: catalogQuote.packageCount,
+      scopeUnits: input.scopeUnits,
+      comparisonVerified: false,
       turnaround: service.turnaround,
       deliverables: service.deliverables,
     } : null,
@@ -331,67 +355,84 @@ publicRouter.post('/upwork-quotes', managedTaskLimiter, asyncRoute(async (req, r
     source: z.string().trim().max(120).optional(),
     website: z.string().max(0).optional().default(''),
     authorizationAttested: z.literal(true),
+    catalogScopeAttested: z.literal(true),
     consent: z.literal(true),
   }).parse(req.body)
 
   const jobUrl = normalizedUpworkJobUrl(input.jobUrl)
   const service = managedService(input.serviceId)
-  if (!service) throw new HttpError(400, 'Choose a supported Bureau service for this comparison.', 'unsupported_quote_service')
+  if (!service) throw new HttpError(400, 'Choose a supported Bureau service for this quote.', 'unsupported_quote_service')
   const agent = await suggestedManagedAgent(service.id)
-  const calculation = calculateUpworkQuote(service, input.referenceAmountCents)
-  const eligible = calculation.status === 'eligible' && Boolean(agent)
-  const guaranteeStatus = eligible ? 'eligible' : 'manual_review'
-  const quoteWorkValueCents = eligible ? calculation.quoteWorkValueCents : null
-  const savingsCents = eligible ? calculation.savingsCents : null
-  const expiresAt = eligible ? new Date(Date.now() + UPWORK_GUARANTEE_HOLD_HOURS * 60 * 60 * 1_000) : null
-  const referenceLabel = input.referenceType === 'posted_budget' ? 'posted project budget' : 'bona fide proposal total'
-  const quoteSummary = eligible
-    ? `Bureau Beat-the-Quote Guarantee: at least 10% below the attested Upwork ${referenceLabel} for the unchanged scope submitted with this request. Price hold expires ${expiresAt!.toISOString()}. ${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround}. Taxes, Bureau client fees, and approved pass-through expenses are excluded from the comparison.`
-    : `Bureau comparison review: the attested Upwork ${referenceLabel} is below the instant-guarantee threshold for this service${agent ? '' : ', or no matching agent is currently available'}. Bureau will review the unchanged scope and respond with the best supportable price. No price guarantee applies until a written eligible quote is issued.`
+  const catalogQuote = calculateBureauCatalogQuote(service, input.scopeUnits)
+  const available = catalogQuote.status === 'available' && Boolean(agent)
+  const quoteWorkValueCents = available ? catalogQuote.workValueCents : null
+  const packageDescription = `${catalogQuote.packageCount} ${catalogQuote.packageCount === 1 ? 'package' : 'packages'} covering ${input.scopeUnits.toLocaleString()} ${service.unitLabel}`
+  const quoteSummary = available
+    ? `Automatic bounded Bureau catalog quote: ${packageDescription} at $${(service.startingPriceCents / 100).toFixed(2)} per package; total work value $${(catalogQuote.workValueCents! / 100).toFixed(2)}. Included: ${service.includedScope.join(', ')}. Excluded: ${service.excludedScope.join(', ')}. Deliverables: ${service.deliverables.join(', ')}. Typical delivery: ${service.turnaround} per package. Bureau validated the Upwork URL format only and makes no external savings claim.`
+    : catalogQuote.status === 'manual_review'
+      ? `Manual scope review required: ${input.scopeUnits.toLocaleString()} ${service.unitLabel} exceeds the automatic limit of ${service.maximumAutomaticUnits.toLocaleString()}. No payable quote or external savings claim applies.`
+      : `The bounded catalog calculation is ${packageDescription} at $${(service.startingPriceCents / 100).toFixed(2)} per package, but no matching active agent is currently available. No payable quote or external savings claim applies.`
   const id = randomUUID()
   const clientOrganization = req.authUser?.organizations.find((organization) => organization.kind === 'client')
 
   await execute(
     `INSERT INTO task_requests
       (id, user_id, client_org_id, contact_name, business_name, email, service_id, title, details, budget_range,
-       desired_timing, source, source_platform, source_job_url, source_reference_type, source_reference_cents,
-       requester_type, hiring_mode, assigned_agent_id, quote_work_value_cents, quote_summary, status, consent_at,
-       quoted_at, guarantee_status, guarantee_discount_basis_points, guarantee_savings_cents, guarantee_terms_version,
-       guarantee_attested_at, guarantee_expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upwork', ?, ?, ?, ?, 'managed', ?, ?, ?, ?, UTC_TIMESTAMP(3),
-       ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), ?)`,
+       desired_timing, source, source_platform, source_job_url, source_verification_status, source_verification_method,
+       source_validated_at, source_verification_note, requester_type, hiring_mode, assigned_agent_id,
+       quote_work_value_cents, quote_summary, quote_basis, catalog_scope_units, catalog_package_count,
+       quote_policy_version, quote_policy_attested_at, status, consent_at, quoted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upwork', ?, 'url_validated', 'url_format', UTC_TIMESTAMP(3),
+       ?, ?, 'managed', ?, ?, ?, 'catalog', ?, ?, ?, UTC_TIMESTAMP(3), ?, UTC_TIMESTAMP(3), ?)`,
     [id, req.authUser?.id ?? null, clientOrganization?.id ?? null, input.contactName, input.businessName || null,
-      input.email, service.id, input.title, input.details, budgetRangeForCents(input.referenceAmountCents),
-      input.desiredTiming, input.source ?? 'beat-upwork', jobUrl, input.referenceType, input.referenceAmountCents,
-      input.requesterType, agent?.id ?? null, quoteWorkValueCents, quoteSummary, eligible ? 'quoted' : 'reviewing',
-      eligible ? new Date() : null, guaranteeStatus, calculation.discountBasisPoints, savingsCents,
-      UPWORK_GUARANTEE_TERMS_VERSION, expiresAt],
+      input.email, service.id, input.title, input.details, budgetRangeForCents(catalogQuote.workValueCents ?? service.startingPriceCents),
+      input.desiredTiming, input.source ?? 'upwork-transfer', jobUrl,
+      'URL host and path format validated locally. Bureau did not fetch the Upwork page or verify external price data.',
+      input.requesterType, agent?.id ?? null, quoteWorkValueCents, quoteSummary, input.scopeUnits,
+      catalogQuote.packageCount, BUREAU_FAIR_QUOTE_TERMS_VERSION, available ? 'quoted' : 'reviewing',
+      available ? new Date() : null],
   )
 
   void Promise.all([
-    sendUpworkQuoteReceipt(input.email, input.contactName, id, input.title, agent?.name ?? 'Bureau concierge', quoteWorkValueCents, savingsCents),
+    sendUpworkTransferReceipt(input.email, input.contactName, id, input.title, agent?.name ?? 'Bureau concierge', quoteWorkValueCents),
     sendOperationsNotification(
-      eligible ? `Guaranteed lower quote: ${input.title}` : `Upwork comparison needs review: ${input.title}`,
-      `${input.contactName}${input.businessName ? ` at ${input.businessName}` : ''} submitted an authorized Upwork job reference. ${eligible ? `Bureau quoted $${(quoteWorkValueCents! / 100).toFixed(2)} with $${(savingsCents! / 100).toFixed(2)} stated savings.` : 'The request needs a manual price review.'} Reference: ${id}.`,
+      available ? `Automatic bounded Bureau quote: ${input.title}` : `Upwork-referenced request needs review: ${input.title}`,
+      `${input.contactName}${input.businessName ? ` at ${input.businessName}` : ''} submitted an authorized Upwork job reference for ${input.scopeUnits.toLocaleString()} ${service.unitLabel}. ${available ? `Bureau applied its $${(quoteWorkValueCents! / 100).toFixed(2)} bounded catalog work value.` : quoteSummary} No external price or savings claim was made. Reference: ${id}.`,
       '/admin',
     ),
-  ]).catch((error) => console.error(`[${req.requestId}] comparison quote notification failed:`, error instanceof Error ? error.message : 'unknown error'))
+  ]).catch((error) => console.error(`[${req.requestId}] transfer quote notification failed:`, error instanceof Error ? error.message : 'unknown error'))
 
   res.status(201).json({
-    request: { id, status: eligible ? 'quoted' : 'reviewing', continuePath: `/start?request=${id}` },
-    source: { platform: 'upwork', jobUrl, fetched: false },
-    eligibility: {
-      status: guaranteeStatus,
-      minimumEligibleReferenceCents: calculation.minimumEligibleReferenceCents,
-      termsVersion: UPWORK_GUARANTEE_TERMS_VERSION,
-      expiresAt: expiresAt?.toISOString() ?? null,
+    request: { id, status: available ? 'quoted' : 'reviewing', continuePath: `/start?request=${id}` },
+    source: {
+      platform: 'upwork',
+      jobUrl,
+      fetched: false,
+      verificationStatus: 'url_validated',
+      verificationMethod: 'url_format',
     },
+    pricing: {
+      status: available ? 'available' : 'manual_review',
+      reason: catalogQuote.status === 'manual_review'
+        ? catalogQuote.reason
+        : agent
+          ? 'Bureau applied the published bounded-package rate and found an active matching agent.'
+          : 'The bounded catalog price is known, but no matching active agent is available yet.',
+      termsVersion: BUREAU_FAIR_QUOTE_TERMS_VERSION,
+    },
+    comparison: {
+      status: 'not_verified',
+      savingsClaim: false,
+      reason: 'Bureau did not access or verify Upwork budget or proposal data.',
+    },
+    catalog: publicCatalogPackage(service, input.scopeUnits, catalogQuote.packageCount),
     match: publicManagedMatch(agent),
-    quote: eligible ? {
+    quote: available ? {
       workValueCents: quoteWorkValueCents,
-      savingsCents,
-      referenceAmountCents: input.referenceAmountCents,
-      discountBasisPoints: calculation.discountBasisPoints,
+      basis: catalogQuote.basis,
+      packageCount: catalogQuote.packageCount,
+      scopeUnits: input.scopeUnits,
+      comparisonVerified: false,
       turnaround: service.turnaround,
       deliverables: service.deliverables,
     } : null,
@@ -449,8 +490,9 @@ marketplaceRouter.get('/organizations/:organizationId/task-requests', asyncRoute
   const requests = await rows<GenericRow>(
     `SELECT tr.id, tr.service_id, tr.title, tr.details, tr.budget_range, tr.desired_timing, tr.requester_type,
       tr.hiring_mode, tr.status, tr.quote_work_value_cents, tr.quote_summary, tr.contract_id, tr.created_at,
-      tr.source_platform, tr.source_reference_cents, tr.guarantee_status, tr.guarantee_savings_cents,
-      tr.guarantee_expires_at,
+      tr.source_platform, tr.source_reference_cents, tr.source_verification_status, tr.source_verification_note,
+      tr.quote_basis, tr.quote_policy_version, tr.catalog_scope_units, tr.catalog_package_count,
+      tr.guarantee_status, tr.guarantee_savings_cents, tr.guarantee_expires_at,
       a.name AS assigned_agent_name, a.slug AS assigned_agent_slug
      FROM task_requests tr LEFT JOIN agents a ON a.id = tr.assigned_agent_id
      WHERE tr.client_org_id = ? ORDER BY tr.created_at DESC LIMIT 200`,

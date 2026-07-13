@@ -2,26 +2,14 @@ import { randomUUID } from 'node:crypto'
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { execute, one, transaction } from './db.js'
 import { calculateFees, type ClientPlan } from './fees.js'
+import { MANAGED_CATALOG, type ManagedCatalogDefinition } from './managed-catalog.js'
 import { HttpError } from './security.js'
 
 type GenericRow = RowDataPacket
 
-export interface ManagedServiceDefinition {
-  id: string
-  category: string
-  startingPriceCents: number
-  turnaround: string
-  deliverables: string[]
-}
+export type ManagedServiceDefinition = ManagedCatalogDefinition
 
-export const MANAGED_SERVICES: Record<string, ManagedServiceDefinition> = {
-  'market-research': { id: 'market-research', category: 'Research', startingPriceCents: 39_000, turnaround: '24–48 hours', deliverables: ['Executive brief', 'Source-linked findings', 'Structured comparison'] },
-  'spreadsheet-cleanup': { id: 'spreadsheet-cleanup', category: 'Data', startingPriceCents: 21_000, turnaround: '1–2 days', deliverables: ['Clean export', 'Exceptions sheet', 'Quality summary'] },
-  'website-fix': { id: 'website-fix', category: 'Engineering', startingPriceCents: 28_000, turnaround: '1–3 days', deliverables: ['Root-cause summary', 'Tested change', 'Deployment notes'] },
-  'support-backlog': { id: 'support-backlog', category: 'Customer support', startingPriceCents: 29_000, turnaround: '1–2 days', deliverables: ['Triage queue', 'Resolved or drafted replies', 'Escalation report'] },
-  'content-brief': { id: 'content-brief', category: 'Marketing', startingPriceCents: 24_000, turnaround: '2 days', deliverables: ['Search brief', 'Source record', 'Outline and metadata'] },
-  'invoice-review': { id: 'invoice-review', category: 'Finance', startingPriceCents: 32_500, turnaround: '1–2 days', deliverables: ['Exception queue', 'Evidence workbook', 'Findings summary'] },
-}
+export const MANAGED_SERVICES: Record<string, ManagedServiceDefinition> = MANAGED_CATALOG
 
 export function managedService(serviceId: string) {
   return MANAGED_SERVICES[serviceId] ?? null
@@ -52,11 +40,14 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
   const fees = calculateFees(workValueCents, clientPlan, agent.operator_plan)
   const contractId = randomUUID()
   const milestoneId = randomUUID()
+  const contractScope = request.quote_basis === 'catalog' && request.quote_summary
+    ? `${request.quote_summary}\n\nBuyer-provided context (does not expand the package inclusions, quantity, or automatic quote):\n${request.details}`
+    : String(request.details)
   await connection.execute(
     `INSERT INTO contracts
      (id, client_org_id, operator_org_id, agent_id, title, scope, total_work_value_cents, client_fee_basis_points, operator_fee_basis_points)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [contractId, clientOrgId, agent.operator_org_id, agent.id, request.title, request.details, workValueCents, fees.clientFeeBasisPoints, fees.operatorFeeBasisPoints],
+    [contractId, clientOrgId, agent.operator_org_id, agent.id, request.title, contractScope, workValueCents, fees.clientFeeBasisPoints, fees.operatorFeeBasisPoints],
   )
   await connection.execute(
     `INSERT INTO milestones (id, contract_id, sequence_number, title, description, work_value_cents, due_at)
@@ -78,7 +69,7 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
 
 export async function acceptManagedRequest(requestId: string, clientOrgId: string, actorUserId: string, clientPlan: ClientPlan) {
   const expired = await one<GenericRow>(
-    `SELECT id FROM task_requests WHERE id = ? AND guarantee_status = 'eligible'
+    `SELECT id FROM task_requests WHERE id = ? AND contract_id IS NULL AND guarantee_status = 'eligible'
       AND guarantee_expires_at IS NOT NULL AND guarantee_expires_at < UTC_TIMESTAMP(3)`,
     [requestId],
   )
@@ -88,7 +79,7 @@ export async function acceptManagedRequest(requestId: string, clientOrgId: strin
        WHERE id = ? AND guarantee_status = 'eligible'`,
       [requestId],
     )
-    throw new HttpError(409, 'This 72-hour guaranteed quote has expired. Bureau will refresh the scope and price before payment.', 'quote_expired')
+    throw new HttpError(409, 'This verified external quote has expired. Bureau must reverify its source and price before payment.', 'quote_expired')
   }
   return transaction(async (connection) => {
     const [records] = await connection.execute<RowDataPacket[]>(
@@ -98,6 +89,12 @@ export async function acceptManagedRequest(requestId: string, clientOrgId: strin
     const request = records[0] as GenericRow | undefined
     if (!request) throw new HttpError(404, 'Managed request not found.', 'task_request_not_found')
     if (request.client_org_id && request.client_org_id !== clientOrgId) throw new HttpError(403, 'This request belongs to another organization.', 'organization_access_denied')
+    if (!request.contract_id && request.source_platform === 'upwork' && request.source_verification_status === 'legacy_unverified') {
+      throw new HttpError(409, 'This older quote used an unverified client-entered comparison amount and cannot be paid. Submit a fresh job-reference request for an automatic bounded catalog quote.', 'legacy_quote_repricing_required')
+    }
+    if (!request.contract_id && request.quote_basis === 'verified_external_reference' && request.source_verification_status !== 'verified') {
+      throw new HttpError(409, 'This external-comparison quote is not backed by an authorized verified source and cannot be paid.', 'quote_source_not_verified')
+    }
     if (request.contract_id) {
       const [milestones] = await connection.execute<RowDataPacket[]>(
         'SELECT id FROM milestones WHERE contract_id = ? ORDER BY sequence_number ASC LIMIT 1',

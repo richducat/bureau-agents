@@ -127,6 +127,6 @@ jobs:
           PREVIEW="$(curl --fail --silent --show-error --max-time 10 --cookie "$COOKIE_JAR" \
             --header 'Origin: https://ai.eb28.co' --header "X-CSRF-Token: $CSRF_TOKEN" \
             --header 'Content-Type: application/json' --request POST \
-            --data '{"jobUrl":"https://www.upwork.com/jobs/~0123456789","serviceId":"website-fix","referenceType":"posted_budget","referenceAmountCents":50000}' \
+            --data '{"jobUrl":"https://www.upwork.com/jobs/~0123456789","serviceId":"website-fix","scopeUnits":1}' \
             "$API_ORIGIN/api/public/upwork-quotes/preview")"
-          jq -e '.source.fetched == false and .eligibility.status == "eligible" and .quote.workValueCents == 45000 and (.match.name | length > 0)' <<<"$PREVIEW" >/dev/null
+          jq -e '.source.fetched == false and .source.verificationStatus == "url_validated" and .pricing.status == "available" and .catalog.packageCount == 1 and .catalog.requestedUnits == 1 and .quote.workValueCents == 28000 and .quote.basis == "catalog" and .comparison.savingsClaim == false and (.match.name | length > 0)' <<<"$PREVIEW" >/dev/null

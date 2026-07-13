@@ -14,7 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, apiFetch, jsonBody } from "../lib/api";
+import { apiFetch, jsonBody } from "../lib/api";
 import { safeHttpsUrl } from "../lib/navigation";
 
 interface Metrics {
@@ -73,6 +73,13 @@ interface TaskRequest {
   guarantee_status: "not_requested" | "eligible" | "manual_review" | "expired";
   guarantee_savings_cents: number | null;
   guarantee_expires_at: string | null;
+  source_verification_status: "not_applicable" | "url_validated" | "legacy_unverified" | "verified";
+  source_verification_method: "url_format" | "upwork_api" | null;
+  source_verification_note: string | null;
+  quote_basis: "catalog" | "verified_external_reference" | null;
+  quote_policy_version: string | null;
+  catalog_scope_units: number | null;
+  catalog_package_count: number | null;
   quote_work_value_cents: number | null;
   assigned_agent_id: string | null;
   status: TaskRequestStatus;
@@ -96,19 +103,6 @@ interface RuntimeKey {
 const dollars = (cents: number | string | undefined) =>
   `$${(Number(cents ?? 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const serviceCategory: Record<string, string> = {
-  "market-research": "Research",
-  "spreadsheet-cleanup": "Data",
-  "website-fix": "Engineering",
-  "support-backlog": "Customer support",
-  "content-brief": "Marketing",
-  "invoice-review": "Finance",
-};
-
-function defaultQuoteAgentId(request: TaskRequest, agents: PlatformAgent[]) {
-  return request.assigned_agent_id || agents.find((agent) => agent.status === "active" && agent.category === serviceCategory[request.service_id])?.id || "";
-}
-
 export default function AdminPage() {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -117,8 +111,6 @@ export default function AdminPage() {
   const [taskRequests, setTaskRequests] = useState<TaskRequest[]>([]);
   const [platformAgents, setPlatformAgents] = useState<PlatformAgent[]>([]);
   const [runtimeKey, setRuntimeKey] = useState<RuntimeKey | null>(null);
-  const [quoteDrafts, setQuoteDrafts] = useState<Record<string, string>>({});
-  const [quoteAgentSelections, setQuoteAgentSelections] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const load = async () => {
@@ -184,29 +176,6 @@ export default function AdminPage() {
       setError("The runtime key could not be created.");
     }
   };
-  const issueUpworkQuote = async (request: TaskRequest) => {
-    const maximum = Math.floor(Number(request.source_reference_cents ?? 0) * 0.9) / 100;
-    const dollarsInput = Number(quoteDrafts[request.id] ?? maximum.toFixed(2));
-    const agentId = quoteAgentSelections[request.id] || defaultQuoteAgentId(request, platformAgents);
-    if (!Number.isFinite(dollarsInput) || dollarsInput < 5 || !agentId) {
-      setError("Enter a supportable lower price and choose an active matching agent.");
-      return;
-    }
-    setError("");
-    try {
-      await apiFetch(`/admin/task-requests/${request.id}/upwork-quote`, {
-        method: "POST",
-        body: jsonBody({
-          workValueCents: Math.round(dollarsInput * 100),
-          agentId,
-          scopeNote: "Bureau operations reviewed the unchanged client-submitted scope and confirmed feasibility with the selected active agent.",
-        }),
-      });
-      await load();
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "The guaranteed quote could not be issued.");
-    }
-  };
   const statusOptions: Array<{ value: TaskRequestStatus; label: string }> = [
     { value: "new", label: "New" },
     { value: "reviewing", label: "Reviewing" },
@@ -256,7 +225,7 @@ export default function AdminPage() {
             <ClipboardList />
             <span>Active requests</span>
             <strong>{metrics.funnel.active_task_requests}</strong>
-            <small>{metrics.funnel.upwork_comparisons} Upwork comparisons</small>
+            <small>{metrics.funnel.upwork_references} Upwork job references</small>
           </article>
           <article>
             <Users />
@@ -371,22 +340,19 @@ export default function AdminPage() {
                 {request.source_platform === "upwork" && (
                   <div className="admin-comparison-quote">
                     <div>
-                      <span className={`admin-guarantee admin-guarantee--${request.guarantee_status}`}>
-                        {request.guarantee_status.replace("_", " ")}
+                      <span className={`admin-guarantee admin-guarantee--${request.source_verification_status}`}>
+                        {request.source_verification_status.replace("_", " ")}
                       </span>
-                      <strong>Upwork comparison</strong>
+                      <strong>Upwork-referenced transfer</strong>
                     </div>
                     <dl>
-                      <div><dt>Reference</dt><dd>{dollars(request.source_reference_cents ?? 0)}</dd></div>
-                      <div><dt>Bureau quote</dt><dd>{request.quote_work_value_cents ? dollars(request.quote_work_value_cents) : "Manual review"}</dd></div>
-                      <div><dt>Savings</dt><dd>{request.guarantee_savings_cents ? dollars(request.guarantee_savings_cents) : "Pending"}</dd></div>
+                      <div><dt>Pricing basis</dt><dd>{request.quote_basis === "catalog" ? "Bureau catalog" : "Repricing required"}</dd></div>
+                      <div><dt>Bounded packages</dt><dd>{request.catalog_package_count && request.catalog_scope_units ? `${request.catalog_package_count} for ${request.catalog_scope_units.toLocaleString()} units` : "Not recorded"}</dd></div>
+                      <div><dt>Bureau quote</dt><dd>{request.quote_work_value_cents ? dollars(request.quote_work_value_cents) : "Not payable"}</dd></div>
+                      <div><dt>External savings</dt><dd>Not claimed</dd></div>
                     </dl>
-                    {safeHttpsUrl(request.source_job_url) && <a href={safeHttpsUrl(request.source_job_url)!} target="_blank" rel="noopener noreferrer">Open attested job reference</a>}
-                    {user.platformRole === "admin" && <div className="admin-comparison-quote__action">
-                      <label><span>Guaranteed work value</span><div><i>$</i><input type="number" min="5" max={Math.floor(Number(request.source_reference_cents ?? 0) * .9) / 100} step="0.01" value={quoteDrafts[request.id] ?? (Math.floor(Number(request.source_reference_cents ?? 0) * .9) / 100).toFixed(2)} onChange={(event) => setQuoteDrafts((current) => ({ ...current, [request.id]: event.target.value }))} /></div><small>Maximum {dollars(Math.floor(Number(request.source_reference_cents ?? 0) * .9))}</small></label>
-                      <label><span>Active agent</span><select value={quoteAgentSelections[request.id] ?? defaultQuoteAgentId(request, platformAgents)} onChange={(event) => setQuoteAgentSelections((current) => ({ ...current, [request.id]: event.target.value }))}><option value="">Choose matching agent</option>{platformAgents.filter((agent) => agent.status === "active" && agent.category === serviceCategory[request.service_id]).map((agent) => <option key={agent.id} value={agent.id}>{agent.name} · {agent.category}</option>)}</select></label>
-                      <button className="button button--dark" onClick={() => void issueUpworkQuote(request)}>{request.guarantee_status === "eligible" ? "Reissue 72-hour quote" : "Issue lower quote"}</button>
-                    </div>}
+                    {request.source_verification_note && <p>{request.source_verification_note}</p>}
+                    {safeHttpsUrl(request.source_job_url) && <a href={safeHttpsUrl(request.source_job_url)!} target="_blank" rel="noopener noreferrer">Open submitted job reference</a>}
                   </div>
                 )}
                 <dl>

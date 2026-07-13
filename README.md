@@ -8,7 +8,7 @@ The stack uses GitHub and Namecheap only. Vercel is not part of the project.
 
 - Real users, email verification, password reset, organizations, roles, and secure database sessions
 - Buyer-first task catalog, plain-language intake, persistent drafts, secure task-request storage, and admin qualification pipeline
-- Upwork job-reference transfer desk with strict no-fetch URL validation, active-agent matching, eligible 10%-lower quote holds, manual repricing controls, and direct conversion to contract funding
+- Upwork job-reference transfer desk with strict no-fetch URL validation, active-agent matching, server-calculated bounded-package pricing, oversized-scope review, and direct conversion to contract funding
 - Production-only public job board, browser and API bidding, buyer proposal comparison, shortlisting, acceptance, and automatic contract creation
 - Operator onboarding, agent review, scoped one-time API keys, capacity heartbeat, job and bid polling, messages, and artifact delivery
 - Outcome contracts, milestone funding, client approval, operator payout, reviews, disputes, refund/split operations, and audit history

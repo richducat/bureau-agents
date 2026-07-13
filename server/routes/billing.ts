@@ -6,8 +6,9 @@ import type Stripe from 'stripe'
 import type { RowDataPacket } from 'mysql2'
 import { z } from 'zod'
 import { getConfig } from '../config.js'
-import { execute, one, transaction } from '../db.js'
+import { execute, one, rows, transaction } from '../db.js'
 import { calculateFees } from '../fees.js'
+import { fundingMustFailClosed } from '../funding-safety.js'
 import {
   asyncRoute,
   HttpError,
@@ -168,7 +169,12 @@ billingRouter.post('/milestones/:milestoneId/checkout', asyncRoute(async (req, r
   }
   const milestone = await one<GenericRow>(
     `SELECT m.*, c.client_org_id, c.operator_org_id, c.client_fee_basis_points, c.operator_fee_basis_points,
-      c.title AS contract_title, co.name AS client_name, co.stripe_customer_id,
+      c.title AS contract_title, c.status AS contract_status, co.name AS client_name, co.stripe_customer_id,
+      EXISTS(
+        SELECT 1 FROM task_requests tr
+        WHERE tr.contract_id = c.id AND tr.source_platform = 'upwork'
+          AND tr.source_verification_status = 'legacy_unverified'
+      ) AS legacy_unverified_source,
       oo.name AS operator_name, oo.kind AS operator_kind, oo.stripe_account_id, oo.stripe_payouts_enabled
      FROM milestones m JOIN contracts c ON c.id = m.contract_id
      JOIN organizations co ON co.id = c.client_org_id JOIN organizations oo ON oo.id = c.operator_org_id
@@ -177,6 +183,9 @@ billingRouter.post('/milestones/:milestoneId/checkout', asyncRoute(async (req, r
   )
   if (!milestone) throw new HttpError(404, 'Milestone not found.', 'milestone_not_found')
   membershipFor(req, String(milestone.client_org_id), ['owner', 'admin', 'billing'])
+  if (fundingMustFailClosed(milestone.contract_status, milestone.legacy_unverified_source)) {
+    throw new HttpError(409, 'This older quote was invalidated and cannot be funded. Submit a fresh job-reference request for an automatic bounded catalog quote.', 'legacy_quote_repricing_required')
+  }
   if (milestone.operator_kind !== 'platform' && (!milestone.stripe_account_id || !milestone.stripe_payouts_enabled)) {
     throw new HttpError(409, 'The agent operator must finish payout verification before this milestone can be funded.', 'operator_payouts_not_ready')
   }
@@ -349,6 +358,67 @@ async function processCheckout(session: Stripe.Checkout.Session) {
   const paymentIntent = await stripeClient().paymentIntents.retrieve(paymentIntentId, { expand: ['latest_charge.balance_transaction'] })
   const charge = typeof paymentIntent.latest_charge === 'string' ? await stripeClient().charges.retrieve(paymentIntent.latest_charge, { expand: ['balance_transaction'] }) : paymentIntent.latest_charge
   const balanceTransaction = charge && typeof charge.balance_transaction !== 'string' ? charge.balance_transaction : null
+  const fundingGate = await one<GenericRow>(
+    `SELECT p.id, p.client_org_id, m.id AS milestone_id, m.contract_id, c.status AS contract_status,
+      EXISTS(
+        SELECT 1 FROM task_requests tr
+        WHERE tr.contract_id = c.id AND tr.source_platform = 'upwork'
+          AND tr.source_verification_status = 'legacy_unverified'
+      ) AS legacy_unverified_source
+     FROM payments p JOIN milestones m ON m.id = p.milestone_id JOIN contracts c ON c.id = m.contract_id
+     WHERE p.id = ?`,
+    [session.metadata!.payment_id],
+  )
+  if (!fundingGate) throw new Error('Paid checkout does not map to a Bureau payment record')
+  if (String(fundingGate.milestone_id) !== session.metadata!.milestone_id || String(fundingGate.contract_id) !== session.metadata!.contract_id) {
+    throw new Error('Paid checkout metadata does not match its Bureau payment record')
+  }
+  const blockedFunding = fundingMustFailClosed(fundingGate.contract_status, fundingGate.legacy_unverified_source)
+  if (blockedFunding) {
+    await transaction(async (connection) => {
+      await connection.execute(
+        `UPDATE payments SET stripe_payment_intent_id = ?, stripe_charge_id = ?, processor_fee_cents = ?,
+          status = 'refund_pending', paid_at = COALESCE(paid_at, UTC_TIMESTAMP(3))
+         WHERE id = ? AND status NOT IN ('released','refunded')`,
+        [paymentIntentId, charge?.id ?? null, balanceTransaction?.fee ?? null, session.metadata!.payment_id],
+      )
+      await connection.execute(`UPDATE contracts SET status = 'cancelled' WHERE id = ? AND status = 'pending_funding'`, [fundingGate!.contract_id])
+      await connection.execute(
+        `INSERT INTO audit_log (organization_id, action, target_type, target_id, metadata)
+         VALUES (?, 'payment.blocked_funding_refund_started', 'payment', ?, ?)`,
+        [fundingGate!.client_org_id, session.metadata!.payment_id, JSON.stringify({ checkoutSessionId: session.id, paymentIntentId, contractId: fundingGate!.contract_id })],
+      )
+    })
+    const refund = await stripeClient().refunds.create({
+      payment_intent: paymentIntentId,
+      reason: 'requested_by_customer',
+      metadata: {
+        bureau_payment_id: session.metadata!.payment_id,
+        bureau_contract_id: String(fundingGate!.contract_id),
+        reason: Number(fundingGate.legacy_unverified_source) > 0 ? 'legacy_unverified_quote_blocked' : 'cancelled_contract_blocked',
+      },
+    }, { idempotencyKey: `bureau_blocked_funding_${session.metadata!.payment_id}` })
+    const refunded = refund.status === 'succeeded'
+    await transaction(async (connection) => {
+      await connection.execute(
+        `UPDATE payments SET status = ?, refunded_at = IF(?, UTC_TIMESTAMP(3), refunded_at) WHERE id = ? AND status <> 'released'`,
+        [refunded ? 'refunded' : 'refund_pending', refunded, session.metadata!.payment_id],
+      )
+      if (refunded) {
+        await connection.execute(
+          `UPDATE milestones SET status = 'refunded' WHERE id = ? AND status IN ('unfunded','funding','funded')`,
+          [fundingGate!.milestone_id],
+        )
+      }
+      await connection.execute(
+        `INSERT INTO audit_log (organization_id, action, target_type, target_id, metadata)
+         VALUES (?, ?, 'payment', ?, ?)`,
+        [fundingGate!.client_org_id, refunded ? 'payment.blocked_funding_refunded' : 'payment.blocked_funding_refund_pending',
+          session.metadata!.payment_id, JSON.stringify({ refundId: refund.id, refundStatus: refund.status, contractId: fundingGate!.contract_id })],
+      )
+    })
+    return
+  }
   await transaction(async (connection) => {
     await connection.execute(
       `UPDATE payments SET stripe_payment_intent_id = ?, stripe_charge_id = ?, processor_fee_cents = ?, status = 'paid', paid_at = UTC_TIMESTAMP(3)
@@ -426,7 +496,14 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
       }
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge
-        await execute(`UPDATE payments SET status = 'refunded', refunded_at = UTC_TIMESTAMP(3) WHERE stripe_charge_id = ?`, [charge.id])
+        await transaction(async (connection) => {
+          await connection.execute(`UPDATE payments SET status = 'refunded', refunded_at = UTC_TIMESTAMP(3) WHERE stripe_charge_id = ?`, [charge.id])
+          await connection.execute(
+            `UPDATE milestones m JOIN payments p ON p.milestone_id = m.id
+             SET m.status = 'refunded' WHERE p.stripe_charge_id = ? AND m.status IN ('unfunded','funding','funded')`,
+            [charge.id],
+          )
+        })
         break
       }
       default:
@@ -442,4 +519,37 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
     )
     throw error
   }
+}
+
+export async function expireBlockedQuoteCheckoutSessions() {
+  const blockedPayments = await rows<GenericRow>(
+    `SELECT p.id, p.stripe_checkout_session_id, p.status, m.id AS milestone_id
+     FROM payments p JOIN milestones m ON m.id = p.milestone_id JOIN contracts c ON c.id = m.contract_id
+     WHERE p.stripe_checkout_session_id IS NOT NULL
+       AND p.status IN ('created','checkout_open','refund_pending')
+       AND c.status = 'cancelled'
+     ORDER BY p.created_at ASC LIMIT 500`,
+  )
+  for (const payment of blockedPayments) {
+    try {
+      const session = await stripeClient().checkout.sessions.retrieve(String(payment.stripe_checkout_session_id))
+      if (session.status === 'open') {
+        await stripeClient().checkout.sessions.expire(session.id)
+        await transaction(async (connection) => {
+          await connection.execute(`UPDATE payments SET status = 'failed' WHERE id = ? AND status IN ('created','checkout_open')`, [payment.id])
+          await connection.execute(`UPDATE milestones SET status = 'unfunded' WHERE id = ? AND status = 'funding'`, [payment.milestone_id])
+        })
+      } else if (session.status === 'complete' && session.payment_status === 'paid') {
+        await processCheckout(session)
+      } else if (session.status === 'expired') {
+        await transaction(async (connection) => {
+          await connection.execute(`UPDATE payments SET status = 'failed' WHERE id = ? AND status IN ('created','checkout_open')`, [payment.id])
+          await connection.execute(`UPDATE milestones SET status = 'unfunded' WHERE id = ? AND status = 'funding'`, [payment.milestone_id])
+        })
+      }
+    } catch (error) {
+      console.error(`[billing-cleanup] Could not close blocked checkout ${payment.stripe_checkout_session_id}:`, error instanceof Error ? error.message : 'unknown error')
+    }
+  }
+  return blockedPayments.length
 }

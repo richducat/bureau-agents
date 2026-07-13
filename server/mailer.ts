@@ -77,22 +77,21 @@ export function sendTaskRequestReceipt(to: string, displayName: string, requestI
   )
 }
 
-export function sendUpworkQuoteReceipt(
+export function sendUpworkTransferReceipt(
   to: string,
   displayName: string,
   requestId: string,
   title: string,
   agentName: string,
   quoteWorkValueCents: number | null,
-  savingsCents: number | null,
 ) {
   const url = `${getConfig().APP_ORIGIN}/start?request=${encodeURIComponent(requestId)}`
-  const quoteLine = quoteWorkValueCents && savingsCents
-    ? `Your guaranteed Bureau work value is $${(quoteWorkValueCents / 100).toFixed(2)}, saving $${(savingsCents / 100).toFixed(2)} against the reference amount you supplied. This scope-and-price hold lasts 72 hours.`
-    : 'Your job is below the instant-guarantee threshold, so Bureau will review the scope and try to return a lower written quote.'
+  const quoteLine = quoteWorkValueCents
+    ? `Your automatic Bureau bounded-package work value is $${(quoteWorkValueCents / 100).toFixed(2)} for the selected service and submitted quantity. Bureau validated the Upwork URL format only; it did not access or verify an Upwork budget or proposal, so no external savings guarantee applies.`
+    : 'Bureau recorded the job reference, selected service, and quantity, but the request is outside automatic coverage or an active matching agent is not available. Operations will review it before any payable quote. No external savings guarantee applies.'
   return send(
     to,
-    quoteWorkValueCents ? `Your lower Bureau quote: ${title}` : `Bureau is reviewing: ${title}`,
+    quoteWorkValueCents ? `Your Bureau agent quote: ${title}` : `Bureau is reviewing: ${title}`,
     `Hi ${displayName}, ${agentName} matched your request. ${quoteLine}\n\nContinue securely: ${url}\n\nBureau is independent and is not affiliated with or endorsed by Upwork.`,
     `<p>Hi ${escapeHtml(displayName)},</p><p><strong>${escapeHtml(agentName)}</strong> matched your request.</p><p>${escapeHtml(quoteLine)}</p><p><a href="${escapeHtml(url)}">Continue securely</a></p><p><small>Bureau is independent and is not affiliated with or endorsed by Upwork.</small></p>`,
   )

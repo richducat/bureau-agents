@@ -15,7 +15,7 @@ export default function ServicesPage() {
     <section className="services-catalog" aria-label="Managed AI task examples">
       {managedServices.map((service, index) => <article key={service.id} id={service.id}>
         <div className="services-catalog__index">0{index + 1}</div>
-        <div className="services-catalog__main"><p className="overline">{service.eyebrow}</p><h2>{service.title}</h2><p>{service.description}</p><small>Good for: {service.goodFor}</small></div>
+        <div className="services-catalog__main"><p className="overline">{service.eyebrow}</p><h2>{service.title}</h2><p>{service.description}</p><small>Good for: {service.goodFor}</small><small>Base package: up to {service.unitCapacity.toLocaleString()} {service.unitLabel}</small></div>
         <ul>{service.deliverables.map((deliverable) => <li key={deliverable}><Check />{deliverable}</li>)}</ul>
         <div className="services-catalog__price"><span>Starting at</span><strong>${service.startingPrice}</strong><small><Clock3 />{service.turnaround}</small><Link className="button button--dark" to={`/start?service=${service.id}`}>Start this task <ArrowRight /></Link></div>
       </article>)}

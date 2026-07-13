@@ -51,11 +51,49 @@ describe('security boundaries', () => {
       .send({
         jobUrl: 'https://upwork.com.attacker.example/jobs/~0123456789',
         serviceId: 'website-fix',
+        scopeUnits: 1,
+      })
+      .expect(400)
+    expect(response.body.error.code).toBe('invalid_upwork_job_url')
+  })
+
+  it('rejects buyer-supplied comparison prices at the public quote boundary', async () => {
+    const browser = request.agent(createApp())
+    const csrf = await browser.get('/api/auth/csrf').set('origin', 'http://localhost:5173').expect(200)
+    const response = await browser
+      .post('/api/public/upwork-quotes/preview')
+      .set('origin', 'http://localhost:5173')
+      .set('x-csrf-token', csrf.body.csrfToken)
+      .send({
+        jobUrl: 'https://www.upwork.com/jobs/~0123456789',
+        serviceId: 'website-fix',
+        scopeUnits: 1,
         referenceType: 'posted_budget',
         referenceAmountCents: 50_000,
       })
       .expect(400)
-    expect(response.body.error.code).toBe('invalid_upwork_job_url')
+    expect(response.body.error.code).toBe('validation_failed')
+
+    const submission = await browser
+      .post('/api/public/upwork-quotes')
+      .set('origin', 'http://localhost:5173')
+      .set('x-csrf-token', csrf.body.csrfToken)
+      .send({
+        jobUrl: 'https://www.upwork.com/jobs/~0123456789',
+        serviceId: 'website-fix',
+        scopeUnits: 1,
+        referenceAmountCents: 50_000,
+        contactName: 'Fair Buyer',
+        email: 'fair@example.com',
+        title: 'Repair the production checkout',
+        details: 'Repair the reproducible checkout issue, verify the fix with tests, and provide a concise deployment record for review.',
+        desiredTiming: 'Flexible',
+        authorizationAttested: true,
+        catalogScopeAttested: true,
+        consent: true,
+      })
+      .expect(400)
+    expect(submission.body.error.code).toBe('validation_failed')
   })
 
   it('hashes passwords and never accepts the plaintext as a hash', async () => {

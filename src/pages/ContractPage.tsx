@@ -32,7 +32,7 @@ export default function ContractPage() {
     finally { setLoading(false) }
   }, [id])
   useEffect(() => { if (user) void load() }, [user, load])
-  const clientSide = Boolean(data && user?.organizations.some((organization) => organization.id === data.contract.client_org_id))
+  const clientSide = Boolean(data && data.contract.status !== 'cancelled' && user?.organizations.some((organization) => organization.id === data.contract.client_org_id))
   const operatorSide = Boolean(data && user?.organizations.some((organization) => organization.id === data.contract.operator_org_id))
   const progress = useMemo(() => data?.milestones.length ? Math.round(data.milestones.filter((milestone) => milestone.status === 'released').length / data.milestones.length * 100) : 0, [data])
   if (!user) return <Navigate to="/auth?mode=login" replace />
@@ -41,6 +41,10 @@ export default function ContractPage() {
 
   const fund = async (milestoneId: string) => {
     setError('')
+    if (data.contract.status === 'cancelled') {
+      setError('This contract was cancelled because its earlier quote was invalidated. Submit a fresh job-reference request for a new bounded quote.')
+      return
+    }
     try {
       const response = await apiFetch<{ checkoutUrl: string }>(`/billing/milestones/${milestoneId}/checkout`, { method: 'POST', headers: { 'idempotency-key': newIdempotencyKey(`milestone:${milestoneId}`) } })
       track('checkout_started', { milestoneId }); navigateToStripe(response.checkoutUrl)

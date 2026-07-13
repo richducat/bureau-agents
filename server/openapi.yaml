@@ -160,22 +160,22 @@ paths:
     post:
       tags: [Public]
       security: [{ csrf: [] }]
-      summary: Validate a client-supplied Upwork job reference and preview guarantee eligibility
-      description: Bureau validates the URL locally and never fetches or scrapes the Upwork page.
+      summary: Validate an Upwork job-reference URL and preview Bureau catalog pricing
+      description: Bureau validates the URL format locally, calculates package count from the selected service and submitted quantity, applies its published bounded-package rate, and never fetches or scrapes the Upwork page. Requests above the automatic service limit return a nonpayable manual-review result. The response explicitly marks the external comparison unverified.
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/UpworkQuoteCore' }
       responses:
-        '200': { description: Active-agent match and eligible lower-quote preview or manual-review threshold }
+        '200': { description: Bureau catalog quote and active-agent match, or agent-availability review state }
         '400': { $ref: '#/components/responses/Error' }
   /public/upwork-quotes:
     post:
       tags: [Public]
       security: [{ csrf: [] }]
-      summary: Save an authorized Upwork comparison as a payable managed work request
-      description: Eligible unchanged scopes receive a 72-hour Bureau quote at least 10 percent below the client-attested reference amount.
+      summary: Save an Upwork-referenced scope with an automatic Bureau catalog quote
+      description: The buyer cannot supply a price or comparison amount. Bureau stores the normalized job-reference URL, calculates its catalog work value from the selected service and submitted quantity, records explicit package-scope attestation and URL-only validation, and makes no unverified external savings claim. Oversized requests are stored for nonpayable manual review.
       requestBody:
         required: true
         content:
@@ -184,7 +184,7 @@ paths:
               allOf:
                 - { $ref: '#/components/schemas/UpworkQuoteCore' }
                 - type: object
-                  required: [contactName, email, title, details, desiredTiming, authorizationAttested, consent]
+                  required: [contactName, email, title, details, desiredTiming, authorizationAttested, catalogScopeAttested, consent]
                   properties:
                     contactName: { type: string, minLength: 2, maxLength: 160 }
                     businessName: { type: string, maxLength: 200 }
@@ -196,9 +196,10 @@ paths:
                     source: { type: string, maxLength: 120 }
                     website: { type: string, maxLength: 0, description: Spam honeypot; must remain empty }
                     authorizationAttested: { const: true }
+                    catalogScopeAttested: { const: true, description: Buyer confirms that the submitted quantity and published package inclusions and exclusions describe the payable scope }
                     consent: { const: true }
       responses:
-        '201': { description: Guaranteed quote or manual-review work request created }
+        '201': { description: Bureau catalog quote or agent-availability review request created }
         '400': { $ref: '#/components/responses/Error' }
   /public/support:
     post:
@@ -412,28 +413,6 @@ paths:
         - { in: path, name: requestId, required: true, schema: { type: string, format: uuid } }
       responses:
         '200': { description: Managed task request updated }
-  /admin/task-requests/{requestId}/upwork-quote:
-    post:
-      tags: [Admin]
-      security: [{ session: [], csrf: [] }]
-      summary: Issue or refresh a qualifying 72-hour Upwork comparison guarantee
-      description: Admin-only. The server rejects any work value above 90 percent of the stored client-attested reference amount and requires an active category-matched agent.
-      parameters:
-        - { in: path, name: requestId, required: true, schema: { type: string, format: uuid } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [workValueCents, scopeNote]
-              properties:
-                workValueCents: { type: integer, minimum: 500, maximum: 100000000 }
-                agentId: { type: string, format: uuid }
-                scopeNote: { type: string, minLength: 20, maxLength: 2000 }
-      responses:
-        '200': { description: Guaranteed lower quote issued and customer notification requested }
-        '400': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     session:
@@ -476,7 +455,7 @@ components:
   schemas:
     UpworkQuoteCore:
       type: object
-      required: [jobUrl, serviceId, referenceType, referenceAmountCents]
+      required: [jobUrl, serviceId, scopeUnits]
       properties:
         jobUrl:
           type: string
@@ -484,8 +463,11 @@ components:
           maxLength: 2048
           description: HTTPS Upwork job-post URL supplied by its client or authorized poster
         serviceId: { enum: [market-research, spreadsheet-cleanup, website-fix, support-backlog, content-brief, invoice-review] }
-        referenceType: { enum: [posted_budget, proposal_total] }
-        referenceAmountCents: { type: integer, minimum: 5000, maximum: 100000000 }
+        scopeUnits:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Work quantity in the unit published for the selected service; Bureau derives package count and price server-side
     Agent:
       type: object
       required: [id, slug, name, tagline, category, verificationLevel, operator, capabilities]

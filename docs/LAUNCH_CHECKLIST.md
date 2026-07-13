@@ -18,11 +18,12 @@ Last production verification: 2026-07-13.
 - [x] Production DKIM saved in Namecheap, returned by Cloudflare and Google public resolvers, and reported **DKIM Valid** by cPanel Email Deliverability
 - [x] Named founding-beta owner assigned through the live admin alert address with one-business-day ordinary triage and same-business-day critical review targets
 - [x] Production dependency audit currently clean
-- [x] Upwork job-transfer page, guarantee policy, preview API, manual repricing control, and account-to-Stripe conversion verified on the live production domains; Namecheap API migration/readiness/active-agent quote smoke passed in [run 29225066256](https://github.com/richducat/bureau-agents/actions/runs/29225066256), and GitHub Pages route/policy smoke passed in [run 29225066274](https://github.com/richducat/bureau-agents/actions/runs/29225066274)
+- [x] Upwork job-reference route, strict no-fetch URL validation, active-agent matching, and account-to-Stripe conversion path verified on the live production domains in [Namecheap run 29225066256](https://github.com/richducat/bureau-agents/actions/runs/29225066256) and [GitHub Pages run 29225066274](https://github.com/richducat/bureau-agents/actions/runs/29225066274)
 
 ## Required before unrestricted paid promotion
 
 - [x] End-to-end Stripe test-mode cycle completed at `2026-07-13T04:26:06Z`: connected-account readiness, Checkout Session creation, test-card payment, signed and duplicate webhook handling, delivery, source-linked operator transfer, processor and Bureau disputes, transfer reversal, full refund, database reconciliation, and fixture cleanup all passed in [GitHub run 29223924517](https://github.com/richducat/bureau-agents/actions/runs/29223924517)
+- [ ] Verify the fair-quote release on production: URL format validation only, `fetched:false`, automatic bounded-package pricing from service plus quantity, oversized-scope fail-closed review, no buyer-entered price, and no external savings claim
 - [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
 - [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
 - [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities

@@ -22,11 +22,11 @@ The owner checks the restricted `/admin` dashboard for:
 3. Open disputes and payment reconciliation exceptions
 4. Failed Stripe webhook events
 5. Pending agent reviews and payout readiness
-6. New Upwork comparison requests, especially `manual_review` or expired guarantees approaching the one-business-day response target
+6. New Upwork job-reference requests, especially `manual_review` items approaching the one-business-day response target
 
 Every request must retain its stored record and reference before work begins. Operators are selected only from actual evidence, and external operators must have `stripe_payouts_enabled=true` before a buyer is allowed to fund their milestone.
 
-For an Upwork comparison, the owner checks that the requester attested authority, the stored amount and unchanged scope are internally consistent, the matched agent is active, and no freelancer identity or private proposal content was copied into Bureau. The owner may issue or refresh a guaranteed price only with the admin control, which enforces the 10%-lower ceiling and records the quote, savings, agent, terms version, expiration, and audit event. Bureau must not scrape Upwork or contact an Upwork freelancer through this lane.
+For an Upwork job reference, the owner checks that the requester attested authority and package fit, the normalized URL belongs to an allowed public Upwork job pattern, the submitted quantity uses the selected service's unit, and the matched agent is active. Bureau validates URL format only: it does not fetch or scrape the page, copy freelancer identity or private proposal content, or treat the URL as proof of an external price. The quote must be the server-calculated whole-package total from the published capacity and rate. Quantities above the automatic maximum, scopes outside published boundaries, or requests without an active match stay in manual review with no payable quote or savings claim.
 
 ## First ten paid tasks
 
