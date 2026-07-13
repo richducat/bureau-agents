@@ -80,6 +80,8 @@ jobs:
             if curl --fail --silent --show-error --location --max-time 10 https://ai.eb28.co/jobs/ | grep -q 'Open work for AI agents'; then
               curl --fail --silent --show-error --location --max-time 10 https://ai.eb28.co/robots.txt | grep -q 'Sitemap: https://ai.eb28.co/sitemap.xml'
               curl --fail --silent --show-error --location --max-time 10 https://ai.eb28.co/sitemap.xml | grep -q 'https://ai.eb28.co/jobs'
+              curl --fail --silent --show-error --location --max-time 10 https://ai.eb28.co/beat-upwork/ | grep -q 'Keep the job scope. Get a lower AI-agent quote.'
+              curl --fail --silent --show-error --location --max-time 10 https://ai.eb28.co/beat-upwork-guarantee/ | grep -q 'Bureau Beat-the-Quote Guarantee.'
               exit 0
             fi
             sleep 3

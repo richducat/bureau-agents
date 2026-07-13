@@ -5,6 +5,9 @@ import { z } from 'zod'
 import { execute, one, rows, transaction } from '../db.js'
 import { asyncRoute, createOpaqueToken, HttpError, requireAuth, requirePlatformRole, requireVerifiedEmail, sha256 } from '../security.js'
 import { stripeClient } from '../stripe.js'
+import { sendUpworkQuoteReceipt } from '../mailer.js'
+import { managedService } from '../managed.js'
+import { UPWORK_GUARANTEE_HOLD_HOURS, UPWORK_GUARANTEE_TERMS_VERSION } from '../upwork-quote.js'
 
 type GenericRow = RowDataPacket
 const uuid = z.string().uuid()
@@ -27,6 +30,7 @@ adminRouter.get('/metrics', asyncRoute(async (_req, res) => {
         (SELECT COUNT(*) FROM users WHERE status IN ('pending','active')) AS users,
         (SELECT COUNT(*) FROM jobs WHERE status = 'open') AS open_jobs,
         (SELECT COUNT(*) FROM task_requests WHERE status IN ('new','reviewing','quoted')) AS active_task_requests,
+        (SELECT COUNT(*) FROM task_requests WHERE source_platform = 'upwork') AS upwork_comparisons,
         (SELECT COUNT(*) FROM proposals WHERE status = 'submitted') AS proposals,
         (SELECT COUNT(*) FROM contracts WHERE status NOT IN ('cancelled')) AS contracts,
         (SELECT COUNT(*) FROM subscriptions WHERE status IN ('active','trialing')) AS paid_subscriptions`,
@@ -236,7 +240,10 @@ const taskRequestStatus = z.enum(['new','reviewing','quoted','accepted','payment
 adminRouter.get('/task-requests', asyncRoute(async (req, res) => {
   const status = taskRequestStatus.optional().parse(req.query.status)
   const requests = await rows<GenericRow>(
-    `SELECT id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing, source, status, admin_note, created_at, updated_at
+    `SELECT id, contact_name, business_name, email, service_id, title, details, budget_range, desired_timing,
+      source, source_platform, source_job_url, source_reference_type, source_reference_cents, guarantee_status,
+      guarantee_discount_basis_points, guarantee_savings_cents, guarantee_terms_version, guarantee_attested_at,
+      guarantee_expires_at, assigned_agent_id, quote_work_value_cents, status, admin_note, created_at, updated_at
      FROM task_requests WHERE (? IS NULL OR status = ?) ORDER BY FIELD(status, 'new','reviewing','quoted','accepted','payment_ready','funded','in_progress','delivered','completed','declined'), created_at DESC LIMIT 1000`,
     [status ?? null, status ?? null],
   )
@@ -259,4 +266,70 @@ adminRouter.patch('/task-requests/:requestId', asyncRoute(async (req, res) => {
     [req.authUser!.id, requestId, JSON.stringify({ status: input.status })],
   )
   res.json({ request: { id: requestId, status: input.status } })
+}))
+
+adminRouter.post('/task-requests/:requestId/upwork-quote', requirePlatformRole('admin'), asyncRoute(async (req, res) => {
+  const requestId = uuid.parse(req.params.requestId)
+  const input = z.object({
+    workValueCents: z.number().int().min(500).max(100_000_000),
+    agentId: uuid.optional(),
+    scopeNote: z.string().trim().min(20).max(2_000),
+  }).parse(req.body)
+  const request = await one<GenericRow>(
+    `SELECT id, contact_name, email, service_id, title, source_platform, source_reference_type,
+      source_reference_cents, assigned_agent_id
+     FROM task_requests WHERE id = ?`,
+    [requestId],
+  )
+  if (!request) throw new HttpError(404, 'Task request not found.', 'task_request_not_found')
+  if (request.source_platform !== 'upwork' || !request.source_reference_cents) {
+    throw new HttpError(400, 'This route only issues Upwork comparison guarantees.', 'not_upwork_comparison')
+  }
+
+  const referenceAmountCents = Number(request.source_reference_cents)
+  const maximumWorkValueCents = Math.floor(referenceAmountCents * 9_000 / 10_000)
+  if (input.workValueCents > maximumWorkValueCents) {
+    throw new HttpError(400, `The guaranteed work value cannot exceed $${(maximumWorkValueCents / 100).toFixed(2)}.`, 'guarantee_price_too_high')
+  }
+  const agentId = input.agentId ?? (request.assigned_agent_id ? String(request.assigned_agent_id) : null)
+  if (!agentId) throw new HttpError(400, 'Assign an active matching agent before issuing the quote.', 'agent_required')
+  const agent = await one<GenericRow>('SELECT id, name, category, status FROM agents WHERE id = ?', [agentId])
+  if (!agent || agent.status !== 'active') throw new HttpError(409, 'The selected agent is not active.', 'agent_not_available')
+  const service = managedService(String(request.service_id))
+  if (service && agent.category !== service.category) {
+    throw new HttpError(400, 'The selected agent does not match the requested service category.', 'agent_category_mismatch')
+  }
+
+  const savingsCents = referenceAmountCents - input.workValueCents
+  const discountBasisPoints = Math.floor(savingsCents * 10_000 / referenceAmountCents)
+  const expiresAt = new Date(Date.now() + UPWORK_GUARANTEE_HOLD_HOURS * 60 * 60 * 1_000)
+  const referenceLabel = request.source_reference_type === 'proposal_total' ? 'bona fide proposal total' : 'posted project budget'
+  const quoteSummary = `Bureau Beat-the-Quote Guarantee: $${(input.workValueCents / 100).toFixed(2)} work value, ${discountBasisPoints / 100}% below the attested Upwork ${referenceLabel}, for the unchanged submitted scope. ${input.scopeNote} Price hold expires ${expiresAt.toISOString()}. Taxes, Bureau client fees, and approved pass-through expenses are excluded from the comparison.`
+
+  await transaction(async (connection) => {
+    await connection.execute(
+      `UPDATE task_requests SET assigned_agent_id = ?, quote_work_value_cents = ?, quote_summary = ?, status = 'quoted',
+        guarantee_status = 'eligible', guarantee_discount_basis_points = ?, guarantee_savings_cents = ?,
+        guarantee_terms_version = ?, guarantee_expires_at = ?, quoted_at = UTC_TIMESTAMP(3)
+       WHERE id = ?`,
+      [agentId, input.workValueCents, quoteSummary, discountBasisPoints, savingsCents,
+        UPWORK_GUARANTEE_TERMS_VERSION, expiresAt, requestId],
+    )
+    await connection.execute(
+      `INSERT INTO audit_log (actor_user_id, action, target_type, target_id, metadata)
+       VALUES (?, 'task_request.upwork_quote_issued', 'task_request', ?, ?)`,
+      [req.authUser!.id, requestId, JSON.stringify({ agentId, referenceAmountCents, workValueCents: input.workValueCents, savingsCents, discountBasisPoints, expiresAt })],
+    )
+  })
+
+  void sendUpworkQuoteReceipt(
+    String(request.email), String(request.contact_name), requestId, String(request.title), String(agent.name),
+    input.workValueCents, savingsCents,
+  ).catch((error) => console.error(`[${req.requestId}] revised comparison quote email failed:`, error instanceof Error ? error.message : 'unknown error'))
+
+  res.json({
+    request: { id: requestId, status: 'quoted' },
+    quote: { workValueCents: input.workValueCents, savingsCents, discountBasisPoints, expiresAt: expiresAt.toISOString() },
+    match: { agentId, name: agent.name },
+  })
 }))

@@ -33,6 +33,7 @@ const PaymentSettingsPage = lazy(() => import('./pages/PaymentSettingsPage'))
 const CategoryPage = lazy(() => import('./pages/CategoryPage'))
 const GuidePage = lazy(() => import('./pages/GuidePage'))
 const DocsPage = lazy(() => import('./pages/DocsPage'))
+const UpworkQuotePage = lazy(() => import('./pages/UpworkQuotePage'))
 
 function AppRoutes() {
   const { toast } = useApp()
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/start" element={<TaskIntakePage />} />
+        <Route path="/beat-upwork" element={<UpworkQuotePage />} />
         <Route path="/how-it-works" element={<MarketingPage />} />
         <Route path="/for-businesses" element={<MarketingPage />} />
         <Route path="/for-agent-builders" element={<MarketingPage />} />
@@ -59,6 +61,7 @@ function AppRoutes() {
         <Route path="/privacy" element={<LegalPage />} />
         <Route path="/acceptable-use" element={<LegalPage />} />
         <Route path="/payment-protection" element={<LegalPage />} />
+        <Route path="/beat-upwork-guarantee" element={<LegalPage />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/categories/:slug" element={<CategoryPage />} />
         <Route path="/guides/:slug" element={<GuidePage />} />

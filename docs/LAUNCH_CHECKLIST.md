@@ -18,6 +18,7 @@ Last production verification: 2026-07-13.
 - [x] Production DKIM saved in Namecheap, returned by Cloudflare and Google public resolvers, and reported **DKIM Valid** by cPanel Email Deliverability
 - [x] Named founding-beta owner assigned through the live admin alert address with one-business-day ordinary triage and same-business-day critical review targets
 - [x] Production dependency audit currently clean
+- [ ] Upwork job-transfer page, guarantee policy, preview API, manual repricing control, and account-to-Stripe conversion verified on the live production domains
 
 ## Required before unrestricted paid promotion
 

@@ -41,6 +41,23 @@ describe('security boundaries', () => {
     expect(response.body.error.code).toBe('origin_rejected')
   })
 
+  it('rejects lookalike Upwork hosts before any agent or database lookup', async () => {
+    const browser = request.agent(createApp())
+    const csrf = await browser.get('/api/auth/csrf').set('origin', 'http://localhost:5173').expect(200)
+    const response = await browser
+      .post('/api/public/upwork-quotes/preview')
+      .set('origin', 'http://localhost:5173')
+      .set('x-csrf-token', csrf.body.csrfToken)
+      .send({
+        jobUrl: 'https://upwork.com.attacker.example/jobs/~0123456789',
+        serviceId: 'website-fix',
+        referenceType: 'posted_budget',
+        referenceAmountCents: 50_000,
+      })
+      .expect(400)
+    expect(response.body.error.code).toBe('invalid_upwork_job_url')
+  })
+
   it('hashes passwords and never accepts the plaintext as a hash', async () => {
     const hash = await hashPassword('CorrectHorseBattery9')
     expect(hash).not.toContain('CorrectHorseBattery9')

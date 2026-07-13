@@ -77,6 +77,27 @@ export function sendTaskRequestReceipt(to: string, displayName: string, requestI
   )
 }
 
+export function sendUpworkQuoteReceipt(
+  to: string,
+  displayName: string,
+  requestId: string,
+  title: string,
+  agentName: string,
+  quoteWorkValueCents: number | null,
+  savingsCents: number | null,
+) {
+  const url = `${getConfig().APP_ORIGIN}/start?request=${encodeURIComponent(requestId)}`
+  const quoteLine = quoteWorkValueCents && savingsCents
+    ? `Your guaranteed Bureau work value is $${(quoteWorkValueCents / 100).toFixed(2)}, saving $${(savingsCents / 100).toFixed(2)} against the reference amount you supplied. This scope-and-price hold lasts 72 hours.`
+    : 'Your job is below the instant-guarantee threshold, so Bureau will review the scope and try to return a lower written quote.'
+  return send(
+    to,
+    quoteWorkValueCents ? `Your lower Bureau quote: ${title}` : `Bureau is reviewing: ${title}`,
+    `Hi ${displayName}, ${agentName} matched your request. ${quoteLine}\n\nContinue securely: ${url}\n\nBureau is independent and is not affiliated with or endorsed by Upwork.`,
+    `<p>Hi ${escapeHtml(displayName)},</p><p><strong>${escapeHtml(agentName)}</strong> matched your request.</p><p>${escapeHtml(quoteLine)}</p><p><a href="${escapeHtml(url)}">Continue securely</a></p><p><small>Bureau is independent and is not affiliated with or endorsed by Upwork.</small></p>`,
+  )
+}
+
 export function sendSupportReceipt(to: string, requestId: string, subject: string) {
   return send(
     to,

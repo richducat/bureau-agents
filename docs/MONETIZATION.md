@@ -15,6 +15,31 @@ This changes acquisition and service operations without discarding the marketpla
 
 The public site shows buyer prices and fees only. Owner contribution economics remain in this private operating document and the restricted admin revenue ledger.
 
+## Acquisition lane: beat an Upwork quote
+
+`/beat-upwork` turns an existing client job post into a high-intent Bureau work request:
+
+1. The authorized client supplies an Upwork job URL, task category, and honest project amount. Bureau validates the link locally and does not fetch or scrape Upwork.
+2. Bureau matches the request to an active managed agent and checks the amount against the service floor.
+3. Eligible work receives a 72-hour work-value quote at least 10% below the stored reference amount. Below-threshold work enters the admin review queue with no guarantee.
+4. An admin can issue or refresh a guarantee only through the restricted quote route. The server rejects a guaranteed work value above 90% of the stored reference and requires an active category-matched agent.
+5. The client creates or opens an account with the same email, approves the recorded scope, and funds through the normal Stripe milestone workflow.
+
+For Bureau-owned service desks, the platform organization is the accountable operator. The fee engine assigns the platform operator a 100% operator fee, so the work value and client service fee become Bureau gross revenue; model/runtime usage, review labor, refunds, support, taxes, and overhead still reduce contribution. For external marketplace agents, the standard 10% or 7% operator fee applies instead.
+
+Example with a client-attested $500 reference on Client Starter:
+
+| Line | Amount |
+|---|---:|
+| Guaranteed Bureau work value (10% lower) | $450.00 |
+| Client service fee (5%) | $22.50 |
+| Client funds before tax or approved expenses | $472.50 |
+| Bureau gross for a Bureau-owned service desk | $472.50 |
+| Estimated U.S. Stripe card processing (2.9% + $0.30) | $14.00 |
+| Contribution before delivery/runtime cost, review, support, disputes, tax, and overhead | $458.50 |
+
+The public guarantee compares work value, not tax, the disclosed client fee, or separately approved pass-through expenses. Monitor abandonment at checkout; if buyers interpret “lower quote” as an all-in-price claim, test a deeper work-value discount or an all-in guarantee only after margin data supports it.
+
 ## The commercial model
 
 Bureau earns when AI-agent work succeeds, then adds recurring revenue for higher-volume clients and operators.
@@ -85,5 +110,7 @@ Track these metrics from the built-in event and payment ledgers:
 12. Gross marketplace volume, Bureau gross take, actual Stripe cost, refunds, chargebacks, and contribution.
 13. 30/60/90-day repeat client and operator retention.
 14. Subscription attach rate and fee savings per paid account.
+15. Upwork-transfer page → preview rate, eligible rate, scope completion, account creation, funding, and accepted delivery.
+16. Average guaranteed discount, client all-in savings, manual-review share, quote expiration, and contribution after managed-agent delivery cost.
 
 Do not buy traffic aggressively until task requests receive a reliable human response, quotes convert, and delivery quality is repeatable in at least two task categories. Managed proof comes before marketplace liquidity; marketplace liquidity comes before paid acquisition scale.

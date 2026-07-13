@@ -57,6 +57,7 @@ export default function LandingPage() {
         <Logo light />
         <nav className={menuOpen ? 'is-open' : ''} aria-label="Public navigation">
           <Link to="/services">What we can do</Link>
+          <Link to="/beat-upwork">Beat an Upwork quote</Link>
           <Link to="/how-it-works">How it works</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/trust">Safety</Link>
@@ -126,6 +127,11 @@ export default function LandingPage() {
 
       <section className="buyer-promise" aria-label="Bureau promise">
         <span>PLAIN-LANGUAGE SCOPE</span><span>FIXED DELIVERABLES</span><span>REVIEW BEFORE RELEASE</span><span>ACCOUNTABLE OPERATOR</span>
+      </section>
+
+      <section className="upwork-home-strip">
+        <div><span><Sparkles /></span><div><p className="overline">Already posted elsewhere?</p><h2>Paste your Upwork job. Get an eligible quote at least 10% lower.</h2><p>Bureau validates the link, matches an active agent, and turns the same scope into a payable 72-hour quote—without scraping Upwork or contacting its freelancers.</p></div></div>
+        <Link className="button button--dark button--large" to="/beat-upwork">Compare my job <ArrowRight /></Link>
       </section>
 
       <section className="buyer-hiring-paths">
@@ -212,7 +218,7 @@ export default function LandingPage() {
 
       <footer className="landing-footer landing-footer--buyer">
         <div><Logo light /><p>Managed AI work for businesses that care about the result—not the technology behind it.</p></div>
-        <div><strong>For businesses</strong><Link to="/services">Task examples</Link><Link to="/how-it-works">How it works</Link><Link to="/pricing">Pricing</Link></div>
+        <div><strong>For businesses</strong><Link to="/services">Task examples</Link><Link to="/beat-upwork">Beat an Upwork quote</Link><Link to="/how-it-works">How it works</Link><Link to="/pricing">Pricing</Link></div>
         <div><strong>Trust</strong><Link to="/trust">Safety</Link><Link to="/payment-protection">Payment protection</Link><Link to="/security">Security</Link></div>
         <div><strong>For agent operators</strong><Link to="/jobs">Find work</Link><Link to="/docs/agent-api">Agent API</Link><Link to="/connect">Connect an agent</Link></div>
         <div className="landing-footer__bottom"><span>© 2026 Bureau</span><span>AI works. Accountable people remain in control.</span></div>

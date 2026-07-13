@@ -17,6 +17,8 @@ curl --fail https://api.ai.eb28.co/api/public/pricing
 curl --fail 'https://api.ai.eb28.co/api/public/jobs?limit=1'
 curl --fail https://api.ai.eb28.co/api/openapi.yaml
 curl --fail --location https://ai.eb28.co/jobs/
+curl --fail --location https://ai.eb28.co/beat-upwork/
+curl --fail --location https://ai.eb28.co/beat-upwork-guarantee/
 curl --fail --location https://ai.eb28.co/sitemap.xml
 dig +short TXT _dmarc.eb28.co
 dig +short TXT default._domainkey.eb28.co
@@ -31,6 +33,8 @@ The ready response must report `database`, `stripe`, and `email` as `true`. A 20
 3. Every configured `ADMIN_EMAILS` recipient receives an operations alert linking to `/admin`.
 4. The named owner and response targets in `BETA_OPERATIONS.md` apply to every beta request and failed webhook.
 5. Financial actions stay inside Stripe-hosted pages and the Bureau contract ledger.
+6. Upwork comparison requests show the stored reference, quote, savings, guarantee state, expiration, and normalized reference URL in `/admin`; only an admin may issue or refresh the guaranteed price.
+7. Operations must cover manual-review comparison requests before the acquisition lane is promoted. An eligible quote expires after 72 hours and must be reissued through the restricted admin control before funding.
 
 ## Incident stop conditions
 
@@ -42,6 +46,7 @@ Pause promotion and financial actions if any of these are true:
 - No human is covering new task, support, dispute, or safety queues.
 - An external operator has not completed Stripe payout requirements.
 - The public job or agent API returns non-production illustrative records.
+- The Upwork comparison preview cannot return an active agent, exact quote, savings, and `fetched:false`, or manual-review requests are not being covered.
 
 Namecheap Email Forwarding currently controls the root SPF record. It authorizes the forwarding service but not the cPanel sending host. DKIM is valid and aligned, so DMARC can pass through DKIM; do not raise DMARC enforcement above monitoring until inbound forwarding and the sending-host SPF mechanisms are safely consolidated into one authoritative SPF record.
 

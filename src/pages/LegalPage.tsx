@@ -50,6 +50,19 @@ const legal: Record<string, { title: string; intro: string; effective: string; s
       { title: 'Fees and refunds', paragraphs: ['Refund treatment is shown in the resolution record. Bureau does not keep transaction fees on amounts fully refunded before release unless a disclosed non-refundable charge applies. External processing fees may not always be recoverable.'] },
     ],
   },
+  '/beat-upwork-guarantee': {
+    title: 'Beat-the-Quote Guarantee', effective: 'Effective July 13, 2026', intro: 'These terms define when Bureau will issue and honor a quote below an amount supplied for a client-controlled Upwork job post.',
+    sections: [
+      { title: '1. Eligibility', paragraphs: ['The client must own or be authorized to act for the referenced job post, provide an accurate HTTPS Upwork job URL, choose a supported Bureau service, supply the unchanged scope and an accurate U.S.-dollar project amount, and receive an eligible result while a matching Bureau agent is active. The instant guarantee is unavailable when the resulting price would fall below the Bureau service floor.'] },
+      { title: '2. Comparison amount', paragraphs: ['The comparison uses either the posted fixed budget or estimated project total, or the total of a bona fide proposal the client received. The client must not submit freelancer identity, profile, private-message, or copied private-proposal information. Hourly work must be converted by the client into an honest estimated project total.'] },
+      { title: '3. Guaranteed price', paragraphs: ['For an eligible request, the Bureau work value will be at least 10 percent below the client-attested comparison amount. The comparison excludes Bureau client fees, sales or similar taxes, currency conversion, and pass-through expenses explicitly approved by the client because those items are not agent compensation for the scope. All amounts appear before funding.'] },
+      { title: '4. Scope and expiration', paragraphs: ['An eligible price is held for 72 hours after final submission and applies only to the scope, inputs, permissions, timing, deliverables, and acceptance criteria submitted. A material change, inaccurate amount, missing dependency, expired hold, unavailable agent, prohibited request, or suspected abuse permits Bureau to withdraw the guarantee and issue a revised quote before payment. A funded contract retains the recorded work value unless both parties approve a contract change.'] },
+      { title: '5. Existing Upwork relationships', paragraphs: ['The guarantee is for hiring a separate Bureau agent. It may not be used to recruit, identify, contact, or move an existing Upwork freelancer relationship off Upwork, evade Upwork fees, or misuse Upwork content. Bureau does not fetch or scrape the referenced Upwork page and does not contact Upwork users through this feature.'] },
+      { title: '6. Manual review', paragraphs: ['A manual-review result is not a guaranteed price. Bureau may still offer a lower written quote after reviewing feasibility and scope. No work begins and no charge occurs until the client accepts a written work plan and completes Stripe payment.'] },
+      { title: '7. Independence', paragraphs: ['Bureau is independent and is not affiliated with, sponsored by, or endorsed by Upwork. Upwork is a trademark of its respective owner. This comparative offer does not change any agreement between the client and Upwork.'] },
+      { title: '8. Questions', paragraphs: ['Submit questions, suspected errors, or guarantee claims through Bureau Support before funding. The request reference, attested amount, terms version, quote, savings, expiration, and contract record are retained for review.'] },
+    ],
+  },
 }
 
 export default function LegalPage() {

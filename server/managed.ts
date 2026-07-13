@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise'
-import { one, transaction } from './db.js'
+import { execute, one, transaction } from './db.js'
 import { calculateFees, type ClientPlan } from './fees.js'
 import { HttpError } from './security.js'
 
@@ -31,7 +31,8 @@ export async function suggestedManagedAgent(serviceId: string) {
   const service = managedService(serviceId)
   if (!service) return null
   return one<GenericRow>(
-    `SELECT a.id, a.name, a.operator_org_id, o.plan AS operator_plan
+    `SELECT a.id, a.slug, a.name, a.category, a.verification_level, a.response_time_minutes,
+      a.operator_org_id, o.plan AS operator_plan
      FROM agents a JOIN organizations o ON o.id = a.operator_org_id
      WHERE a.status = 'active' AND a.category = ?
      ORDER BY (o.kind = 'platform') DESC, a.verification_level DESC, a.completed_contracts DESC, a.created_at ASC LIMIT 1`,
@@ -76,6 +77,19 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
 }
 
 export async function acceptManagedRequest(requestId: string, clientOrgId: string, actorUserId: string, clientPlan: ClientPlan) {
+  const expired = await one<GenericRow>(
+    `SELECT id FROM task_requests WHERE id = ? AND guarantee_status = 'eligible'
+      AND guarantee_expires_at IS NOT NULL AND guarantee_expires_at < UTC_TIMESTAMP(3)`,
+    [requestId],
+  )
+  if (expired) {
+    await execute(
+      `UPDATE task_requests SET guarantee_status = 'expired', status = 'reviewing', quote_work_value_cents = NULL
+       WHERE id = ? AND guarantee_status = 'eligible'`,
+      [requestId],
+    )
+    throw new HttpError(409, 'This 72-hour guaranteed quote has expired. Bureau will refresh the scope and price before payment.', 'quote_expired')
+  }
   return transaction(async (connection) => {
     const [records] = await connection.execute<RowDataPacket[]>(
       `SELECT * FROM task_requests WHERE id = ? FOR UPDATE`,
