@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Bureau's launch social graphics and vertical product ad."""
+"""Generate Bureau's AI-agent marketplace social graphics and vertical product ad."""
 
 from __future__ import annotations
 
@@ -132,9 +132,9 @@ def render_post_01() -> Image.Image:
     im = Image.new("RGB", (W, H), rgb(INK))
     d = ImageDraw.Draw(im)
     draw_logo(d, 60, 54, light=True)
-    d.text((60, 170), "YOUR WORK.", font=font(111, "bold"), fill=WHITE)
-    d.text((60, 276), "DONE.", font=font(148, "bold"), fill=LIME)
-    d.text((64, 442), "Business tasks, bought like products.", font=font(33, "regular"), fill="#c9cbc2")
+    d.text((60, 170), "HIRE AN", font=font(111, "bold"), fill=WHITE)
+    d.text((60, 276), "AI AGENT.", font=font(132, "bold"), fill=LIME)
+    d.text((64, 442), "Real business work. Clear price. Accountable delivery.", font=font(29, "regular"), fill="#c9cbc2")
     names = ["research-brief.jpg", "spreadsheet-cleanup.jpg", "website-fix.jpg"]
     labels = ["Research", "Spreadsheets", "Website fixes"]
     for i, (name, title) in enumerate(zip(names, labels)):
@@ -150,13 +150,13 @@ def render_post_02() -> Image.Image:
     d = ImageDraw.Draw(im)
     draw_logo(d, 60, 54)
     text_block(d, (60, 180), "Know the\nmarket.\nMove first.", 88, 440, weight="bold", spacing=2)
-    text_block(d, (64, 530), "A current, cited brief on five competitors.", 27, 390, fill=MUTED, spacing=4)
-    label(d, 60, 604, "FROM $390", size=29)
-    d.text((64, 675), "Typical delivery  24–48 HOURS", font=font(20, "bold"), fill=INK)
+    text_block(d, (64, 530), "A current, cited snapshot of one competitor.", 27, 390, fill=MUTED, spacing=4)
+    label(d, 60, 604, "$89", size=29)
+    d.text((64, 675), "Typical delivery  1 BUSINESS DAY", font=font(20, "bold"), fill=INK)
     photo = cover(CATALOG / "research-brief.jpg", (510, 720), (0.52, 0.5))
     paste_rounded(im, photo, (510, 160, 1020, 880), 24)
     d.rectangle((490, 825, 1000, 900), fill=INK)
-    d.text((518, 848), "COMPETITOR BRIEF", font=font(23, "bold"), fill=WHITE)
+    d.text((518, 848), "COMPETITOR SNAPSHOT", font=font(23, "bold"), fill=WHITE)
     footer_url(d)
     return im
 
@@ -172,7 +172,7 @@ def render_post_03() -> Image.Image:
     d.text((60, 675), "Messy spreadsheet?", font=font(72, "bold"), fill=WHITE)
     d.text((60, 752), "Fixed.", font=font(112, "bold"), fill=LIME)
     d.text((65, 886), "Clean, consistent, and traceable.", font=font(28), fill="#c8cac1")
-    label(d, 756, 886, "FROM $210", fill=WHITE, size=23)
+    label(d, 756, 886, "$49 / 1K ROWS", fill=WHITE, size=23)
     footer_url(d, light=True, y=1015)
     return im
 
@@ -191,8 +191,8 @@ def render_post_04() -> Image.Image:
     d.rounded_rectangle((218, 416, 820, 440), radius=12, fill="#33342f")
     photo = cover(CATALOG / "website-fix.jpg", (900, 386), (0.5, 0.48))
     im.paste(photo, (90, 471))
-    label(d, 60, 908, "STARTING AT $280", size=25)
-    d.text((812, 924), "1–3 DAYS", font=font(23, "bold"), fill=INK)
+    label(d, 60, 908, "$99 / ONE FIX", size=25)
+    d.text((812, 924), "1–2 DAYS", font=font(23, "bold"), fill=INK)
     right_arrow(d, 961, 923, INK, size=24, width=3)
     footer_url(d, y=1018)
     return im
@@ -205,7 +205,7 @@ def render_post_05() -> Image.Image:
     d.text((60, 168), "A clearer way", font=font(75, "bold"), fill=WHITE)
     d.text((60, 242), "to get work done.", font=serif(72), fill=LIME)
     steps = [
-        ("01", "CHOOSE", "Pick the finished work."),
+        ("01", "SHARE", "Describe or paste the job."),
         ("02", "APPROVE", "See price, timing, and scope."),
         ("03", "RECEIVE", "Review the completed result."),
     ]
@@ -225,18 +225,25 @@ def render_post_06() -> Image.Image:
     im = Image.new("RGB", (W, H), rgb(LIME))
     d = ImageDraw.Draw(im)
     draw_logo(d, 60, 54)
-    d.text((60, 170), "Already posted", font=font(77, "bold"), fill=INK)
-    d.text((60, 244), "the job?", font=font(106, "bold"), fill=INK)
-    d.text((64, 365), "Reuse the brief. Get Bureau's catalog quote.", font=font(27), fill=INK)
-    d.rounded_rectangle((60, 440, 1020, 875), radius=28, fill=INK)
-    d.text((95, 485), "PASTE YOUR JOB LINK", font=font(20, "bold"), fill=LIME)
-    d.rounded_rectangle((95, 535, 985, 610), radius=12, fill=WHITE)
-    d.text((126, 557), "upwork.com/jobs/~your-job", font=font(24), fill=MUTED)
-    d.rounded_rectangle((95, 652, 985, 823), radius=15, fill=CREAM)
-    d.text((127, 684), "BUREAU CATALOG QUOTE", font=font(18, "bold"), fill=MUTED)
-    d.text((127, 722), "Calculated automatically", font=font(35, "bold"), fill=INK)
-    label(d, 748, 704, "GET QUOTE", size=20)
-    right_arrow(d, 937, 716, INK, size=22, width=3)
+    d.text((60, 160), "Common Upwork job?", font=font(70, "bold"), fill=INK)
+    d.text((60, 240), "Check our price.", font=serif(82), fill=INK)
+    d.text((64, 350), "Published starter packages. No invented comparison.", font=font(25), fill=INK)
+    d.rounded_rectangle((60, 420, 1020, 880), radius=28, fill=INK)
+    rows = [
+        ("SPREADSHEET CLEANUP", "UP TO 1,000 ROWS", "$49"),
+        ("SEO CONTENT BRIEF", "ONE TOPIC + SITE", "$59"),
+        ("WEBSITE FIX", "ONE REPRODUCIBLE ISSUE", "$99"),
+    ]
+    for index, (title, scope, price) in enumerate(rows):
+        y = 468 + index * 105
+        d.text((95, y), title, font=font(23, "bold"), fill=WHITE)
+        d.text((95, y + 38), scope, font=font(16, "bold"), fill="#8f9188")
+        d.text((830, y), price, font=font(42, "bold"), fill=LIME)
+        if index < len(rows) - 1:
+            d.line((95, y + 82, 985, y + 82), fill="#34362f", width=2)
+    d.rounded_rectangle((95, 790, 985, 844), radius=10, fill=LIME)
+    d.text((125, 806), "PASTE YOUR JOB LINK", font=font(20, "bold"), fill=INK)
+    right_arrow(d, 928, 805, INK, size=25, width=3)
     d.text((60, 915), "Independent service. Not affiliated with or endorsed by Upwork.", font=font(18), fill=INK)
     d.text((60, 1007), "AI.EB28.CO/BEAT-UPWORK", font=font(22, "bold"), fill=INK)
     return im
@@ -290,11 +297,11 @@ def render_post_09() -> Image.Image:
     d.text((64, 335), "Know the cost, timing, and finish line before work starts.", font=font(26), fill=MUTED)
     d.rounded_rectangle((60, 430, 1020, 894), radius=25, fill=WHITE, outline=LINE, width=2)
     paste_rounded(im, cover(CATALOG / "research-brief.jpg", (395, 400)), (92, 462, 487, 862), 18)
-    d.text((540, 476), "COMPETITOR BRIEF", font=font(18, "bold"), fill=MUTED)
-    d.text((540, 534), "$390", font=font(91, "bold"), fill=INK)
-    d.text((540, 638), "24–48 HOURS", font=font(24, "bold"), fill=OLIVE)
+    d.text((540, 476), "COMPETITOR SNAPSHOT", font=font(18, "bold"), fill=MUTED)
+    d.text((540, 534), "$89", font=font(91, "bold"), fill=INK)
+    d.text((540, 638), "1 BUSINESS DAY", font=font(24, "bold"), fill=OLIVE)
     d.line((540, 696, 955, 696), fill=LINE, width=2)
-    d.text((540, 728), "5 competitors", font=font(24), fill=INK)
+    d.text((540, 728), "1 competitor", font=font(24), fill=INK)
     d.text((540, 769), "Current cited sources", font=font(24), fill=INK)
     label(d, 540, 817, "START", size=20)
     right_arrow(d, 693, 829, INK, size=22, width=3)
@@ -331,10 +338,10 @@ def video_slide_01() -> Image.Image:
     im = Image.new("RGB", (VW, VH), rgb(INK))
     d = ImageDraw.Draw(im)
     draw_logo(d, 70, 86, light=True, scale=1.15)
-    d.text((70, 320), "YOUR BUSINESS", font=font(93, "bold"), fill=WHITE)
-    d.text((70, 420), "TASK.", font=font(145, "bold"), fill=WHITE)
-    d.text((70, 570), "DONE.", font=font(178, "bold"), fill=LIME)
-    d.text((74, 774), "The easiest way to buy finished work.", font=font(35), fill="#c9cbc2")
+    d.text((70, 320), "HIRE AN", font=font(105, "bold"), fill=WHITE)
+    d.text((70, 440), "AI AGENT.", font=font(138, "bold"), fill=LIME)
+    d.text((74, 650), "Real business work from $49.", font=font(35), fill="#c9cbc2")
+    d.text((74, 710), "Clear scope. Accountable delivery.", font=font(30), fill="#c9cbc2")
     for i, name in enumerate(("research-brief.jpg", "spreadsheet-cleanup.jpg", "website-fix.jpg")):
         x = 70 + i * 325
         paste_rounded(im, cover(CATALOG / name, (300, 480)), (x, 1060, x + 300, 1540), 22)
@@ -372,10 +379,10 @@ def video_slide_03() -> Image.Image:
     card = (70, 520, 1010, 1550)
     d.rounded_rectangle(card, radius=28, fill=CREAM)
     paste_rounded(im, cover(CATALOG / "research-brief.jpg", (860, 610)), (110, 560, 970, 1170), 20)
-    d.text((110, 1225), "COMPETITOR BRIEF", font=font(22, "bold"), fill=MUTED)
-    d.text((110, 1280), "$390", font=font(94, "bold"), fill=INK)
-    d.text((570, 1302), "24–48 HOURS", font=font(27, "bold"), fill=OLIVE)
-    d.text((110, 1415), "Clear scope  •  Named deliverables  •  Published limits", font=font(22), fill=INK)
+    d.text((110, 1225), "COMPETITOR SNAPSHOT", font=font(22, "bold"), fill=MUTED)
+    d.text((110, 1280), "$89", font=font(94, "bold"), fill=INK)
+    d.text((570, 1302), "1 BUSINESS DAY", font=font(27, "bold"), fill=OLIVE)
+    d.text((110, 1415), "One competitor  •  Current sources  •  Clear finish line", font=font(22), fill=INK)
     d.text((70, 1695), "PRICE + TIMING + FINISH LINE", font=font(27, "bold"), fill=LIME)
     return im
 
@@ -386,7 +393,7 @@ def video_slide_04() -> Image.Image:
     draw_logo(d, 70, 86)
     d.text((70, 275), "Three simple steps.", font=font(78, "bold"), fill=INK)
     steps = [
-        ("01", "CHOOSE", "Pick work or describe the task."),
+        ("01", "SHARE", "Describe the job or paste your post."),
         ("02", "APPROVE", "Confirm the plan, price, and timing."),
         ("03", "RECEIVE", "Review the finished result."),
     ]
@@ -409,7 +416,7 @@ def video_slide_05() -> Image.Image:
     d.text((70, 270), "No AI knowledge", font=font(75, "bold"), fill=WHITE)
     d.text((70, 350), "required.", font=serif(84), fill=LIME)
     d.text((74, 462), "Tell Bureau the result you need in plain English.", font=font(30), fill="#c9cbc2")
-    screenshot_path = ROOT / "output" / "design-qa" / "storefront-mobile-02.png"
+    screenshot_path = ROOT / "output" / "design-audit" / "03-final-mobile.png"
     if screenshot_path.exists():
         screen = Image.open(screenshot_path).convert("RGB")
     else:
@@ -430,8 +437,8 @@ def video_slide_06() -> Image.Image:
     d.text((115, 1045), "VISIT", font=font(28, "bold"), fill=LIME)
     d.text((115, 1100), "AI.EB28.CO", font=font(76, "bold"), fill=WHITE)
     right_arrow(d, 875, 1091, LIME, size=54, width=6)
-    d.text((70, 1590), "CHOOSE  •  APPROVE  •  RECEIVE", font=font(28, "bold"), fill=INK)
-    d.text((70, 1660), "FINISHED BUSINESS WORK", font=font(24), fill=INK)
+    d.text((70, 1590), "SHARE  •  APPROVE  •  REVIEW", font=font(28, "bold"), fill=INK)
+    d.text((70, 1660), "THE AI-AGENT HIRING MARKETPLACE", font=font(24), fill=INK)
     return im
 
 
@@ -510,7 +517,7 @@ def render_video() -> None:
 
 def write_captions() -> None:
     lines = [
-        "# Bureau Work Store Launch Campaign",
+        "# Bureau AI Agent Marketplace Launch Campaign",
         "",
         "All creative links point to the live Bureau site. Pricing and timing match the published catalog as of July 13, 2026.",
         "",

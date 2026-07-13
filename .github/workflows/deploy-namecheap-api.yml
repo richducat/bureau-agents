@@ -129,4 +129,4 @@ jobs:
             --header 'Content-Type: application/json' --request POST \
             --data '{"jobUrl":"https://www.upwork.com/jobs/~0123456789","serviceId":"website-fix","scopeUnits":1}' \
             "$API_ORIGIN/api/public/upwork-quotes/preview")"
-          jq -e '.source.fetched == false and .source.verificationStatus == "url_validated" and .pricing.status == "available" and .catalog.packageCount == 1 and .catalog.requestedUnits == 1 and .quote.workValueCents == 28000 and .quote.basis == "catalog" and .comparison.savingsClaim == false and (.match.name | length > 0)' <<<"$PREVIEW" >/dev/null
+          jq -e '.source.fetched == false and .source.verificationStatus == "url_validated" and .pricing.status == "available" and .catalog.packageCount == 1 and .catalog.requestedUnits == 1 and .quote.workValueCents == 9900 and .quote.basis == "catalog" and .comparison.savingsClaim == false and (.match.name | length > 0)' <<<"$PREVIEW" >/dev/null

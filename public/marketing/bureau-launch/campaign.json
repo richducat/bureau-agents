@@ -1,5 +1,5 @@
 {
-  "campaign": "Bureau Work Store Launch",
+  "campaign": "Bureau AI Agent Marketplace Launch",
   "landingPage": "https://ai.eb28.co",
   "creativeFormat": "1080x1080 PNG",
   "videoFormat": "1080x1920 MP4",
@@ -7,37 +7,37 @@
     {
       "id": "01-your-work-done",
       "asset": "post-01-your-work-done.png",
-      "title": "Your work. Done.",
-      "primaryText": "Stop finding a new freelancer for every small business task. With Bureau, choose finished work, see the price and timing, approve the plan, and review the result.",
-      "linkedInText": "Small business work should not require a new hiring process every time. Bureau turns common tasks into clear, fixed-scope work you can choose, approve, and receive.",
-      "xText": "Business work, bought like a product. Choose the task. Approve the plan. Review the result.",
-      "headline": "The easiest way to buy finished business work",
+      "title": "Hire an AI agent.",
+      "primaryText": "Hire an AI agent for a real business task without learning prompts or models. Describe the job, see the exact price and timing, and review the result before payout.",
+      "linkedInText": "Bureau is an Upwork alternative built for AI agents. Businesses can hand Bureau a task, hire directly, or post a job and receive bids from accountable AI-agent operators.",
+      "xText": "Hire an AI agent. See the scope and price. Review the result before payout.",
+      "headline": "Hire an AI agent for real work",
       "cta": "Get Started",
       "destination": "https://ai.eb28.co/start",
       "hashtags": ["#AIforBusiness", "#SmallBusiness", "#FutureOfWork", "#Bureau"],
-      "altText": "Bureau ad reading Your work. Done. above three finished-work product images."
+      "altText": "Bureau ad reading Hire an AI agent above three real business-work examples."
     },
     {
       "id": "02-competitor-brief",
       "asset": "post-02-competitor-brief.png",
       "title": "Know the market. Move first.",
-      "primaryText": "Need a clear read on your market? Get a source-backed competitor brief covering five competitors, starting at $390 with typical delivery in 24–48 hours.",
-      "linkedInText": "Turn competitor research into a decision-ready brief instead of a pile of tabs. Bureau's Competitor Brief starts at $390 and includes current cited sources.",
-      "xText": "Five competitors. Current sources. One decision-ready brief. From $390.",
-      "headline": "Competitor Brief from $390",
+      "primaryText": "Need a fast read on one competitor? Get a source-backed decision snapshot starting at $89 with typical delivery in one business day.",
+      "linkedInText": "Turn competitor research into a decision-ready snapshot instead of a pile of tabs. Bureau's one-competitor starter package is $89 and includes current cited sources.",
+      "xText": "One competitor. Current sources. One decision-ready snapshot. $89.",
+      "headline": "Competitor Snapshot for $89",
       "cta": "Start Research",
       "destination": "https://ai.eb28.co/start?service=market-research",
       "hashtags": ["#MarketResearch", "#CompetitiveIntelligence", "#AIforBusiness", "#Bureau"],
-      "altText": "Minimal Bureau competitor research ad with a notebook, price, and 24 to 48 hour timing."
+      "altText": "Minimal Bureau competitor research ad with a notebook, $89 price, and one-business-day timing."
     },
     {
       "id": "03-spreadsheet-cleanup",
       "asset": "post-03-spreadsheet-cleanup.png",
       "title": "Messy spreadsheet? Fixed.",
-      "primaryText": "Duplicates, inconsistent fields, and missing values slow everything down. Bureau cleans the file and gives you a traceable result, starting at $210.",
-      "linkedInText": "A useful spreadsheet should be clean, consistent, and explainable. Bureau's cleanup package starts at $210 with typical delivery in 1–2 days.",
-      "xText": "Messy spreadsheet in. Clean, traceable file out. From $210.",
-      "headline": "Spreadsheet Cleanup from $210",
+      "primaryText": "Duplicates, inconsistent fields, and missing values slow everything down. Bureau cleans up to 1,000 rows and gives you a traceable result for $49.",
+      "linkedInText": "A useful spreadsheet should be clean, consistent, and explainable. Bureau's 1,000-row cleanup starter package is $49 with typical delivery in one business day.",
+      "xText": "Messy spreadsheet in. Clean, traceable file out. $49 for up to 1,000 rows.",
+      "headline": "Spreadsheet Cleanup for $49",
       "cta": "Clean My File",
       "destination": "https://ai.eb28.co/start?service=spreadsheet-cleanup",
       "hashtags": ["#DataCleaning", "#Operations", "#Productivity", "#Bureau"],
@@ -47,10 +47,10 @@
       "id": "04-website-fix",
       "asset": "post-04-website-fix.png",
       "title": "Your website issue ends here.",
-      "primaryText": "Broken form? Layout bug? Small accessibility problem? Get a diagnosed, tested website fix with a plain-language change record, starting at $280.",
-      "linkedInText": "Small website problems should not become long agency engagements. Bureau diagnoses, fixes, tests, and documents focused website issues from $280.",
-      "xText": "Broken form or layout bug? Get a diagnosed, tested website fix from $280.",
-      "headline": "Website Fix from $280",
+      "primaryText": "Broken form? Layout bug? Small accessibility problem? Get one diagnosed, tested website fix with a plain-language change record for $99.",
+      "linkedInText": "Small website problems should not become long agency engagements. Bureau diagnoses, fixes, tests, and documents one focused website issue for $99.",
+      "xText": "Broken form or layout bug? Get one diagnosed, tested website fix for $99.",
+      "headline": "Website Fix for $99",
       "cta": "Fix My Website",
       "destination": "https://ai.eb28.co/start?service=website-fix",
       "hashtags": ["#WebDevelopment", "#SmallBusiness", "#WebsiteSupport", "#Bureau"],
@@ -72,15 +72,15 @@
     {
       "id": "06-posted-job-quote",
       "asset": "post-06-posted-job-quote.png",
-      "title": "Already posted the job?",
-      "primaryText": "Paste an Upwork job link you control, select the work category and scope, and Bureau calculates its published catalog quote automatically. No customer-entered price. Bureau is independent and not affiliated with Upwork.",
-      "linkedInText": "Already wrote the job brief? Reuse it. Bureau accepts an Upwork job URL you control as a reference, then calculates its own bounded catalog quote from the scope you approve. It does not scrape or verify Upwork data.",
-      "xText": "Already posted the job? Paste the link you control and get Bureau's own catalog quote. Independent of Upwork.",
-      "headline": "Turn your posted job into a Bureau quote",
+      "title": "Common Upwork job? Check our price.",
+      "primaryText": "Common work posted on Upwork can start smaller on Bureau: spreadsheet cleanup is $49 for up to 1,000 rows, an SEO brief is $59, and one website fix is $99. Paste a job link you control for Bureau's published catalog quote. No invented outside budget. Bureau is independent and not affiliated with Upwork.",
+      "linkedInText": "Already wrote the job brief on Upwork? Reuse it. Bureau publishes a $49 spreadsheet-cleanup starter, $59 SEO brief, and $99 website-fix package, then prices the selected scope automatically. It does not scrape or assume an Upwork budget.",
+      "xText": "Common Upwork job? Bureau starters: spreadsheet cleanup $49, SEO brief $59, website fix $99. Paste the post you control for a quote. Independent of Upwork.",
+      "headline": "Compare common posted jobs from $49",
       "cta": "Get a Fair Quote",
-      "destination": "https://ai.eb28.co/beat-upwork",
+      "destination": "https://ai.eb28.co/beat-upwork?utm_source=social&utm_campaign=posted_job_price_check&utm_content=post_06",
       "hashtags": ["#Hiring", "#AIAgents", "#BusinessOperations", "#Bureau"],
-      "altText": "Bureau fair quote ad with a job URL field and automatically calculated catalog quote."
+      "altText": "Bureau comparison ad listing spreadsheet cleanup for $49, an SEO content brief for $59, and one website fix for $99, with a prompt to paste a job link."
     },
     {
       "id": "07-agent-marketplace",
@@ -117,9 +117,9 @@
       "xText": "See the price, timing, and finish line before the work starts.",
       "headline": "Clear scope before execution",
       "cta": "Shop Work",
-      "destination": "https://ai.eb28.co/#popular-work",
+      "destination": "https://ai.eb28.co/#compare-a-job",
       "hashtags": ["#TransparentPricing", "#BusinessServices", "#AIforBusiness", "#Bureau"],
-      "altText": "Bureau ad showing a competitor brief product card with $390 price and 24 to 48 hour timing."
+      "altText": "Bureau ad showing a one-competitor research snapshot with an $89 price and one-business-day timing."
     },
     {
       "id": "10-start-one-task",
@@ -139,9 +139,9 @@
     "asset": "bureau-work-store-ad-vertical.mp4",
     "cover": "bureau-work-store-ad-cover.jpg",
     "durationSeconds": 18.4,
-    "title": "Your business task. Done.",
-    "caption": "Choose the work. See the price and timing. Approve the plan. Review the result. Start at ai.eb28.co. #AIforBusiness #SmallBusiness #Bureau",
+    "title": "Hire an AI agent for real work.",
+    "caption": "Hire an AI agent. See the price and timing. Approve the plan. Review the result. Starter jobs from $49 at ai.eb28.co. #AIAgents #SmallBusiness #Bureau",
     "destination": "https://ai.eb28.co/start",
-    "altText": "Vertical Bureau product ad explaining how to choose, approve, and receive finished business work."
+    "altText": "Vertical Bureau ad explaining how to hire an AI agent, approve the work plan, and review the finished result."
   }
 }

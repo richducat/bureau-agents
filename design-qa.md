@@ -1,55 +1,47 @@
-# Bureau Work Store Design QA
+# Bureau buyer-first landing page QA
 
-- Source visual truth: `/Users/richardducat/.codex/generated_images/019f5793-557e-7b23-a715-50da2bd5ad67/exec-bb596fd5-0b2b-4ba2-99dc-627e7f6b559c.png`
-- Implementation screenshot: `/Users/richardducat/Documents/Codex/2026-07-12/we/outputs/bureau/output/design-qa/storefront-desktop-01.png`
-- Full-view comparison: `/Users/richardducat/Documents/Codex/2026-07-12/we/outputs/bureau/output/design-qa/compare-desktop-01.png`
-- Supplemental mobile screenshot: `/Users/richardducat/Documents/Codex/2026-07-12/we/outputs/bureau/output/design-qa/storefront-mobile-02.png`
-- Viewport: 1440 x 1024 desktop; supplemental responsive check at 390 x 844
-- State: signed-out landing page, default storefront state
+Date: July 13, 2026
 
-## Findings
+## Outcome
 
-- No actionable P0, P1, or P2 differences remain.
-- Fonts and typography: the implementation uses the existing Manrope variable family for the storefront and Georgia for the editorial accent. Weight, scale, line height, wrapping, and hierarchy closely match the approved reference at the comparison viewport. Small navigation and product terms remain readable.
-- Spacing and layout rhythm: header height, hero proportions, six-item shelf, product row, section boundaries, and first-viewport density match the selected design. The implementation has no horizontal page overflow at 1440 px or 390 px.
-- Colors and visual tokens: the existing Bureau black, warm cream, and lime tokens are preserved. Contrast remains strong for navigation, primary actions, product terms, and the lime conversion section.
-- Image quality and asset fidelity: six purpose-built 900 x 900 product photographs are loaded successfully at natural resolution and share one warm editorial art direction. The source's top shelf uses more isolated object silhouettes; the implementation uses consistent photographic crops. This is an acceptable P3 production adaptation and does not change comprehension or hierarchy.
-- Copy and content: the approved `Work store`, outcome categories, popular products, prices, turnaround times, and concierge fallback are present. Existing Bureau marketplace, Upwork fair-quote, operator, trust, and payment paths remain discoverable below the buyer-first storefront.
-- Accessibility and interaction: semantic headings and regions are present, primary links have accessible names, decorative shelf imagery is hidden from assistive technology, meaningful product imagery has alt text, focus styling is retained, and the mobile menu exposes its expanded state.
+The landing page now introduces Bureau as an AI-agent hiring marketplace, explains the customer and agent-operator sides in plain language, provides direct managed and marketplace paths, and promotes common job types that customers may already have posted elsewhere.
 
-## Browser Verification
+## Verified layouts
 
-- Primary storefront rendered in the Codex in-app browser at 1440 x 1024.
-- Research shelf selection navigated to `/start?service=market-research` and the intake page selected `Research a market or competitor` with the correct `$390` starting price and `24–48 hours` timing.
-- Mobile menu opened successfully at 390 x 844 and exposed all five navigation actions.
-- First FAQ expanded and exposed its answer.
-- All 12 visible storefront image instances loaded with non-zero 900 x 900 natural dimensions.
-- Browser console check returned no warnings or errors.
+- Desktop cold-visitor viewport: 1440 × 1000
+- Mobile cold-visitor viewport: 390 × 844
+- Mobile navigation opens, exposes the comparison path, and closes correctly
+- Hero, starter-price card, job-link transfer form, comparison grid, pricing cards, hiring paths, FAQ, and final calls to action render without visible overflow
+- Source-versus-implementation comparison reviewed in `output/design-audit/04-before-after-comparison.png`
 
-## Full-view Comparison Evidence
+## Verified customer paths
 
-The normalized side-by-side comparison shows the source and implementation at the same desktop state. The first-screen structure, reading order, brand treatment, category shelf, popular-work products, pricing hierarchy, and next-section reveal align closely.
+- `Describe my job` opens the managed task intake
+- `Browse AI agents` opens the agent marketplace
+- The landing-page Upwork URL form sends the customer to `/beat-upwork?url=...`
+- Comparison cards preselect the correct service through `/beat-upwork?service=...`
+- Combined URL and service parameters prefill the job URL, service, quantity, and new published starter price
+- The posted-job flow remains format-validation only and does not scrape or assume an external budget
 
-## Focused Region Comparison Evidence
+## Published starter packages
 
-A separate focused crop was not required: the selected source is a single 1440-class desktop storefront with large display type, six large category images, and three product offers. Those fidelity surfaces remain legible in the normalized full-view comparison, while the implementation screenshot preserves native 1440 x 1024 detail for closer inspection.
+- Spreadsheet cleanup: $49 for up to 1,000 rows
+- SEO content brief: $59 for one topic and site
+- Invoice review: $69 for up to 25 invoices
+- Support triage: $79 for up to 20 tickets
+- Competitor snapshot: $89 for one competitor
+- Website fix: $99 for one reproducible issue
 
-## Comparison History
+Client Starter's 5% service fee is disclosed on the landing page and the full total remains visible before payment.
 
-- Pass 1: no actionable P0/P1/P2 issues were found in the 1440 x 1024 side-by-side comparison. No visual fixes were required after this pass.
+## Acquisition truth boundary
 
-## Follow-up Polish
+The site and refreshed social campaign actively promote common Upwork job types that Bureau can quote. They do not copy live listings, invent outside budgets, or publish unverified savings. Exact external savings remain disabled unless Bureau receives authorized, verified source data.
 
-- P3: if a later campaign needs even closer source-image fidelity, produce transparent cutout variants for the six shelf assets while retaining the current product-card crops below.
+## Automated verification
 
-## Implementation Checklist
-
-- [x] Approved option 1 resolved unambiguously.
-- [x] Real product imagery generated and placed.
-- [x] Desktop design comparison completed.
-- [x] Responsive mobile layout checked.
-- [x] Core storefront-to-intake path tested.
-- [x] Mobile navigation and FAQ interaction tested.
-- [x] Console checked.
-
-final result: passed
+- ESLint: pass
+- Vitest: 22 tests pass
+- Frontend TypeScript and Vite production build: pass
+- API TypeScript build: pass
+- Social campaign: 10 refreshed image posts, updated captions, and one 18.4-second vertical video generated

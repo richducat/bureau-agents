@@ -39,7 +39,7 @@ export const agents: Agent[] = [
     guardrails: ['Source allowlists', 'PII redaction', 'Human approval gates', 'No-contact mode'],
     recentRuns: [],
     packages: [
-      { id: 'sp-1', title: 'Competitive landscape in 24 hours', description: '10-company market map, source pack, and executive brief.', price: 390, delivery: '1 day' },
+      { id: 'sp-1', title: 'Research one competitor', description: 'One-page decision brief, source links, and strengths-and-gaps table.', price: 89, delivery: '1 day' },
       { id: 'sp-2', title: 'Weekly intelligence monitor', description: 'Tracked sources, delta report, and risk alerts.', price: 680, delivery: '7 days' },
     ],
   },
@@ -70,7 +70,7 @@ export const agents: Agent[] = [
     guardrails: ['Branch protection', 'Secret scanning', 'Command policy', 'Required test suite'],
     recentRuns: [],
     packages: [
-      { id: 'fp-1', title: 'Fix one reproducible bug', description: 'Root-cause analysis, tested patch, and pull request.', price: 280, delivery: '1 day' },
+      { id: 'fp-1', title: 'Fix one reproducible website issue', description: 'Root-cause analysis, tested change, and deployment notes.', price: 99, delivery: '1–2 days' },
       { id: 'fp-2', title: 'Ship one scoped product feature', description: 'Implementation, tests, docs, and deployment notes.', price: 1200, delivery: '3 days' },
     ],
   },
@@ -102,7 +102,7 @@ export const agents: Agent[] = [
     recentRuns: [],
     packages: [
       { id: 'lp-1', title: 'Reconcile one month of transactions', description: 'Matched ledger, exception queue, and evidence workbook.', price: 460, delivery: '2 days' },
-      { id: 'lp-2', title: 'Accounts payable anomaly scan', description: 'Duplicate, policy, and pricing anomaly review.', price: 325, delivery: '1 day' },
+      { id: 'lp-2', title: 'Review 25 invoices', description: 'Duplicate, policy, and pricing exception review.', price: 69, delivery: '1 day' },
     ],
   },
   {
@@ -132,7 +132,7 @@ export const agents: Agent[] = [
     guardrails: ['Draft-only default', 'Claim verification', 'Brand lexicon', 'Channel allowlists'],
     recentRuns: [],
     packages: [
-      { id: 'tp-1', title: 'Publish-ready SEO article', description: 'Research, brief, article, metadata, and source record.', price: 240, delivery: '2 days' },
+      { id: 'tp-1', title: 'Create one SEO content brief', description: 'Search intent, cited sources, outline, and metadata.', price: 59, delivery: '1 day' },
       { id: 'tp-2', title: '30-day content operating plan', description: 'Channel plan, briefs, repurposing map, and KPI sheet.', price: 510, delivery: '3 days' },
     ],
   },
@@ -163,7 +163,7 @@ export const agents: Agent[] = [
     guardrails: ['Robots compliance', 'PII minimization', 'Schema validation', 'Source provenance'],
     recentRuns: [],
     packages: [
-      { id: 'ap-1', title: 'Enrich 1,000 B2B records', description: 'Verified firmographic fields with source URLs.', price: 210, delivery: '1 day' },
+      { id: 'ap-1', title: 'Clean 1,000 spreadsheet rows', description: 'Clean export, exception sheet, and quality summary.', price: 49, delivery: '1 day' },
       { id: 'ap-2', title: 'Extract a structured web dataset', description: 'Up to 5,000 rows, QA report, and clean CSV.', price: 430, delivery: '2 days' },
     ],
   },
@@ -194,7 +194,7 @@ export const agents: Agent[] = [
     guardrails: ['Confidence routing', 'Refund approval', 'Sentiment escalation', 'PII redaction'],
     recentRuns: [],
     packages: [
-      { id: 'cp-1', title: 'Resolve a 250-ticket backlog', description: 'Triage, resolution, and escalation report.', price: 290, delivery: '1 day' },
+      { id: 'cp-1', title: 'Triage 20 support tickets', description: 'Routine replies, triage queue, and escalation report.', price: 79, delivery: '1 day' },
       { id: 'cp-2', title: 'Audit your support knowledge base', description: 'Gap map, stale content list, and top 20 fixes.', price: 220, delivery: '2 days' },
     ],
   },

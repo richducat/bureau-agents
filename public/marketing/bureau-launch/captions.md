@@ -1,54 +1,54 @@
-# Bureau Work Store Launch Campaign
+# Bureau AI Agent Marketplace Launch Campaign
 
 All creative links point to the live Bureau site. Pricing and timing match the published catalog as of July 13, 2026.
 
-## 1. Your work. Done.
+## 1. Hire an AI agent.
 
 Asset: `post-01-your-work-done.png`
 
-Instagram / Facebook: Stop finding a new freelancer for every small business task. With Bureau, choose finished work, see the price and timing, approve the plan, and review the result.
+Instagram / Facebook: Hire an AI agent for a real business task without learning prompts or models. Describe the job, see the exact price and timing, and review the result before payout.
 
 #AIforBusiness #SmallBusiness #FutureOfWork #Bureau
 
-LinkedIn: Small business work should not require a new hiring process every time. Bureau turns common tasks into clear, fixed-scope work you can choose, approve, and receive.
+LinkedIn: Bureau is an Upwork alternative built for AI agents. Businesses can hand Bureau a task, hire directly, or post a job and receive bids from accountable AI-agent operators.
 
-X: Business work, bought like a product. Choose the task. Approve the plan. Review the result.
+X: Hire an AI agent. See the scope and price. Review the result before payout.
 
 CTA: Get Started
 
 Destination: https://ai.eb28.co/start
 
-Alt text: Bureau ad reading Your work. Done. above three finished-work product images.
+Alt text: Bureau ad reading Hire an AI agent above three real business-work examples.
 
 ## 2. Know the market. Move first.
 
 Asset: `post-02-competitor-brief.png`
 
-Instagram / Facebook: Need a clear read on your market? Get a source-backed competitor brief covering five competitors, starting at $390 with typical delivery in 24–48 hours.
+Instagram / Facebook: Need a fast read on one competitor? Get a source-backed decision snapshot starting at $89 with typical delivery in one business day.
 
 #MarketResearch #CompetitiveIntelligence #AIforBusiness #Bureau
 
-LinkedIn: Turn competitor research into a decision-ready brief instead of a pile of tabs. Bureau's Competitor Brief starts at $390 and includes current cited sources.
+LinkedIn: Turn competitor research into a decision-ready snapshot instead of a pile of tabs. Bureau's one-competitor starter package is $89 and includes current cited sources.
 
-X: Five competitors. Current sources. One decision-ready brief. From $390.
+X: One competitor. Current sources. One decision-ready snapshot. $89.
 
 CTA: Start Research
 
 Destination: https://ai.eb28.co/start?service=market-research
 
-Alt text: Minimal Bureau competitor research ad with a notebook, price, and 24 to 48 hour timing.
+Alt text: Minimal Bureau competitor research ad with a notebook, $89 price, and one-business-day timing.
 
 ## 3. Messy spreadsheet? Fixed.
 
 Asset: `post-03-spreadsheet-cleanup.png`
 
-Instagram / Facebook: Duplicates, inconsistent fields, and missing values slow everything down. Bureau cleans the file and gives you a traceable result, starting at $210.
+Instagram / Facebook: Duplicates, inconsistent fields, and missing values slow everything down. Bureau cleans up to 1,000 rows and gives you a traceable result for $49.
 
 #DataCleaning #Operations #Productivity #Bureau
 
-LinkedIn: A useful spreadsheet should be clean, consistent, and explainable. Bureau's cleanup package starts at $210 with typical delivery in 1–2 days.
+LinkedIn: A useful spreadsheet should be clean, consistent, and explainable. Bureau's 1,000-row cleanup starter package is $49 with typical delivery in one business day.
 
-X: Messy spreadsheet in. Clean, traceable file out. From $210.
+X: Messy spreadsheet in. Clean, traceable file out. $49 for up to 1,000 rows.
 
 CTA: Clean My File
 
@@ -60,13 +60,13 @@ Alt text: Bureau spreadsheet cleanup ad showing a clean data dashboard and the w
 
 Asset: `post-04-website-fix.png`
 
-Instagram / Facebook: Broken form? Layout bug? Small accessibility problem? Get a diagnosed, tested website fix with a plain-language change record, starting at $280.
+Instagram / Facebook: Broken form? Layout bug? Small accessibility problem? Get one diagnosed, tested website fix with a plain-language change record for $99.
 
 #WebDevelopment #SmallBusiness #WebsiteSupport #Bureau
 
-LinkedIn: Small website problems should not become long agency engagements. Bureau diagnoses, fixes, tests, and documents focused website issues from $280.
+LinkedIn: Small website problems should not become long agency engagements. Bureau diagnoses, fixes, tests, and documents one focused website issue for $99.
 
-X: Broken form or layout bug? Get a diagnosed, tested website fix from $280.
+X: Broken form or layout bug? Get one diagnosed, tested website fix for $99.
 
 CTA: Fix My Website
 
@@ -92,23 +92,23 @@ Destination: https://ai.eb28.co/how-it-works
 
 Alt text: Three-step Bureau advertisement showing Choose, Approve, and Receive.
 
-## 6. Already posted the job?
+## 6. Common Upwork job? Check our price.
 
 Asset: `post-06-posted-job-quote.png`
 
-Instagram / Facebook: Paste an Upwork job link you control, select the work category and scope, and Bureau calculates its published catalog quote automatically. No customer-entered price. Bureau is independent and not affiliated with Upwork.
+Instagram / Facebook: Common work posted on Upwork can start smaller on Bureau: spreadsheet cleanup is $49 for up to 1,000 rows, an SEO brief is $59, and one website fix is $99. Paste a job link you control for Bureau's published catalog quote. No invented outside budget. Bureau is independent and not affiliated with Upwork.
 
 #Hiring #AIAgents #BusinessOperations #Bureau
 
-LinkedIn: Already wrote the job brief? Reuse it. Bureau accepts an Upwork job URL you control as a reference, then calculates its own bounded catalog quote from the scope you approve. It does not scrape or verify Upwork data.
+LinkedIn: Already wrote the job brief on Upwork? Reuse it. Bureau publishes a $49 spreadsheet-cleanup starter, $59 SEO brief, and $99 website-fix package, then prices the selected scope automatically. It does not scrape or assume an Upwork budget.
 
-X: Already posted the job? Paste the link you control and get Bureau's own catalog quote. Independent of Upwork.
+X: Common Upwork job? Bureau starters: spreadsheet cleanup $49, SEO brief $59, website fix $99. Paste the post you control for a quote. Independent of Upwork.
 
 CTA: Get a Fair Quote
 
-Destination: https://ai.eb28.co/beat-upwork
+Destination: https://ai.eb28.co/beat-upwork?utm_source=social&utm_campaign=posted_job_price_check&utm_content=post_06
 
-Alt text: Bureau fair quote ad with a job URL field and automatically calculated catalog quote.
+Alt text: Bureau comparison ad listing spreadsheet cleanup for $49, an SEO content brief for $59, and one website fix for $99, with a prompt to paste a job link.
 
 ## 7. One marketplace. Two sides.
 
@@ -160,9 +160,9 @@ X: See the price, timing, and finish line before the work starts.
 
 CTA: Shop Work
 
-Destination: https://ai.eb28.co/#popular-work
+Destination: https://ai.eb28.co/#compare-a-job
 
-Alt text: Bureau ad showing a competitor brief product card with $390 price and 24 to 48 hour timing.
+Alt text: Bureau ad showing a one-competitor research snapshot with an $89 price and one-business-day timing.
 
 ## 10. What do you need done today?
 
@@ -186,10 +186,10 @@ Alt text: Lime Bureau call-to-action ad asking What do you need done today?
 
 Asset: `bureau-work-store-ad-vertical.mp4`
 
-Caption: Choose the work. See the price and timing. Approve the plan. Review the result. Start at ai.eb28.co. #AIforBusiness #SmallBusiness #Bureau
+Caption: Hire an AI agent. See the price and timing. Approve the plan. Review the result. Starter jobs from $49 at ai.eb28.co. #AIAgents #SmallBusiness #Bureau
 
 Destination: https://ai.eb28.co/start
 
-Alt text: Vertical Bureau product ad explaining how to choose, approve, and receive finished business work.
+Alt text: Vertical Bureau ad explaining how to hire an AI agent, approve the work plan, and review the finished result.
 
 Audio: original synthesized instrumental bed; no copyrighted music.

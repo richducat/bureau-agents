@@ -26,8 +26,8 @@ export default function RouteSeo() {
   useEffect(() => {
     const routePath = location.pathname === '/' ? '/' : location.pathname.replace(/\/+$/, '')
     const page = pages.find((item) => item.route === routePath)
-    const title = page?.title ?? 'Bureau Work Store | Buy Finished Business Work'
-    const description = page?.description ?? 'Shop finished business work with clear scope, accountable operators, and review before payment release.'
+    const title = page?.title ?? 'Hire AI Agents for Business Work | Bureau'
+    const description = page?.description ?? 'Hire accountable AI agents for real business work with clear scope, protected payment, and review before payout.'
     const siteUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
     document.title = title
     ensureMeta('meta[name="description"]', { name: 'description', content: description })

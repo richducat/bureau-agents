@@ -63,11 +63,24 @@ const initialDraft: QuoteDraft = {
   email: '',
 }
 
+function initialQuoteDraft(): QuoteDraft {
+  if (typeof window === 'undefined') return initialDraft
+  const params = new URLSearchParams(window.location.search)
+  const requestedService = params.get('service') ?? ''
+  const selected = managedServices.find((service) => service.id === requestedService)
+  return {
+    ...initialDraft,
+    jobUrl: (params.get('url') ?? '').slice(0, 2048),
+    serviceId: selected?.id ?? '',
+    scopeUnits: String(selected?.unitCapacity ?? 1),
+  }
+}
+
 const money = (cents: number) => `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function UpworkQuotePage() {
   const { user } = useAuth()
-  const [draft, setDraft] = useState<QuoteDraft>(initialDraft)
+  const [draft, setDraft] = useState<QuoteDraft>(initialQuoteDraft)
   const [preview, setPreview] = useState<QuotePreview | null>(null)
   const [result, setResult] = useState<QuoteResult | null>(null)
   const [authorizationAttested, setAuthorizationAttested] = useState(false)
@@ -141,6 +154,9 @@ export default function UpworkQuotePage() {
     setError('')
     try {
       const params = new URLSearchParams(window.location.search)
+      const attribution = ['utm_source', 'utm_campaign', 'utm_content']
+        .map((key) => params.get(key)?.trim())
+        .filter((value): value is string => Boolean(value))
       const response = await apiFetch<QuoteResult>('/public/upwork-quotes', {
         method: 'POST',
         body: jsonBody({
@@ -151,7 +167,7 @@ export default function UpworkQuotePage() {
           consent: true,
           requesterType: 'human',
           website,
-          source: params.get('utm_source') ? `upwork-transfer:${params.get('utm_source')}`.slice(0, 120) : 'upwork-transfer',
+          source: attribution.length ? `upwork-transfer:${attribution.join(':')}`.slice(0, 120) : 'upwork-transfer',
         }),
       })
       setResult(response)
@@ -225,7 +241,7 @@ export default function UpworkQuotePage() {
       <section className="upwork-guarantee-explainer">
         <header><p className="overline">The Bureau Fair Quote</p><h2>Automatic price. Bounded scope.</h2><p>The same service and quantity receive the same published package total. Buyers enter work volume, never a desired price.</p></header>
         <div className="upwork-guarantee-formula"><span>ROUND UP (QUANTITY ÷ PACKAGE SIZE)</span><strong>× published package rate</strong><ArrowRight /><span>YOUR BUREAU QUOTE</span></div>
-        <div className="upwork-guarantee-columns"><article><CheckCircle2 /><h3>Consistent pricing</h3><ul><li>No customer-entered price</li><li>Published units, limits, and exclusions</li><li>Automatic package-count calculation</li><li>Oversized scopes fail closed to review</li></ul></article><article><ShieldCheck /><h3>What the quote covers</h3><ul><li>The displayed bounded packages</li><li>Named deliverables and typical timing</li><li>Disclosed Bureau fees before checkout</li><li>Written approval and Stripe records</li></ul></article><article><LockKeyhole /><h3>External boundary</h3><ul><li>The URL is format-validated, not scraped</li><li>No Upwork price or proposal is assumed</li><li>No “cheaper than Upwork” claim is made</li><li>A future comparison requires authorized verified data</li></ul></article></div>
+        <div className="upwork-guarantee-columns"><article><CheckCircle2 /><h3>Consistent pricing</h3><ul><li>No customer-entered price</li><li>Published units, limits, and exclusions</li><li>Automatic package-count calculation</li><li>Oversized scopes fail closed to review</li></ul></article><article><ShieldCheck /><h3>What the quote covers</h3><ul><li>The displayed bounded packages</li><li>Named deliverables and typical timing</li><li>Disclosed Bureau fees before checkout</li><li>Written approval and Stripe records</li></ul></article><article><LockKeyhole /><h3>External boundary</h3><ul><li>The URL is format-validated, not scraped</li><li>No Upwork price or proposal is assumed</li><li>Unverified savings are never claimed</li><li>Verified savings require authorized source data</li></ul></article></div>
         <p className="upwork-independent-note"><Sparkles /> Bureau is an independent service and is not affiliated with, sponsored by, or endorsed by Upwork. Upwork is a trademark of its respective owner.</p>
       </section>
 
