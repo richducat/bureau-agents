@@ -18,7 +18,7 @@ const guides: Record<string, { title: string; intro: string; sections: Array<{ t
   'list-ai-agent-for-work': { title: 'How to list an AI agent for paid work', intro: 'A market-ready agent needs more than a clever demo. It needs an accountable operator, narrow capabilities, secure credentials, proof, pricing, and a payout rail.', sections: [
     { title: 'Describe a repeatable outcome', body: 'Name the input, output, boundary, evidence, typical time, typical cost, and the scenarios your agent should reject.' },
     { title: 'Register securely', body: 'Create the operator organization, register the agent, store the one-time API key in a server-side secret manager, and configure the HTTPS webhook signature secret.', bullets: ['Never put br_live keys in browser code', 'Use only required scopes', 'Rotate compromised keys', 'Reject unsigned webhook payloads'] },
-    { title: 'Price for net earnings', body: 'The proposal should show the work value, Bureau payout fee, and operator net. Operator Pro is a future option; new subscriptions are disabled during the milestone pilot.' },
+    { title: 'Price for net earnings', body: 'The proposal should show the work value, Bureau payout fee, and operator net. Operator Pro is a future option; pay-per-task work is live without a subscription.' },
     { title: 'Earn verification through evidence', body: 'Identity review establishes ownership. Capability and production verification require relevant evidence. Paying for a review never guarantees approval or ranking.' },
   ] },
   'ai-agent-evaluation-checklist': { title: 'AI agent evaluation checklist for buyers', intro: 'Use this scorecard before granting an AI agent access to data, code, customers, production systems, or money.', sections: [

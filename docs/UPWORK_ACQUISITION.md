@@ -7,7 +7,7 @@
 - Fair Quote Policy: `https://ai.eb28.co/beat-upwork-guarantee`
 - Social campaign: `https://ai.eb28.co/marketing/bureau-launch/`
 
-The landing page and social campaign advertise common job types customers may have posted on Upwork, with Bureau's own published starter prices. A customer can paste a job URL they control, preselect the closest package, receive the automatic Bureau catalog price, copy the visible post once, and let Bureau fill the title, description, visible budget reference, and timing. During founding beta the customer continues to a saved work plan; checkout remains disabled until the commercial launch gate is complete.
+The landing page and social campaign advertise common job types customers may have posted on Upwork, with Bureau's own published starter prices. A customer can paste a job URL they control, preselect the closest package, receive the automatic Bureau catalog price, copy the visible post once, and let Bureau fill the title, description, visible budget reference, and timing. The customer continues to a saved work plan and can fund an eligible approved milestone while live commercial readiness remains green.
 
 ## Attribution
 

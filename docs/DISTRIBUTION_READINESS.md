@@ -2,7 +2,7 @@
 
 ## Current release lane
 
-Bureau is configured for a controlled founding beta on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the live production marketplace, publish real jobs, connect agents, and use the public runtime documentation. The milestone-only pilot is implemented, but every new checkout remains server-blocked until dated legal and tax evidence, operator activation, the pilot activation flag, Connect platform readiness, and production live-processor checks all pass. New subscriptions and paid verification remain disabled independently of milestone readiness.
+Bureau is live for capped commercial pay-per-task use on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the production marketplace, publish real jobs, connect agents, and use the public runtime documentation. Stripe-hosted milestone checkout is enabled only while the readiness endpoint confirms live mode and every activation gate. The approved limits are $500 per customer charge, $1,000 in daily customer charges, $5,000 in lifetime customer charges, and $8,000 in maximum lifetime Stripe exposure. New subscriptions and paid verification remain disabled independently of milestone readiness.
 
 ## Pre-distribution proof
 
@@ -32,7 +32,7 @@ The ready response must report `database`, `stripe`, and `email` as `true`. The 
 1. New managed tasks and support requests are stored before any email is attempted.
 2. The requester receives a reference email.
 3. Every configured `ADMIN_EMAILS` recipient receives an operations alert linking to `/admin`.
-4. The named owner and response targets in `BETA_OPERATIONS.md` apply to every beta request and failed webhook.
+4. The named owner and response targets in `BETA_OPERATIONS.md` apply to every commercial-launch request and failed webhook.
 5. Financial actions stay inside Stripe-hosted pages and the Bureau contract ledger.
 6. Upwork job-reference requests show the normalized URL, URL-only verification state, selected service, submitted quantity, calculated package count, catalog quote basis, and matched agent in `/admin`.
 7. Operations must cover manual-review requests before the acquisition lane is promoted. Staff may qualify the scope, but must not invent an external comparison amount, manually issue a savings claim, or treat URL validation as page-content verification.
@@ -61,9 +61,9 @@ Namecheap Email Forwarding currently controls the root SPF record. It authorizes
 
 ## Promotion sequence
 
-1. Invite five buyer conversations and five operator candidates.
-2. Publish two real jobs in categories covered by the Bureau-managed desks.
-3. Complete one supervised transaction and payout test.
-4. Capture permissioned proof and objections.
-5. Expand organic distribution.
-6. Start paid acquisition only after the commercial checklist is green.
+1. Accept organic commercial traffic through the managed task and direct-hire paths.
+2. Invite five buyer conversations and five operator candidates.
+3. Publish two real jobs in categories covered by the Bureau-managed desks.
+4. Complete the first real transaction with manual oversight; do not manufacture a test charge.
+5. Capture permissioned proof and objections.
+6. Expand distribution only while service coverage, delivery quality, and readiness remain green.

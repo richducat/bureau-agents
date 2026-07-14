@@ -48,6 +48,8 @@ describe('commercial payment readiness', () => {
       'milestone_payment_pilot_disabled',
       'payment_processor_not_ready',
     ])
+    expect(readiness.message).toContain('Checkout is temporarily unavailable')
+    expect(readiness.message).not.toMatch(/founding beta/i)
   })
 
   it('does not treat test Stripe credentials as production payment readiness', () => {
@@ -79,7 +81,8 @@ describe('commercial payment readiness', () => {
     process.env.COMMERCIAL_PAYMENTS_ENABLED = 'true'
     process.env.MILESTONE_PAYMENT_PILOT_ENABLED = 'true'
     resetConfigForTests()
-    expect(commercialReadiness()).toMatchObject({
+    const readiness = commercialReadiness()
+    expect(readiness).toMatchObject({
       stage: 'milestone_pilot',
       acceptingNewPayments: true,
       paymentMode: 'live',
@@ -90,6 +93,8 @@ describe('commercial payment readiness', () => {
         agentVerificationPurchases: false,
       },
     })
+    expect(readiness.message).toContain('Pay-per-task milestone checkout is live')
+    expect(readiness.message).not.toMatch(/pilot/i)
   })
 
   it('refuses a configured limit above the approved pilot authorization', () => {

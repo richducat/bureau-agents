@@ -215,7 +215,7 @@ export default function TaskIntakePage() {
   const payAndStart = async (requestId: string) => {
     if (!client) return;
     if (!readiness.acceptingNewPayments) {
-      setError("Your work plan is saved. New payments are not activated during the founding beta, so Bureau cannot open checkout yet.");
+      setError("Your work plan is saved. Checkout is temporarily unavailable, so Bureau cannot open a new payment session right now.");
       return;
     }
     setSubmitting(true);
@@ -284,7 +284,7 @@ export default function TaskIntakePage() {
             {result.quote
               ? `${
                 result.match?.name ?? "Bureau"
-              } matched the request with a defined starting scope. Create or open your client account to review and approve the plan${readiness.acceptingNewPayments ? " and pay securely" : ". Payment opens after the founding-beta launch approvals"}.`
+              } matched the request with a defined starting scope. Create or open your client account to review and approve the plan${readiness.acceptingNewPayments ? " and pay securely" : ". Payment opens after live readiness is restored"}.`
               : "Bureau will review the request and return a recommended scope, timing, agent, and final price."}
           </p>
           <dl>
@@ -306,7 +306,7 @@ export default function TaskIntakePage() {
             </div>
             <div>
               <dt>Payment</dt>
-              <dd>{readiness.acceptingNewPayments ? "Secure checkout after approval" : "Not activated during founding beta"}</dd>
+              <dd>{readiness.acceptingNewPayments ? "Secure checkout after approval" : "Checkout temporarily unavailable"}</dd>
             </div>
           </dl>
           <div>
@@ -392,7 +392,7 @@ export default function TaskIntakePage() {
                 <p>
                   {readiness.acceptingNewPayments
                     ? "Nothing starts until you accept the plan and finish Stripe checkout."
-                    : "Founding-beta requests are free. Bureau saves the plan; no checkout can open yet."}
+                    : "Task requests are free. Bureau saves the plan; checkout is temporarily unavailable."}
                 </p>
               </span>
             </div>
@@ -792,7 +792,7 @@ function LinkedRequestPage({
                 )
                 : (
                   <div className="linked-request-actions">
-                    {!paymentsOpen && payable && <p className="commercial-inline-note"><ShieldCheck /> Your quote is saved. New payments are not activated during the founding beta.</p>}
+                    {!paymentsOpen && payable && <p className="commercial-inline-note"><ShieldCheck /> Your quote is saved. Checkout is temporarily unavailable until live payment readiness is restored.</p>}
                     <Link className="button button--secondary" to="/workspace">
                       Track {payable ? "work plan" : "concierge review"}
                     </Link>

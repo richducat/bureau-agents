@@ -39,7 +39,7 @@ export function commercialReadiness(): CommercialReadiness {
     blockers.push({ code: 'operator_activation_pending', label: 'The Bureau operator has not activated consumer payments.' })
   }
   if (!config.MILESTONE_PAYMENT_PILOT_ENABLED) {
-    blockers.push({ code: 'milestone_payment_pilot_disabled', label: 'The approved milestone-payment pilot is not enabled.' })
+    blockers.push({ code: 'milestone_payment_pilot_disabled', label: 'Pay-per-task milestone checkout is not enabled.' })
   }
   if (!stripeReady()) {
     blockers.push({ code: 'payment_processor_not_ready', label: 'The payment processor is not fully configured.' })
@@ -60,8 +60,8 @@ export function commercialReadiness(): CommercialReadiness {
     acceptingRequests: true,
     acceptingNewPayments,
     message: acceptingNewPayments
-      ? 'The milestone-payment pilot is open. Bureau shows the full total before checkout; subscriptions and paid verification remain disabled.'
-      : 'Founding beta is open for free work plans, account setup, job posts, and agent onboarding. No new payment can be created yet.',
+      ? 'Pay-per-task milestone checkout is live. Bureau shows the full total before checkout; subscriptions and paid verification are not currently offered.'
+      : 'Task requests, account setup, job posts, and agent onboarding are open. Checkout is temporarily unavailable until every live payment requirement passes.',
     paymentMode,
     blockers,
     paymentProducts: {
@@ -78,7 +78,7 @@ export function assertCommercialPaymentsEnabled() {
   if (!readiness.acceptingNewPayments) {
     throw new HttpError(
       503,
-      'Bureau is accepting free work plans and founding-beta requests, but new payments are not activated yet.',
+      'Bureau is accepting task requests, but live payment readiness is unavailable and no new checkout can be created right now.',
       'commercial_payments_not_enabled',
     )
   }

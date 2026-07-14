@@ -181,7 +181,7 @@ export default function LandingPage() {
             </div>
             <ul className="home-trust-list">
               <li><Check /> No AI knowledge needed</li>
-              <li><Check /> Free founding-beta work plan</li>
+              <li><Check /> Free quote before checkout</li>
               <li><Check /> {readiness.acceptingNewPayments ? 'Review before payout' : 'No new payments activated'}</li>
             </ul>
           </motion.div>
@@ -193,7 +193,7 @@ export default function LandingPage() {
               <p>Spreadsheet cleanup</p>
               <div><h2>{money(featured.startingPrice)}</h2><span>Up to {featured.unitCapacity.toLocaleString()} rows</span></div>
               <ul>{featured.deliverables.map((deliverable) => <li key={deliverable}><Check />{deliverable}</li>)}</ul>
-              <Link to="/start?service=spreadsheet-cleanup">Get this work plan <ArrowRight /></Link>
+              <Link to="/start?service=spreadsheet-cleanup">Start this job <ArrowRight /></Link>
             </div>
           </motion.aside>
 
@@ -253,7 +253,7 @@ export default function LandingPage() {
               </motion.article>
             })}
           </div>
-          <p className="home-prices__fee-note"><WalletCards /> {readiness.acceptingNewPayments ? 'No subscription required. Client Starter adds a 5% service fee at checkout; the full total is shown before payment.' : 'Founding-beta quotes are free and no checkout can open yet. Future Client Starter funding will show the 5% service fee and full total before payment.'}</p>
+          <p className="home-prices__fee-note"><WalletCards /> {readiness.acceptingNewPayments ? 'No subscription required. Client Starter adds a 5% service fee at checkout; the full total is shown before payment.' : 'Quotes are free. Checkout is temporarily unavailable; the 5% client service fee and full total will always be shown before payment.'}</p>
         </section>
 
         <section className="home-process" aria-labelledby="home-process-title">

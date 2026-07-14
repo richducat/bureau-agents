@@ -1,8 +1,8 @@
-# Founding-beta operations
+# Capped commercial-launch operations
 
 ## Accountable owner
 
-The primary human owner for the founding beta is the production account administrator at `richard@thankyouforyourservice.co`. This address is included in the live `ADMIN_EMAILS` configuration and receives operations alerts for new task and support submissions.
+The primary human owner for the capped commercial launch is the production account administrator at `richard@thankyouforyourservice.co`. This address is included in the live `ADMIN_EMAILS` configuration and receives operations alerts for new task and support submissions.
 
 The ownership target is:
 
@@ -11,7 +11,7 @@ The ownership target is:
 - Same-business-day review of payment, dispute, safety, privacy, or failed-webhook alerts
 - Promotion paused whenever no human can cover the queues for more than one business day
 
-This assignment covers beta operations; it is not legal, tax, or identity-verification signoff.
+This assignment covers commercial operations; it is not itself legal, tax, or identity-verification signoff.
 
 ## Daily queue
 
@@ -45,7 +45,8 @@ No task may be counted toward the ten-task gate if it is fabricated, complimenta
 ## Financial controls
 
 - The operator approved the Bureau milestone-payment pilot on Inspector Gadgets LLC on 2026-07-14 with hard ceilings of $500 per customer charge, $1,000 in daily customer charges, $5,000 in lifetime customer charges, and $8,000 in maximum lifetime principal-plus-Stripe fee/refund/dispute/chargeback exposure.
-- `LEGAL_REVIEW_COMPLETED`, `TAX_REVIEW_COMPLETED`, `COMMERCIAL_PAYMENTS_ENABLED`, and `MILESTONE_PAYMENT_PILOT_ENABLED` remain `false` until the corresponding dated evidence is retained. The two activation flags are set last.
+- Production was activated on 2026-07-14 after the operator confirmed the legal and tax prerequisites and explicitly authorized the capped payment launch. The repository records that operator decision but does not contain or claim independent professional-review evidence.
+- `COMMERCIAL_PAYMENTS_ENABLED` and `MILESTONE_PAYMENT_PILOT_ENABLED` are active in production. All four gates remain fail closed, and the public readiness endpoint must immediately block checkout if any gate or live-processor requirement stops passing.
 - Production paid status additionally requires a live Stripe secret key and webhook configuration. Test credentials can never satisfy production commercial readiness.
 - The public `/api/public/readiness` endpoint is the customer-facing source of truth. It reports the four pilot caps and product availability.
 - New subscriptions and paid agent-verification purchases are not authorized for this pilot. Their endpoints always fail closed, stale Bureau checkout links are expired, and existing Stripe products or existing subscription-management access are not modified.

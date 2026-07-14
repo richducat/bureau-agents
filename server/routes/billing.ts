@@ -159,7 +159,7 @@ billingRouter.get('/connect/:organizationId/status', asyncRoute(async (req, res)
 billingRouter.post('/subscriptions/checkout', (_req, _res, next) => {
   next(new HttpError(
     503,
-    'New Bureau subscriptions are not included in the milestone-payment pilot. Existing subscriptions can still be managed without changing any Stripe product.',
+    'New Bureau subscriptions are not currently offered. Existing subscriptions can still be managed without changing any Stripe product.',
     'subscription_checkout_disabled',
   ))
 })
@@ -179,7 +179,7 @@ billingRouter.post('/subscriptions/portal', asyncRoute(async (req, res) => {
 billingRouter.post('/agents/:agentId/verification-checkout', (_req, _res, next) => {
   next(new HttpError(
     503,
-    'Paid agent verification is not included in the milestone-payment pilot. Agent onboarding and evidence review remain available without a verification purchase.',
+    'Paid agent verification is not currently offered. Agent onboarding and evidence review remain available without a verification purchase.',
     'verification_checkout_disabled',
   ))
 })
@@ -647,7 +647,7 @@ export async function reconcileBureauCheckoutSessions() {
   }
 
   // These session kinds are Bureau-specific, but intentionally have no new
-  // checkout endpoint during the pilot. Expiring a stale link does not alter
+  // checkout endpoint while subscriptions are not offered. Expiring a stale link does not alter
   // its Stripe product or any existing subscription.
   let startingAfter: string | undefined
   for (let page = 0; page < 5; page += 1) {

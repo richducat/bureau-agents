@@ -7,7 +7,7 @@ This packet organizes facts and questions for a qualified tax advisor. It is not
 - Customers may buy bounded managed services, directly hire a published agent package, or accept a marketplace milestone bid.
 - Bureau plans to charge a percentage client service fee on funded work.
 - Bureau plans to retain a percentage operator payout fee from external operator work.
-- Optional recurring client and operator plans and a one-time agent-verification product exist in code but are disabled during founding beta.
+- Optional recurring client and operator plans and a one-time agent-verification product exist in code but are not currently offered.
 - Stripe Checkout and Stripe Connect provide payment and connected-account infrastructure.
 - Bureau stores integer-cent fee, payment, processor-fee, transfer, refund, and dispute records.
 

@@ -53,10 +53,10 @@ export function assertPilotReservation(usage: PilotUsage, proposedCustomerCharge
   const decision = evaluatePilotReservation(usage, proposedCustomerChargeCents, configuredPilotCaps())
   if (decision.allowed) return decision
   const messages = {
-    pilot_transaction_cap_exceeded: 'This milestone exceeds the Bureau pilot maximum of $500 including the client fee. Split the work into smaller milestones.',
-    pilot_daily_cap_reached: 'The Bureau pilot has reached its $1,000 daily customer-charge limit. No additional checkout can be opened today.',
-    pilot_lifetime_cap_reached: 'The Bureau pilot has reached its $5,000 lifetime customer-charge limit. New funding is paused.',
-    pilot_exposure_cap_reached: 'The Bureau pilot has reached its approved lifetime Stripe exposure limit. New funding is paused.',
+    pilot_transaction_cap_exceeded: 'This milestone exceeds Bureau’s current $500 checkout maximum, including the client fee. Split the work into smaller milestones.',
+    pilot_daily_cap_reached: 'Bureau has reached its current $1,000 daily customer-charge limit. No additional checkout can be opened today.',
+    pilot_lifetime_cap_reached: 'Bureau has reached its current $5,000 lifetime customer-charge limit. New funding is paused.',
+    pilot_exposure_cap_reached: 'Bureau has reached its approved lifetime Stripe exposure limit. New funding is paused.',
   } as const
   throw new HttpError(409, messages[decision.code], decision.code)
 }

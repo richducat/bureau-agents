@@ -26,7 +26,7 @@ const safeDefault: CommercialReadiness = {
   stage: 'founding_beta',
   acceptingRequests: true,
   acceptingNewPayments: false,
-  message: 'Founding beta is open for free work plans, account setup, job posts, and agent onboarding. No new payment can be created yet.',
+  message: 'Task requests, account setup, job posts, and agent onboarding are open. Live payment readiness could not be confirmed, so no new checkout can be created right now.',
   paymentMode: 'unconfigured',
   blockers: [{ code: 'readiness_unavailable', label: 'Live payment readiness could not be confirmed.' }],
   paymentProducts: { milestoneFunding: false, subscriptions: false, agentVerificationPurchases: false },

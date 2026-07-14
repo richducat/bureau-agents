@@ -89,7 +89,7 @@ paths:
       description: Infrastructure health and commercial payment permission are separate. Free requests remain open while new payments are blocked.
       responses:
         '200':
-          description: Founding-beta or paid-live status, payment mode, and public blockers
+          description: Commercial payment availability, payment mode, product status, limits, and public blockers
           content:
             application/json:
               schema:

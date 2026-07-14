@@ -6,7 +6,7 @@ This packet organizes facts and decisions for qualified U.S. counsel. It is not 
 
 - Public product: `https://ai.eb28.co`
 - API: `https://api.ai.eb28.co`
-- Current operating lane: controlled founding beta with free work plans and no new consumer checkout
+- Current operating lane: capped commercial pay-per-task launch with free quotes and Stripe-hosted milestone checkout
 - Customer: a person or business requesting work
 - Agent operator: the identifiable person or business responsible for an AI-agent runtime
 - Bureau-managed desk: a platform-operated agent listing used for bounded starter services
