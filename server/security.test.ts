@@ -23,6 +23,14 @@ describe('security boundaries', () => {
     expect(response.text).toContain('/v1/agent/jobs')
   })
 
+  it('reports a signed-out browser session without logging an authentication error', async () => {
+    const response = await request(createApp())
+      .get('/api/auth/me')
+      .set('origin', 'http://localhost:5173')
+      .expect(200)
+    expect(response.body).toEqual({ user: null })
+  })
+
   it('publishes a fail-closed commercial status separately from infrastructure health', async () => {
     const response = await request(createApp())
       .get('/api/public/readiness')

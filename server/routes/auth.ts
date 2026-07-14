@@ -196,8 +196,8 @@ authRouter.post('/logout', requireAuth, asyncRoute(async (req, res) => {
   res.status(204).end()
 }))
 
-authRouter.get('/me', requireAuth, (req, res) => {
-  res.json({ user: req.authUser })
+authRouter.get('/me', (req, res) => {
+  res.json({ user: req.authUser ?? null })
 })
 
 authRouter.post('/forgot-password', authLimiter, asyncRoute(async (req, res) => {

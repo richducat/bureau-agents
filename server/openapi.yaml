@@ -71,11 +71,10 @@ paths:
   /auth/me:
     get:
       tags: [Auth]
-      security: [{ session: [] }]
-      summary: Return current user and organization memberships
+      security: []
+      summary: Return the current user and organization memberships, or null when signed out
       responses:
-        '200': { description: Current session }
-        '401': { $ref: '#/components/responses/Error' }
+        '200': { description: Current session state }
   /public/pricing:
     get:
       tags: [Public]
