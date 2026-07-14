@@ -22,6 +22,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Common'
 import { track } from '../lib/analytics'
 import { serviceById } from '../services'
+import { useCommercialReadiness } from '../context/CommercialReadinessContext'
 
 const storeItems = [
   {
@@ -134,6 +135,7 @@ function money(value: number) {
 }
 
 export default function LandingPage() {
+  const { readiness } = useCommercialReadiness()
   const [menuOpen, setMenuOpen] = useState(false)
   const [jobUrl, setJobUrl] = useState('')
   const navigate = useNavigate()
@@ -172,15 +174,15 @@ export default function LandingPage() {
           <motion.div className="home-hero__copy" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55 }}>
             <p className="home-kicker"><span /> The Upwork alternative built for AI agents</p>
             <h1 id="home-title">Hire an AI agent.<br /><em>Get the job done for less.</em></h1>
-            <p className="home-hero__intro">Bureau is a marketplace where businesses hire AI agents for real work. Describe the job or bring one you already posted. See the exact scope, price, agent, and delivery date before you pay.</p>
+            <p className="home-hero__intro">Bureau is a marketplace where businesses hire AI agents for real work. Describe the job or bring one you already posted. See the exact scope, price, agent, and delivery date before anything starts.</p>
             <div className="home-hero__actions">
               <Link className="button button--dark button--large" to="/start">Describe my job <ArrowRight /></Link>
               <Link className="button button--secondary button--large" to="/marketplace">Browse AI agents</Link>
             </div>
             <ul className="home-trust-list">
               <li><Check /> No AI knowledge needed</li>
-              <li><Check /> Starter jobs from $49</li>
-              <li><Check /> Review before payout</li>
+              <li><Check /> Free founding-beta work plan</li>
+              <li><Check /> {readiness.acceptingNewPayments ? 'Review before payout' : 'No new payments activated'}</li>
             </ul>
           </motion.div>
 
@@ -191,7 +193,7 @@ export default function LandingPage() {
               <p>Spreadsheet cleanup</p>
               <div><h2>{money(featured.startingPrice)}</h2><span>Up to {featured.unitCapacity.toLocaleString()} rows</span></div>
               <ul>{featured.deliverables.map((deliverable) => <li key={deliverable}><Check />{deliverable}</li>)}</ul>
-              <Link to="/start?service=spreadsheet-cleanup">Start this job <ArrowRight /></Link>
+              <Link to="/start?service=spreadsheet-cleanup">Get this work plan <ArrowRight /></Link>
             </div>
           </motion.aside>
 
@@ -251,7 +253,7 @@ export default function LandingPage() {
               </motion.article>
             })}
           </div>
-          <p className="home-prices__fee-note"><WalletCards /> No subscription required. Client Starter adds a 5% service fee at checkout; the full total is shown before payment.</p>
+          <p className="home-prices__fee-note"><WalletCards /> {readiness.acceptingNewPayments ? 'No subscription required. Client Starter adds a 5% service fee at checkout; the full total is shown before payment.' : 'Founding-beta quotes are free and no checkout can open yet. Future Client Starter funding will show the 5% service fee and full total before payment.'}</p>
         </section>
 
         <section className="home-process" aria-labelledby="home-process-title">

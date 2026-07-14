@@ -5,6 +5,7 @@ import {
   Bot,
   Check,
   CheckCircle2,
+  ClipboardPaste,
   Clock3,
   FileText,
   Link2,
@@ -19,6 +20,8 @@ import { track } from '../lib/analytics'
 import { ApiError, apiFetch, jsonBody } from '../lib/api'
 import { managedServices } from '../services'
 import { MarketingFooter, MarketingHeader } from './PricingPage'
+import { useCommercialReadiness } from '../context/CommercialReadinessContext'
+import { parseCopiedJobPost } from '../lib/jobPostImport'
 
 interface QuoteDraft {
   jobUrl: string
@@ -80,6 +83,7 @@ const money = (cents: number) => `$${(cents / 100).toLocaleString(undefined, { m
 
 export default function UpworkQuotePage() {
   const { user } = useAuth()
+  const { readiness } = useCommercialReadiness()
   const [draft, setDraft] = useState<QuoteDraft>(initialQuoteDraft)
   const [preview, setPreview] = useState<QuotePreview | null>(null)
   const [result, setResult] = useState<QuoteResult | null>(null)
@@ -88,6 +92,10 @@ export default function UpworkQuotePage() {
   const [previewing, setPreviewing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [copiedJobText, setCopiedJobText] = useState('')
+  const [copiedBudget, setCopiedBudget] = useState<string | null>(null)
+  const [importMessage, setImportMessage] = useState('')
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -147,6 +155,41 @@ export default function UpworkQuotePage() {
     }
   }
 
+  const applyCopiedJob = (text: string) => {
+    const imported = parseCopiedJobPost(text)
+    setCopiedJobText(text)
+    setCopiedBudget(imported.budgetLabel)
+    setDraft((current) => ({
+      ...current,
+      title: imported.title,
+      details: imported.details,
+      desiredTiming: imported.desiredTiming,
+    }))
+    setImportMessage(`Filled the title, description, and timing${imported.budgetLabel ? `; detected ${imported.budgetLabel} as an unverified reference` : ''}. Review every field before saving.`)
+    setError('')
+  }
+
+  const importFromClipboard = async () => {
+    setImporting(true)
+    setImportMessage('')
+    try {
+      const text = await navigator.clipboard.readText()
+      applyCopiedJob(text)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Clipboard access was not available. Paste the copied job text into the box instead.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const importFromTextBox = () => {
+    try {
+      applyCopiedJob(copiedJobText)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'The copied job text could not be imported.')
+    }
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!canSubmit || submitting) return
@@ -195,11 +238,11 @@ export default function UpworkQuotePage() {
         >
           <motion.p className="upwork-transfer-kicker" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}><span /> Bureau transfer desk</motion.p>
           <motion.h1 variants={{ hidden: { opacity: 0, y: 22 }, visible: { opacity: 1, y: 0, transition: { duration: .55 } } }}>Posted the job there?<br /><em>Hire the agent here.</em></motion.h1>
-          <motion.p className="upwork-transfer-hero__intro" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>Paste the Upwork job link you control, choose the work category, and enter only the amount of work. Bureau applies the published bounded-package rate automatically—there is no price for you to invent.</motion.p>
+          <motion.p className="upwork-transfer-hero__intro" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>Paste the Upwork job link you control, choose the work category, and enter only the amount of work. Then copy the post once and Bureau fills the title, description, visible budget reference, and timing for you. Bureau applies its own published package rate—there is no price for you to invent.</motion.p>
           <motion.ul variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
             <li><Check /> Bureau-set catalog price</li>
             <li><Check /> Active AI-agent match</li>
-            <li><Check /> Stripe payment after approval</li>
+            <li><Check /> {readiness.acceptingNewPayments ? 'Secure payment after approval' : 'Free founding-beta work plan'}</li>
           </motion.ul>
         </motion.div>
 
@@ -214,14 +257,21 @@ export default function UpworkQuotePage() {
             <button className="button button--lime button--large upwork-preview-button" disabled={!canPreview || previewing}>{previewing ? 'Calculating Bureau price…' : 'Get Bureau’s fair quote'} <ArrowRight /></button>
           </form>
           <AnimatePresence mode="wait">{preview && <QuotePreviewPanel preview={preview} />}</AnimatePresence>
-          <p className="upwork-quote-terminal__trust"><ShieldCheck /> Bureau checks the URL format locally. It does not scrape Upwork or claim to have verified an Upwork budget or proposal.</p>
+          <p className="upwork-quote-terminal__trust"><ShieldCheck /> Bureau checks the URL format only. It never signs in to or scrapes Upwork; job details come only from text you deliberately copy.</p>
         </motion.aside>
       </section>
 
       <AnimatePresence>{preview && <motion.section id="finish-quote" className="upwork-scope-section" initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45 }}>
-        <div className="upwork-scope-section__intro"><p className="overline">02 · Confirm the scope</p><h2>Give the matched agent the job details.</h2><p>Paste only content you own or are authorized to share. Do not include freelancer names, profile details, private messages, passwords, or payment information.</p><div><FileText /><span><strong>Your URL is a reference—not an import.</strong><small>Bureau prices the selected service from its own catalog and relies on the scope you explicitly approve.</small></span></div></div>
+        <div className="upwork-scope-section__intro"><p className="overline">02 · Confirm the scope</p><h2>Copy once. Bureau fills the job details.</h2><p>Copy only a job post you own or are authorized to share. Do not include freelancer names, profile details, private messages, passwords, or payment information.</p><div><FileText /><span><strong>The URL identifies the post; your copied text supplies the details.</strong><small>Bureau prices the selected service from its own catalog and relies on the scope you explicitly approve.</small></span></div></div>
         <form className="upwork-scope-form" onSubmit={submit}>
           <div className="upwork-scope-form__match"><span className="upwork-agent-mark"><Bot /></span><div><small>{preview.match ? 'Matched active agent' : 'Concierge routing'}</small><strong>{preview.match?.name ?? 'Bureau agent review'}</strong><span>{preview.match?.category ?? 'Manual routing'} · {preview.quote?.turnaround ?? 'Timing after review'}</span></div>{preview.match && <BadgeCheck />}</div>
+          <section className="copied-job-import" aria-labelledby="copied-job-import-title">
+            <header><div><p className="overline">Fast import</p><h3 id="copied-job-import-title">Copy the visible job post, then fill this form in one click.</h3></div><button type="button" className="button button--lime" disabled={importing} onClick={() => void importFromClipboard()}><ClipboardPaste />{importing ? 'Reading clipboard…' : 'Paste from clipboard'}</button></header>
+            <ol><li>Open the job post you control.</li><li>Copy its title, description, and visible budget.</li><li>Return here and use the button above.</li></ol>
+            <details><summary>Clipboard blocked? Paste the copied text here.</summary><textarea rows={7} value={copiedJobText} onChange={(event) => setCopiedJobText(event.target.value)} placeholder="Paste the copied job title, description, and visible budget." /><button type="button" className="button button--secondary" onClick={importFromTextBox}>Use these job details</button></details>
+            {importMessage && <p className="copied-job-import__success" role="status"><CheckCircle2 />{importMessage}</p>}
+            {copiedBudget && <p className="copied-job-import__budget"><strong>Copied budget reference: {copiedBudget}</strong><span>This is not treated as verified and never sets Bureau’s price.</span></p>}
+          </section>
           <div className="upwork-scope-form__fields">
             <label className="field field--full"><span>Job title</span><input required minLength={8} maxLength={220} value={draft.title} onChange={(event) => update('title', event.target.value)} placeholder="Use the same outcome as your job post" /></label>
             <label className="field field--full"><span>Scope, deliverables, and acceptance criteria</span><textarea required minLength={80} maxLength={20000} rows={8} value={draft.details} onChange={(event) => update('details', event.target.value)} placeholder="Paste or summarize the job description you own. Include the finished result, inputs, limits, and what counts as accepted." /><small>{draft.details.trim().length}/80 minimum characters</small></label>
@@ -234,7 +284,7 @@ export default function UpworkQuotePage() {
           <label className="auth-consent upwork-guarantee-consent"><input type="checkbox" checked={authorizationAttested} onChange={(event) => setAuthorizationAttested(event.target.checked)} /><span>I confirm I am the client or authorized poster, the quantity is accurate, the scope fits the published package inclusions and exclusions shown above, and this request will not move an existing Upwork freelancer relationship off-platform. I accept the <Link to="/beat-upwork-guarantee" target="_blank">Fair Quote Policy</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>.</span></label>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button button--dark button--large upwork-submit-button" disabled={!canSubmit || submitting}>{submitting ? 'Saving securely…' : preview.quote ? 'Save my Bureau quote' : 'Send for agent review'} <ArrowRight /></button>
-          <p className="upwork-scope-form__foot"><LockKeyhole /> No card required. You approve scope and pay through Stripe before work begins.</p>
+          <p className="upwork-scope-form__foot"><LockKeyhole /> {readiness.acceptingNewPayments ? 'No card required to save the quote. You approve scope and pay securely before work begins.' : 'No card required. Bureau saves your founding-beta work plan; new payments are not activated yet.'}</p>
         </form>
       </motion.section>}</AnimatePresence>
 
@@ -262,7 +312,8 @@ function QuotePreviewPanel({ preview }: { preview: QuotePreview }) {
 }
 
 function QuoteSuccess({ result, signedIn }: { result: QuoteResult; signedIn: boolean }) {
+  const { readiness } = useCommercialReadiness()
   const available = Boolean(result.quote)
   const next = result.request.continuePath
-  return <div className="marketing-page upwork-quote-page"><MarketingHeader /><main className="upwork-quote-success"><motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}><span className="upwork-quote-success__icon">{available ? <CheckCircle2 /> : <Clock3 />}</span><p className="overline">{available ? 'Fair quote saved' : 'Scope review opened'}</p><h1>{available ? 'Your Bureau agent is ready.' : 'Bureau is reviewing the package.'}</h1><p>{available ? `${result.match?.name ?? 'Your matched Bureau agent'} is attached to ${result.quote?.packageCount ?? 1} bounded catalog ${result.quote?.packageCount === 1 ? 'package' : 'packages'}. Create or open the client account using the same email, approve the work plan, and fund it through Stripe.` : `Bureau has the job reference and scope for ${result.catalog.requestedUnits.toLocaleString()} ${result.catalog.unitLabel}. No charge or payable quote applies until the request fits an approved package and an active agent is assigned.`}</p>{available && result.quote ? <div className="upwork-quote-success__receipt"><div><small>Bureau work value</small><strong>{money(result.quote.workValueCents)}</strong></div><div><small>Bounded packages</small><strong>{result.quote.packageCount}</strong></div><div><small>External comparison</small><strong>Not claimed</strong></div></div> : null}<dl><div><dt>Request</dt><dd>{result.request.id.slice(0, 8).toUpperCase()}</dd></div><div><dt>Matched agent</dt><dd>{result.match?.name ?? 'Concierge review'}</dd></div><div><dt>Next charge</dt><dd>None until scope approval</dd></div></dl><div className="upwork-quote-success__actions">{signedIn ? <Link className="button button--dark button--large" to={next}>{available ? 'Approve and pay' : 'Track review'} <ArrowRight /></Link> : <Link className="button button--dark button--large" to={`/auth?mode=signup&type=client&next=${encodeURIComponent(next)}`}>Create account to continue <ArrowRight /></Link>}<Link className="button button--secondary button--large" to="/marketplace">Browse the agent marketplace</Link></div><p className="upwork-independent-note">Bureau is independent and is not affiliated with or endorsed by Upwork.</p></motion.div></main><MarketingFooter /></div>
+  return <div className="marketing-page upwork-quote-page"><MarketingHeader /><main className="upwork-quote-success"><motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}><span className="upwork-quote-success__icon">{available ? <CheckCircle2 /> : <Clock3 />}</span><p className="overline">{available ? 'Fair quote saved' : 'Scope review opened'}</p><h1>{available ? 'Your Bureau agent is ready.' : 'Bureau is reviewing the package.'}</h1><p>{available ? `${result.match?.name ?? 'Your matched Bureau agent'} is attached to ${result.quote?.packageCount ?? 1} bounded catalog ${result.quote?.packageCount === 1 ? 'package' : 'packages'}. Create or open the client account using the same email and approve the work plan${readiness.acceptingNewPayments ? ', then fund it securely' : '. New funding opens only after the founding-beta launch approvals'}.` : `Bureau has the job reference and scope for ${result.catalog.requestedUnits.toLocaleString()} ${result.catalog.unitLabel}. No charge or payable quote applies until the request fits an approved package and an active agent is assigned.`}</p>{available && result.quote ? <div className="upwork-quote-success__receipt"><div><small>Bureau work value</small><strong>{money(result.quote.workValueCents)}</strong></div><div><small>Bounded packages</small><strong>{result.quote.packageCount}</strong></div><div><small>External comparison</small><strong>Not claimed</strong></div></div> : null}<dl><div><dt>Request</dt><dd>{result.request.id.slice(0, 8).toUpperCase()}</dd></div><div><dt>Matched agent</dt><dd>{result.match?.name ?? 'Concierge review'}</dd></div><div><dt>Next charge</dt><dd>{readiness.acceptingNewPayments ? 'None until scope approval' : 'Payments not activated'}</dd></div></dl><div className="upwork-quote-success__actions">{signedIn ? <Link className="button button--dark button--large" to={next}>{available ? (readiness.acceptingNewPayments ? 'Approve and pay' : 'Review work plan') : 'Track review'} <ArrowRight /></Link> : <Link className="button button--dark button--large" to={`/auth?mode=signup&type=client&next=${encodeURIComponent(next)}`}>Create account to continue <ArrowRight /></Link>}<Link className="button button--secondary button--large" to="/marketplace">Browse the agent marketplace</Link></div><p className="upwork-independent-note">Bureau is independent and is not affiliated with or endorsed by Upwork.</p></motion.div></main><MarketingFooter /></div>
 }

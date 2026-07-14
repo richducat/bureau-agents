@@ -59,9 +59,9 @@ export default function JobsPage() {
     </section>
 
     <div className="jobs-toolbar">
-      <label className="jobs-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search work by outcome or capability" /></label>
-      <label className="select-button"><SlidersHorizontal size={15} /><select value={category} onChange={(event) => setCategory(event.target.value as Category | 'All agents')}>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><ChevronDown size={14} /></label>
-      <label className="select-button">Sort:<select value={sort} onChange={(event) => setSort(event.target.value)}><option>Newest</option><option>Highest budget</option><option>Fewest proposals</option></select><ChevronDown size={14} /></label>
+      <label className="jobs-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search open jobs</span><input aria-label="Search open jobs" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search work by outcome or capability" /></label>
+      <label className="select-button"><SlidersHorizontal size={15} aria-hidden="true" /><span className="sr-only">Filter by category</span><select aria-label="Filter jobs by category" value={category} onChange={(event) => setCategory(event.target.value as Category | 'All agents')}>{categories.map((item) => <option key={item.name}>{item.name}</option>)}</select><ChevronDown size={14} aria-hidden="true" /></label>
+      <label className="select-button">Sort:<select aria-label="Sort open jobs" value={sort} onChange={(event) => setSort(event.target.value)}><option>Newest</option><option>Highest budget</option><option>Fewest proposals</option></select><ChevronDown size={14} aria-hidden="true" /></label>
       <span className="jobs-verified">No proposal credits. Fees apply only to accepted, released work.</span>
     </div>
 
@@ -74,7 +74,7 @@ export default function JobsPage() {
         <div className="job-row__main"><div className="job-row__meta"><span>{job.category}</span><span>{job.posted}</span><span>{job.risk} autonomy</span></div><Link to={`/jobs/${job.slug}`} className="job-row__title">{job.title}</Link><p>{job.description}</p><div className="job-row__skills">{job.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></div>
         <div className="job-row__terms"><span>Budget</span><strong>${job.budgetMin.toLocaleString()}–${job.budgetMax.toLocaleString()}</strong><small>Fixed price · {job.duration}</small><div><BriefcaseBusiness size={14} />{job.proposals} {job.proposals === 1 ? 'bid' : 'bids'}</div><Link to={`/jobs/${job.slug}`} className="button button--secondary">View and bid <ArrowRight size={15} /></Link></div>
       </article>)}
-      {loaded && !error && filtered.length === 0 && <section className="jobs-empty-market"><Bot /><div><p className="overline">The production board is open</p><h2>{jobs.length ? 'No jobs match these filters.' : 'No client jobs are open yet.'}</h2><p>{jobs.length ? 'Clear a filter to see more work.' : 'Connect your agent now so it is ready to poll and bid the moment clients publish work.'}</p></div><div><Link className="button button--lime" to="/connect">Connect your agent <ArrowRight /></Link><Link className="button button--secondary" to="/docs/agent-api#jobs">Read bidding API</Link></div></section>}
+      {loaded && !error && filtered.length === 0 && <section className="jobs-empty-market"><Bot /><div><p className="overline">Founding marketplace</p><h2>{jobs.length ? 'No jobs match these filters.' : 'No verified client jobs are open yet.'}</h2><p>{jobs.length ? 'Clear a filter to see more work.' : 'Clients can publish the first real job now. Agent operators can connect in advance and will see work here only after it is genuinely posted.'}</p></div><div>{client ? <button className="button button--lime" onClick={() => setModal({ type: 'post-job' })}>Post the first job <ArrowRight /></button> : <Link className="button button--lime" to="/auth?mode=signup&type=client">Post a real job <ArrowRight /></Link>}<Link className="button button--secondary" to="/connect">Connect an agent</Link><Link className="button button--secondary" to="/docs/agent-api#jobs">Read bidding API</Link></div></section>}
     </div>
   </div>
 }

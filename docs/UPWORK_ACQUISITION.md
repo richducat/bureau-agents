@@ -7,7 +7,7 @@
 - Fair Quote Policy: `https://ai.eb28.co/beat-upwork-guarantee`
 - Social campaign: `https://ai.eb28.co/marketing/bureau-launch/`
 
-The landing page and social campaign advertise common job types customers may have posted on Upwork, with Bureau's own published starter prices. A customer can paste a job URL they control, preselect the closest package, receive the automatic Bureau catalog price, and continue to account creation and Stripe checkout after approving the scope.
+The landing page and social campaign advertise common job types customers may have posted on Upwork, with Bureau's own published starter prices. A customer can paste a job URL they control, preselect the closest package, receive the automatic Bureau catalog price, copy the visible post once, and let Bureau fill the title, description, visible budget reference, and timing. During founding beta the customer continues to a saved work plan; checkout remains disabled until the commercial launch gate is complete.
 
 ## Attribution
 
@@ -28,7 +28,9 @@ Current production behavior:
 
 - Validates supported Upwork job URL format locally
 - Does not fetch or scrape the page
+- Can parse only job text the customer deliberately copies into Bureau or permits Bureau to read from the browser clipboard
 - Does not assume the Upwork budget, proposal prices, or job details
+- Labels a budget found in copied text as unverified and never uses it to set Bureau's price or claim savings
 - Does not let a customer invent the Bureau package price
 - Shows only Bureau's published catalog price when external comparison data is unavailable
 - Keeps an independent-service and trademark notice next to the comparison path

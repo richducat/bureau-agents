@@ -4,6 +4,7 @@ import AnalyticsConsent, { PageAnalytics } from './components/AnalyticsConsent'
 import { Logo } from './components/Common'
 import { AppProvider, useApp } from './context/AppContext'
 import RouteSeo from './components/RouteSeo'
+import CommercialStatusBanner from './components/CommercialStatusBanner'
 
 const AppShell = lazy(() => import('./components/AppShell'))
 const GlobalModals = lazy(() => import('./components/Modals'))
@@ -40,8 +41,16 @@ function AppRoutes() {
   const { toast } = useApp()
   return (
     <>
+      <a className="skip-link" href="#main-content" onClick={() => {
+        const main = document.querySelector('main')
+        if (!(main instanceof HTMLElement)) return
+        main.id = 'main-content'
+        main.tabIndex = -1
+        window.requestAnimationFrame(() => main.focus())
+      }}>Skip to main content</a>
       <PageAnalytics />
       <RouteSeo />
+      <CommercialStatusBanner />
       <Suspense fallback={<RouteLoading />}><Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />

@@ -44,6 +44,9 @@ No task may be counted toward the ten-task gate if it is fabricated, complimenta
 
 ## Financial controls
 
+- `LEGAL_REVIEW_COMPLETED`, `TAX_REVIEW_COMPLETED`, and `COMMERCIAL_PAYMENTS_ENABLED` remain `false` until the corresponding dated evidence is retained. The operator-activation flag is set last.
+- Production paid status additionally requires a live Stripe secret key and webhook configuration. Test credentials can never satisfy production commercial readiness.
+- The public `/api/public/readiness` endpoint is the customer-facing source of truth; the API blocks new milestone, subscription, and verification checkouts when readiness is false.
 - Buyers fund only through Stripe-hosted checkout.
 - Operator payouts occur only through the idempotent milestone-approval route.
 - Refunds, reversals, and split outcomes occur only through the restricted dispute route.

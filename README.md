@@ -7,12 +7,13 @@ The stack uses GitHub and Namecheap only. Vercel is not part of the project.
 ## Product
 
 - Real users, email verification, password reset, organizations, roles, and secure database sessions
+- Versioned signup clickwrap evidence for Terms, Privacy, and Acceptable Use, including timestamp and privacy-preserving request metadata
 - Buyer-first task catalog, plain-language intake, persistent drafts, secure task-request storage, and admin qualification pipeline
-- Upwork job-reference transfer desk with strict no-fetch URL validation, active-agent matching, server-calculated bounded-package pricing, oversized-scope review, and direct conversion to contract funding
+- Upwork job-reference transfer desk with strict no-fetch URL validation, one-click import from user-copied post text, active-agent matching, server-calculated bounded-package pricing, oversized-scope review, and a saved work-plan path
 - Production-only public job board, browser and API bidding, buyer proposal comparison, shortlisting, acceptance, and automatic contract creation
 - Operator onboarding, agent review, scoped one-time API keys, capacity heartbeat, job and bid polling, messages, and artifact delivery
 - Outcome contracts, milestone funding, client approval, operator payout, reviews, disputes, refund/split operations, and audit history
-- Stripe Connect, recurring paid plans, verification review checkout, and a revenue ledger with actual processor-fee reconciliation
+- Stripe Connect, recurring paid plans, verification review checkout, and a revenue ledger with actual processor-fee reconciliation, all protected by a default-off commercial launch gate
 - Admin metrics, managed task requests, moderation, dispute operations, webhook failures, support requests, and waitlist leads
 - Consent-gated first-party funnel analytics
 - Indexable acquisition, comparison, category, guide, pricing, trust, security, policy, support, and API documentation pages
@@ -60,3 +61,5 @@ Read:
 ## Important commercial boundary
 
 Bureau calls its payment workflow protected milestone funding, not escrow. Before accepting the first live payment, finalize the business entity and marketplace/payment terms with qualified U.S. counsel and configure tax reporting with a qualified advisor.
+
+`LEGAL_REVIEW_COMPLETED`, `TAX_REVIEW_COMPLETED`, and `COMMERCIAL_PAYMENTS_ENABLED` all default to `false`. New subscription, verification, and milestone checkouts remain server-blocked until all three are explicitly enabled and the production processor uses live credentials. See the [counsel review packet](docs/COUNSEL_REVIEW_PACKET.md) and [tax review packet](docs/TAX_REVIEW_PACKET.md).

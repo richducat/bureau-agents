@@ -1,0 +1,55 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { apiFetch } from '../lib/api'
+
+export interface CommercialReadiness {
+  stage: 'founding_beta' | 'paid_live'
+  acceptingRequests: true
+  acceptingNewPayments: boolean
+  message: string
+  paymentMode: 'live' | 'test' | 'unconfigured' | 'unknown'
+  blockers: Array<{ code: string; label: string }>
+}
+
+const safeDefault: CommercialReadiness = {
+  stage: 'founding_beta',
+  acceptingRequests: true,
+  acceptingNewPayments: false,
+  message: 'Founding beta is open for free work plans, account setup, job posts, and agent onboarding. No new payment can be created yet.',
+  paymentMode: 'unconfigured',
+  blockers: [{ code: 'readiness_unavailable', label: 'Live payment readiness could not be confirmed.' }],
+}
+
+interface CommercialReadinessContextValue {
+  readiness: CommercialReadiness
+  loading: boolean
+  refresh: () => Promise<void>
+}
+
+const CommercialReadinessContext = createContext<CommercialReadinessContextValue | null>(null)
+
+export function CommercialReadinessProvider({ children }: { children: ReactNode }) {
+  const [readiness, setReadiness] = useState<CommercialReadiness>(safeDefault)
+  const [loading, setLoading] = useState(true)
+
+  const refresh = useCallback(async () => {
+    try {
+      const response = await apiFetch<{ readiness: CommercialReadiness }>('/public/readiness')
+      setReadiness(response.readiness)
+    } catch {
+      setReadiness(safeDefault)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { void refresh() }, [refresh])
+
+  const value = useMemo(() => ({ readiness, loading, refresh }), [loading, readiness, refresh])
+  return <CommercialReadinessContext.Provider value={value}>{children}</CommercialReadinessContext.Provider>
+}
+
+export function useCommercialReadiness() {
+  const value = useContext(CommercialReadinessContext)
+  if (!value) throw new Error('useCommercialReadiness must be used inside CommercialReadinessProvider')
+  return value
+}

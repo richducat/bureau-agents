@@ -82,6 +82,21 @@ paths:
       summary: Return current plan and marketplace fee configuration
       responses:
         '200': { description: Pricing }
+  /public/readiness:
+    get:
+      tags: [Public]
+      summary: Return fail-closed commercial launch status
+      description: Infrastructure health and commercial payment permission are separate. Free requests remain open while new payments are blocked.
+      responses:
+        '200':
+          description: Founding-beta or paid-live status, payment mode, and public blockers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [readiness]
+                properties:
+                  readiness: { $ref: '#/components/schemas/CommercialReadiness' }
   /public/agents:
     get:
       tags: [Public]
@@ -267,9 +282,11 @@ paths:
       tags: [Marketplace]
       security: [{ session: [], csrf: [] }]
       summary: Create a direct outcome contract with an active agent
+      description: The milestone total must exactly equal the agent's published base package price. Custom pricing belongs in the open job and proposal flow.
       parameters: [{ $ref: '#/components/parameters/AgentId' }]
       responses:
         '201': { description: Direct contract created }
+        '409': { $ref: '#/components/responses/Error' }
   /marketplace/contracts/{contractId}:
     get:
       tags: [Marketplace]
@@ -305,6 +322,7 @@ paths:
       responses:
         '201': { description: Checkout URL and complete fee breakdown }
         '409': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
   /billing/milestones/{milestoneId}/approve:
     post:
       tags: [Billing]
@@ -328,6 +346,16 @@ paths:
       summary: Begin Operator Pro or Client Scale subscription checkout
       responses:
         '201': { description: Stripe Checkout URL }
+        '503': { $ref: '#/components/responses/Error' }
+  /billing/agents/{agentId}/verification-checkout:
+    post:
+      tags: [Billing]
+      security: [{ session: [], csrf: [] }]
+      summary: Begin one-time agent verification checkout when commercial payments are live
+      parameters: [{ $ref: '#/components/parameters/AgentId' }]
+      responses:
+        '201': { description: Stripe Checkout URL }
+        '503': { $ref: '#/components/responses/Error' }
   /v1/agent/me:
     get:
       tags: [Agent runtime]
@@ -453,6 +481,23 @@ components:
                   message: { type: string }
               requestId: { type: string, format: uuid }
   schemas:
+    CommercialReadiness:
+      type: object
+      required: [stage, acceptingRequests, acceptingNewPayments, message, paymentMode, blockers]
+      properties:
+        stage: { enum: [founding_beta, paid_live] }
+        acceptingRequests: { const: true }
+        acceptingNewPayments: { type: boolean }
+        message: { type: string }
+        paymentMode: { enum: [live, test, unconfigured, unknown] }
+        blockers:
+          type: array
+          items:
+            type: object
+            required: [code, label]
+            properties:
+              code: { type: string }
+              label: { type: string }
     UpworkQuoteCore:
       type: object
       required: [jobUrl, serviceId, scopeUnits]

@@ -9,8 +9,8 @@
   --paper: #f4f2ec;
   --paper-2: #ebe9e2;
   --surface: #ffffff;
-  --muted: #70726a;
-  --muted-2: #9b9c95;
+  --muted: #5d6057;
+  --muted-2: #6d7067;
   --line: #dddcd4;
   --line-dark: #30312c;
   --lime: #d8ff3e;
@@ -1755,13 +1755,32 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--lime-deep);
+  outline: 3px solid var(--lime-deep);
   outline-offset: 3px;
 }
 
 ::selection {
   color: var(--ink);
   background: var(--lime);
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10000;
+  padding: 11px 15px;
+  color: #fff;
+  background: #12130f;
+  border: 3px solid #d8ff3e;
+  border-radius: 7px;
+  font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .button {
@@ -6651,6 +6670,26 @@ select:focus-visible {
   background: transparent;
   border: 0;
   box-shadow: none !important;
+}
+
+.capability-chip {
+  min-height: 36px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: #e9f2d8;
+  border: 1px solid #becb9e;
+  border-radius: 999px;
+  font-size: 14px !important;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.capability-chip svg {
+  width: 15px;
+  height: 15px;
 }
 
 .connect-actions {
@@ -12060,6 +12099,310 @@ select:focus-visible {
   .admin-comparison-quote__action { grid-template-columns: 1fr; }
 }
 
+/* Consumer launch clarity and WCAG-readable type floor */
+.commercial-status {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px clamp(16px, 4vw, 52px);
+  color: #171912;
+  background: #d8ff3e;
+  border-bottom: 1px solid #a5c224;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.commercial-status > svg {
+  width: 20px;
+  flex: 0 0 20px;
+}
+
+.commercial-status p {
+  font-size: 15px !important;
+}
+
+.commercial-status > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.commercial-status > a svg {
+  width: 16px;
+}
+
+.commercial-payment-callout,
+.pricing-launch-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  color: var(--ink);
+  background: #efffc0;
+  border: 1px solid #a9c830;
+  border-radius: 12px;
+}
+
+.commercial-payment-callout {
+  margin-bottom: 22px;
+}
+
+.commercial-payment-callout > svg,
+.pricing-launch-status > svg {
+  width: 24px;
+  flex: 0 0 24px;
+  color: #647711;
+}
+
+.commercial-payment-callout strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 17px;
+}
+
+.commercial-payment-callout p,
+.pricing-launch-status p {
+  color: #4d5540;
+  line-height: 1.6;
+}
+
+.pricing-launch-status {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto 46px;
+  padding: 28px;
+}
+
+.pricing-launch-status h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(27px, 3vw, 40px);
+}
+
+.copied-job-import {
+  grid-column: 1 / -1;
+  padding: 22px;
+  background: #f2f6e7;
+  border: 1px solid #b9c995;
+  border-radius: 12px;
+}
+
+.copied-job-import > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.copied-job-import h3 {
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.copied-job-import ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin: 17px 0;
+  padding-left: 21px;
+  color: #5e6554;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.copied-job-import summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.copied-job-import details textarea {
+  width: 100%;
+  margin: 12px 0 8px;
+  padding: 12px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  resize: vertical;
+}
+
+.copied-job-import__success,
+.copied-job-import__budget {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid #cbd5b6;
+}
+
+.copied-job-import__success > svg {
+  width: 19px;
+  flex: 0 0 19px;
+  color: #647711;
+}
+
+.copied-job-import__budget {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.copied-job-import__budget span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.published-price-output {
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 12px;
+  background: #efffc0;
+  border: 1px solid #a9c830;
+  border-radius: 7px;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.published-price-output small {
+  color: #596348;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.direct-hire-unpriced {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 28px;
+  background: #f2f6e7;
+  border: 1px solid #b9c995;
+  border-radius: 12px;
+}
+
+.direct-hire-unpriced > svg {
+  width: 28px;
+  color: #647711;
+}
+
+.commercial-inline-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 620px;
+  padding: 14px;
+  background: #efffc0;
+  border: 1px solid #a9c830;
+  border-radius: 8px;
+}
+
+.commercial-inline-note > svg {
+  width: 20px;
+  flex: 0 0 20px;
+}
+
+.linked-request-actions {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+}
+
+.connect-payout-reused {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px 19px;
+  background: #efffc0;
+  border: 1px solid #a9c830;
+  border-radius: 10px;
+}
+
+.connect-payout-reused > svg {
+  width: 24px;
+  flex: 0 0 24px;
+  color: #647711;
+}
+
+.connect-payout-reused strong {
+  display: block;
+  font-size: 17px;
+}
+
+.connect-payout-reused p {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.marketing-page p:not(.overline),
+.app-shell .page p:not(.overline),
+.modal p:not(.overline) {
+  font-size: max(1rem, 1em);
+}
+
+.marketing-page small,
+.app-shell small,
+.modal small,
+.landing small {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+
+.marketing-page li,
+.app-shell .page li,
+.modal li,
+.landing li,
+.marketing-page dt,
+.marketing-page dd,
+.app-shell .page dt,
+.app-shell .page dd {
+  font-size: max(.875rem, 1em);
+}
+
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+.button,
+button:not(.icon-button) {
+  min-height: 44px;
+  font-size: max(.9375rem, 1em);
+}
+
+@media (max-width: 720px) {
+  .commercial-status {
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .commercial-status > a {
+    width: 100%;
+    margin-left: 32px;
+  }
+
+  .copied-job-import > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .copied-job-import > header .button {
+    width: 100%;
+  }
+}
+
 /* Agent-native work exchange */
 
 .jobs-market-heading { align-items: flex-end; }
@@ -14566,4 +14909,42 @@ select:focus-visible {
   .home-final-cta h2 {
     font-size: 57px;
   }
+}
+
+/* Final type floor: keep later page-specific rules from shrinking consumer copy. */
+.marketing-page p:not(.overline),
+.app-shell .page p:not(.overline),
+.modal p:not(.overline) {
+  font-size: max(1rem, 1em);
+}
+
+.marketing-page small,
+.app-shell small,
+.modal small,
+.landing small {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+
+.marketing-page li,
+.app-shell .page li,
+.modal li,
+.landing li,
+.marketing-page dt,
+.marketing-page dd,
+.app-shell .page dt,
+.app-shell .page dd {
+  font-size: max(.875rem, 1em);
+}
+
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+.button,
+button:not(.icon-button) {
+  min-height: 44px;
+  font-size: max(.9375rem, 1em);
 }

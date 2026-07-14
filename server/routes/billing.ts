@@ -9,6 +9,7 @@ import { getConfig } from '../config.js'
 import { execute, one, rows, transaction } from '../db.js'
 import { calculateFees } from '../fees.js'
 import { fundingMustFailClosed } from '../funding-safety.js'
+import { requireCommercialPayments } from '../commercial-readiness.js'
 import {
   asyncRoute,
   HttpError,
@@ -101,7 +102,7 @@ billingRouter.get('/connect/:organizationId/status', asyncRoute(async (req, res)
   res.json({ connected: true, onboardingComplete, payoutsEnabled, requirements: 'requirements' in account ? account.requirements : undefined })
 }))
 
-billingRouter.post('/subscriptions/checkout', asyncRoute(async (req, res) => {
+billingRouter.post('/subscriptions/checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
   const input = z.object({ organizationId: uuid, plan: z.enum(['operator_pro', 'client_scale']) }).parse(req.body)
   const membership = membershipFor(req, input.organizationId, ['owner', 'admin', 'billing'])
   if ((input.plan === 'operator_pro' && membership.kind !== 'operator') || (input.plan === 'client_scale' && membership.kind !== 'client')) {
@@ -138,7 +139,7 @@ billingRouter.post('/subscriptions/portal', asyncRoute(async (req, res) => {
   res.json({ portalUrl: portal.url })
 }))
 
-billingRouter.post('/agents/:agentId/verification-checkout', asyncRoute(async (req, res) => {
+billingRouter.post('/agents/:agentId/verification-checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
   const agentId = uuid.parse(req.params.agentId)
   const config = getConfig()
   if (!config.STRIPE_PRICE_VERIFIED_AGENT) throw new HttpError(503, 'Verification checkout is not configured.', 'payments_not_configured')
@@ -161,7 +162,7 @@ billingRouter.post('/agents/:agentId/verification-checkout', asyncRoute(async (r
   res.status(201).json({ checkoutUrl: session.url })
 }))
 
-billingRouter.post('/milestones/:milestoneId/checkout', asyncRoute(async (req, res) => {
+billingRouter.post('/milestones/:milestoneId/checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
   const milestoneId = uuid.parse(req.params.milestoneId)
   const idempotencyKey = (req.get('idempotency-key') ?? '').trim()
   if (!/^[a-zA-Z0-9:_-]{12,200}$/.test(idempotencyKey)) {

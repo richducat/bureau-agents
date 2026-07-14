@@ -16,6 +16,7 @@ import { ApiError, apiFetch, jsonBody, newIdempotencyKey } from "../lib/api";
 import { track } from "../lib/analytics";
 import { useAuth } from "../context/AuthContext";
 import { navigateToStripe } from "../lib/navigation";
+import { useCommercialReadiness } from "../context/CommercialReadinessContext";
 
 const DRAFT_KEY = "bureau-task-draft-v2";
 
@@ -77,6 +78,7 @@ const emptyDraft: TaskDraft = {
 export default function TaskIntakePage() {
   const [params] = useSearchParams();
   const { user } = useAuth();
+  const { readiness } = useCommercialReadiness();
   const client = user?.organizations.find((organization) =>
     organization.kind === "client"
   );
@@ -211,6 +213,10 @@ export default function TaskIntakePage() {
 
   const payAndStart = async (requestId: string) => {
     if (!client) return;
+    if (!readiness.acceptingNewPayments) {
+      setError("Your work plan is saved. New payments are not activated during the founding beta, so Bureau cannot open checkout yet.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -253,6 +259,7 @@ export default function TaskIntakePage() {
         submitting={submitting}
         onResend={resendVerification}
         onPay={payAndStart}
+        paymentsOpen={readiness.acceptingNewPayments}
       />
     );
   }
@@ -276,7 +283,7 @@ export default function TaskIntakePage() {
             {result.quote
               ? `${
                 result.match?.name ?? "Bureau"
-              } matched the request with a defined starting scope. Create or open your client account to approve the plan and pay securely.`
+              } matched the request with a defined starting scope. Create or open your client account to review and approve the plan${readiness.acceptingNewPayments ? " and pay securely" : ". Payment opens after the founding-beta launch approvals"}.`
               : "Bureau will review the request and return a recommended scope, timing, agent, and final price."}
           </p>
           <dl>
@@ -298,14 +305,14 @@ export default function TaskIntakePage() {
             </div>
             <div>
               <dt>Payment</dt>
-              <dd>Secure checkout after approval</dd>
+              <dd>{readiness.acceptingNewPayments ? "Secure checkout after approval" : "Not activated during founding beta"}</dd>
             </div>
           </dl>
           <div>
             {user
               ? (
                 <Link className="button button--dark button--large" to={next}>
-                  Approve and pay <ArrowRight />
+                  {readiness.acceptingNewPayments ? "Approve and pay" : "Review my work plan"} <ArrowRight />
                 </Link>
               )
               : (
@@ -380,10 +387,11 @@ export default function TaskIntakePage() {
             <div>
               <Clock3 />
               <span>
-                <strong>Approve and pay</strong>
+                <strong>{readiness.acceptingNewPayments ? "Approve and pay" : "Approve the plan"}</strong>
                 <p>
-                  Nothing starts until you accept the plan and finish Stripe
-                  checkout.
+                  {readiness.acceptingNewPayments
+                    ? "Nothing starts until you accept the plan and finish Stripe checkout."
+                    : "Founding-beta requests are free. Bureau saves the plan; no checkout can open yet."}
                 </p>
               </span>
             </div>
@@ -401,7 +409,7 @@ export default function TaskIntakePage() {
             <ol className="intake-progress" aria-label="Hiring progress">
               <li className="is-active"><span>1</span>Describe</li>
               <li><span>2</span>Review plan</li>
-              <li><span>3</span>Pay &amp; start</li>
+              <li><span>3</span>{readiness.acceptingNewPayments ? "Pay & start" : "Launch review"}</li>
             </ol>
             <p className="overline">Your work request · draft saves automatically</p>
             <h2>{selectedService?.title ?? "Describe the result you need"}</h2>
@@ -587,6 +595,7 @@ function LinkedRequestPage({
   submitting,
   onResend,
   onPay,
+  paymentsOpen,
 }: {
   requestId: string;
   request: ManagedRequest | null;
@@ -597,6 +606,7 @@ function LinkedRequestPage({
   submitting: boolean;
   onResend: () => Promise<void>;
   onPay: (requestId: string) => Promise<void>;
+  paymentsOpen: boolean;
 }) {
   if (!user) {
     return (
@@ -693,7 +703,7 @@ function LinkedRequestPage({
         <span>
           <CheckCircle2 />
         </span>
-        <p className="overline">Approve and fund</p>
+        <p className="overline">{paymentsOpen ? "Approve and fund" : "Review your work plan"}</p>
         <h1>{request?.title ?? "Loading your work plan…"}</h1>
         {request
           ? (
@@ -772,7 +782,7 @@ function LinkedRequestPage({
                 </div>
               </dl>
               {error && <p className="form-error">{error}</p>}
-              {payable
+              {payable && paymentsOpen
                 ? (
                   <button
                     className="button button--dark button--large"
@@ -785,9 +795,12 @@ function LinkedRequestPage({
                   </button>
                 )
                 : (
-                  <Link className="button button--secondary" to="/workspace">
-                    Track concierge review
-                  </Link>
+                  <div className="linked-request-actions">
+                    {!paymentsOpen && payable && <p className="commercial-inline-note"><ShieldCheck /> Your quote is saved. New payments are not activated during the founding beta.</p>}
+                    <Link className="button button--secondary" to="/workspace">
+                      Track {payable ? "work plan" : "concierge review"}
+                    </Link>
+                  </div>
                 )}
             </>
           )

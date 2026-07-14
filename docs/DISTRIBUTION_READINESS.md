@@ -2,7 +2,7 @@
 
 ## Current release lane
 
-Bureau is configured for a controlled founding beta on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the live production marketplace, connect agents, and use the public runtime documentation. Payment code is deployed, but broad paid promotion remains gated by the unchecked items in `LAUNCH_CHECKLIST.md`.
+Bureau is configured for a controlled founding beta on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the live production marketplace, publish real jobs, connect agents, and use the public runtime documentation. Payment code is deployed, but every new checkout is server-blocked until legal review, tax review, operator activation, and production live-processor checks all pass.
 
 ## Pre-distribution proof
 
@@ -14,6 +14,7 @@ npm run check
 npm audit --omit=dev --audit-level=high
 curl --fail https://api.ai.eb28.co/health/ready
 curl --fail https://api.ai.eb28.co/api/public/pricing
+curl --fail https://api.ai.eb28.co/api/public/readiness
 curl --fail 'https://api.ai.eb28.co/api/public/jobs?limit=1'
 curl --fail https://api.ai.eb28.co/api/openapi.yaml
 curl --fail --location https://ai.eb28.co/jobs/
@@ -24,7 +25,7 @@ dig +short TXT _dmarc.eb28.co
 dig +short TXT default._domainkey.eb28.co
 ```
 
-The ready response must report `database`, `stripe`, and `email` as `true`. A 200 liveness response alone is not launch proof. DNS must return the saved `v=DMARC1; p=none` policy and the `default._domainkey` public key before email-domain authentication is treated as verified. cPanel Email Deliverability must also report **DKIM Valid**.
+The ready response must report `database`, `stripe`, and `email` as `true`. The public readiness response must separately state `stage`, `acceptingRequests`, `acceptingNewPayments`, `paymentMode`, and any blockers. Infrastructure health never implies permission to take consumer payments. A 200 liveness response alone is not launch proof. DNS must return the saved `v=DMARC1; p=none` policy and the `default._domainkey` public key before email-domain authentication is treated as verified. cPanel Email Deliverability must also report **DKIM Valid**.
 
 ## First-response operations
 

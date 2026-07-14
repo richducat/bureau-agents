@@ -1,5 +1,5 @@
 import { ArrowRight, ArrowUpRight, Bot, BriefcaseBusiness, Check, ChevronDown, Heart, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AgentMark, Tag } from '../components/Common'
 import { agents as previewAgents, categories } from '../data'
@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext'
 import type { Category } from '../types'
 import type { Agent } from '../types'
 import { apiFetch } from '../lib/api'
+import { useCommercialReadiness } from '../context/CommercialReadinessContext'
 
 interface PublicAgent { id: string; slug: string; name: string; tagline: string; description: string; category: Category; verificationLevel: Agent['verificationLevel']; autonomyLevel: string; basePriceCents: number | null; hourlyRateCents: number | null; responseTimeMinutes: number | null; successRateBasisPoints: number; completedContracts: number; averageRating: number; reviewCount: number; operator: { name: string }; capabilities: string[] }
 
@@ -16,6 +17,7 @@ function mapPublicAgent(agent: PublicAgent): Agent {
 }
 
 export default function MarketplacePage() {
+  const { readiness } = useCommercialReadiness()
   const [searchParams, setSearchParams] = useSearchParams()
   const [tab, setTab] = useState<'agents' | 'services'>('services')
   const [category, setCategory] = useState<Category | 'All agents'>('All agents')
@@ -59,6 +61,14 @@ export default function MarketplacePage() {
     window.requestAnimationFrame(() => document.getElementById('market-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
+  const handleTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'ArrowLeft' || event.key === 'Home' ? 'agents' : 'services'
+    setTab(next)
+    window.requestAnimationFrame(() => document.getElementById(`market-tab-${next}`)?.focus())
+  }
+
   return (
     <div className="market-page">
       <header className="page-heading page-heading--market">
@@ -68,7 +78,7 @@ export default function MarketplacePage() {
         </div>
         <div className="market-proof">
           <span><strong>Clear</strong> deliverables</span>
-          <span><strong>Protected</strong> payment</span>
+          <span><strong>{readiness.acceptingNewPayments ? 'Protected' : 'Gated'}</strong> payment</span>
           <span><strong>Accountable</strong> operators</span>
         </div>
       </header>
@@ -84,8 +94,8 @@ export default function MarketplacePage() {
 
       <div className="market-toolbar">
         <div className="tabs" role="tablist">
-          <button className={tab === 'agents' ? 'is-active' : ''} onClick={() => setTab('agents')} role="tab">{hasLiveAgents ? 'Agents' : 'Preview agents'} <span>{filteredAgents.length}</span></button>
-          <button className={tab === 'services' ? 'is-active' : ''} onClick={() => setTab('services')} role="tab">{hasLiveAgents ? 'Services' : 'Example services'} <span>{services.length}</span></button>
+          <button id="market-tab-agents" aria-controls="market-results" aria-selected={tab === 'agents'} tabIndex={tab === 'agents' ? 0 : -1} className={tab === 'agents' ? 'is-active' : ''} onClick={() => setTab('agents')} onKeyDown={handleTabKey} role="tab">{hasLiveAgents ? 'Agents' : 'Preview agents'} <span>{filteredAgents.length}</span></button>
+          <button id="market-tab-services" aria-controls="market-results" aria-selected={tab === 'services'} tabIndex={tab === 'services' ? 0 : -1} className={tab === 'services' ? 'is-active' : ''} onClick={() => setTab('services')} onKeyDown={handleTabKey} role="tab">{hasLiveAgents ? 'Services' : 'Example services'} <span>{services.length}</span></button>
         </div>
         <button className="button button--secondary mobile-filter-button" onClick={() => setFiltersOpen((open) => !open)}><SlidersHorizontal size={16} /> Filters</button>
       </div>
@@ -118,7 +128,7 @@ export default function MarketplacePage() {
           <div className="filter-note"><strong>Launch-data honesty</strong><p>Profiles shown before production onboarding are clearly illustrative. Live verification and delivery counts come only from the production ledger.</p></div>
         </aside>
 
-        <section className="market-results" id="market-results">
+        <section className="market-results" id="market-results" role="tabpanel" aria-labelledby={tab === 'agents' ? 'market-tab-agents' : 'market-tab-services'}>
           <div className="results-heading">
             <p><strong>{tab === 'agents' ? filteredAgents.length : services.length}</strong> {tab === 'agents' ? 'agents' : 'services'} match your filters</p>
             <label>Sort by
@@ -172,7 +182,7 @@ export default function MarketplacePage() {
                 <article className="service-result" key={`${service.agent.id}-${service.id}`}>
                   <div className="service-result__top">
                     <AgentMark agent={service.agent} />
-                    <div><Link to={`/agents/${service.agent.slug ?? service.agent.id}`}>{service.agent.name}</Link><span>{service.agent.live ? 'Production listing' : 'Illustrative launch profile'}</span></div>
+                    <div><Link to={`/agents/${service.agent.slug ?? service.agent.id}`}>{service.agent.name}</Link><span>{service.agent.live ? (service.agent.jobs ? 'Production listing' : 'Founding listing · no completed work yet') : 'Illustrative launch profile'}</span></div>
                   </div>
                   <Link to={`/agents/${service.agent.slug ?? service.agent.id}`} className="service-result__title">{service.title}</Link>
                   <p>{service.description}</p>

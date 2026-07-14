@@ -18,6 +18,7 @@ import { marketplaceRouter, publicRouter } from './routes/marketplace.js'
 import { csrfProtection, HttpError, loadSession, requireTrustedOrigin } from './security.js'
 import { stripeReady } from './stripe.js'
 import { emailReady } from './mailer.js'
+import { commercialReadiness } from './commercial-readiness.js'
 
 const openApiPath = fileURLToPath(new URL('./openapi.yaml', import.meta.url))
 
@@ -55,9 +56,11 @@ export function createApp() {
       const stripe = stripeReady()
       const email = await emailReady()
       const ready = stripe && email
-      res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'not_ready', database: true, stripe, email })
+      const commercial = commercialReadiness()
+      res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'not_ready', database: true, stripe, email, commercial: { stage: commercial.stage, acceptingNewPayments: commercial.acceptingNewPayments, paymentMode: commercial.paymentMode } })
     } catch {
-      res.status(503).json({ status: 'not_ready', database: false, stripe: stripeReady(), email: false })
+      const commercial = commercialReadiness()
+      res.status(503).json({ status: 'not_ready', database: false, stripe: stripeReady(), email: false, commercial: { stage: commercial.stage, acceptingNewPayments: commercial.acceptingNewPayments, paymentMode: commercial.paymentMode } })
     }
   })
 

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleDollarSign, Clock3, FileCheck2, LockKeyhole, Plus, ShieldCheck, Sparkles, Trash2, X } from 'lucide-react'
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useAuth, type AuthUser } from '../context/AuthContext'
@@ -9,6 +9,7 @@ import { apiFetch, ApiError, jsonBody } from '../lib/api'
 import { track } from '../lib/analytics'
 import type { Agent, Category, Job } from '../types'
 import { AgentMark, Tag } from './Common'
+import { useCommercialReadiness } from '../context/CommercialReadinessContext'
 
 export default function GlobalModals() {
   const { modal, setModal } = useApp()
@@ -16,12 +17,26 @@ export default function GlobalModals() {
 }
 
 function Modal({ children, title, onClose, wide = false }: { children: ReactNode; title: string; onClose: () => void; wide?: boolean }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    document.addEventListener('keydown', close)
-    return () => document.removeEventListener('keydown', close)
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const dialog = dialogRef.current
+    const focusable = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? [])
+    window.requestAnimationFrame(() => focusable()[0]?.focus())
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { onClose(); return }
+      if (event.key !== 'Tab') return
+      const items = focusable()
+      if (!items.length) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => { document.removeEventListener('keydown', handleKey); previous?.focus() }
   }, [onClose])
-  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}><motion.div className={`modal ${wide ? 'modal--wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} initial={{ opacity: 0, y: 28, scale: .985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 14, scale: .99 }} transition={{ duration: .22, ease: [.2, .8, .2, 1] }} onMouseDown={(event) => event.stopPropagation()}><button className="modal__close icon-button" onClick={onClose} aria-label="Close"><X /></button>{children}</motion.div></motion.div>
+  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}><motion.div ref={dialogRef} className={`modal ${wide ? 'modal--wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} initial={{ opacity: 0, y: 28, scale: .985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 14, scale: .99 }} transition={{ duration: .22, ease: [.2, .8, .2, 1] }} onMouseDown={(event) => event.stopPropagation()}><button className="modal__close icon-button" onClick={onClose} aria-label="Close"><X /></button>{children}</motion.div></motion.div>
 }
 
 function PostJobModal({ onClose }: { onClose: () => void }) {
@@ -70,26 +85,33 @@ function HireAgentModal({ agent, onClose }: { agent: Agent; onClose: () => void 
   const navigate = useNavigate()
   const { showToast } = useApp()
   const { user } = useAuth()
+  const { readiness } = useCommercialReadiness()
   const [title, setTitle] = useState('')
   const [scope, setScope] = useState('')
-  const [budget, setBudget] = useState(agent.packages[0]?.price ?? agent.hourlyRate * 8)
-  const [due, setDue] = useState('2026-07-18')
+  const publishedPackage = agent.packages[0]
+  const budget = publishedPackage?.price ?? 0
+  const [due, setDue] = useState(() => {
+    const date = new Date()
+    date.setDate(date.getDate() + 7)
+    return date.toISOString().slice(0, 10)
+  })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (!publishedPackage) { setError('This agent needs a published package before direct hire. Post a job for competitive bids instead.'); return }
     if (!user) { onClose(); navigate('/auth?mode=signup&type=client'); return }
     const client = user.organizations.find((organization) => organization.kind === 'client')
     if (!client) { setError('A client organization is required.'); return }
     setSubmitting(true); setError('')
     try {
       const response = await apiFetch<{ contract: { id: string } }>(`/marketplace/agents/${agent.id}/contracts`, { method: 'POST', body: jsonBody({ clientOrganizationId: client.id, title, scope, milestones: [{ title: 'First delivery', description: scope, amountCents: Math.round(budget * 100), dueAt: new Date(`${due}T23:59:00Z`).toISOString() }] }) })
-      onClose(); track('contract_created', { direct: true }); showToast(`${agent.name} contract created — fund the first milestone next`); navigate(`/contracts/${response.contract.id}`)
+      onClose(); track('contract_created', { direct: true }); showToast(readiness.acceptingNewPayments ? `${agent.name} contract created — fund the first milestone next` : `${agent.name} work plan created — funding opens after founding beta`); navigate(`/contracts/${response.contract.id}`)
     } catch (caught) { setError(caught instanceof ApiError ? caught.message : 'Contract could not be created.') }
     finally { setSubmitting(false) }
   }
   const rate = clientFeeRate(user)
-  return <Modal title={`Hire ${agent.name}`} onClose={onClose} wide><form className="hire-modal" onSubmit={submit}><header className="hire-agent-heading"><AgentMark agent={agent} size="large" /><div><p className="overline">Direct contract</p><h2>Hire {agent.name}</h2><p>{agent.specialty}</p><span>Review the live profile evidence before contracting.</span></div></header><div className="hire-modal__layout"><div className="modal-fields"><label className="field field--full"><span>Contract title</span><input required minLength={10} value={title} onChange={(event) => setTitle(event.target.value)} /></label><label className="field field--full"><span>Scope and acceptance criteria</span><textarea required minLength={100} rows={6} value={scope} onChange={(event) => setScope(event.target.value)} /></label><label className="field"><span>Work value</span><div className="prefix-input"><span>$</span><input type="number" min={5} value={budget} onChange={(event) => setBudget(Number(event.target.value))} /></div></label><label className="field"><span>Due date</span><input type="date" value={due} onChange={(event) => setDue(event.target.value)} /></label></div><aside className="hire-summary"><h3>Contract economics</h3><dl><div><dt>Work value</dt><dd>${budget.toFixed(2)}</dd></div><div><dt>Client fee</dt><dd>${(budget * rate / 100).toFixed(2)} ({rate}%)</dd></div><div className="hire-total"><dt>Due when funded</dt><dd>${(budget * (1 + rate / 100)).toFixed(2)}</dd></div></dl><div className="hire-protection"><ShieldCheck /><p><strong>Protected funding</strong>Stripe confirms payment; operator transfer follows accepted delivery.</p></div><ul><li><Check />Fee visible before checkout</li><li><Check />Delivery evidence retained</li><li><Check />Dispute review available</li></ul></aside></div>{error && <p className="form-error">{error}</p>}<footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><button className="button button--lime" disabled={submitting || title.length < 10 || scope.length < 100}>{submitting ? 'Creating…' : 'Create contract'}<ArrowRight /></button></div></footer></form></Modal>
+  return <Modal title={`Hire ${agent.name}`} onClose={onClose} wide><form className="hire-modal" onSubmit={submit}><header className="hire-agent-heading"><AgentMark agent={agent} size="large" /><div><p className="overline">Direct contract</p><h2>Hire {agent.name}</h2><p>{agent.specialty}</p><span>Review the live profile evidence before contracting.</span></div></header>{!publishedPackage ? <section className="direct-hire-unpriced"><ShieldCheck /><h3>This agent needs a published package first.</h3><p>Bureau will not let either side invent a direct-hire price. Post the scope as a job so eligible agents can submit transparent milestone bids.</p><Link className="button button--dark" to="/jobs" onClick={onClose}>Post work for bids <ArrowRight /></Link></section> : <><div className="hire-modal__layout"><div className="modal-fields"><label className="field field--full"><span>Contract title</span><input required minLength={10} value={title} onChange={(event) => setTitle(event.target.value)} /></label><label className="field field--full"><span>Scope and acceptance criteria</span><textarea required minLength={100} rows={6} value={scope} onChange={(event) => setScope(event.target.value)} /></label><label className="field"><span>Published package price</span><output className="published-price-output">${budget.toFixed(2)}<small>{publishedPackage.title}</small></output></label><label className="field"><span>Due date</span><input type="date" min={new Date().toISOString().slice(0, 10)} value={due} onChange={(event) => setDue(event.target.value)} /></label></div><aside className="hire-summary"><h3>Contract economics</h3><dl><div><dt>Published work value</dt><dd>${budget.toFixed(2)}</dd></div><div><dt>Client fee</dt><dd>${(budget * rate / 100).toFixed(2)} ({rate}%)</dd></div><div className="hire-total"><dt>{readiness.acceptingNewPayments ? 'Due when funded' : 'Future checkout total'}</dt><dd>${(budget * (1 + rate / 100)).toFixed(2)}</dd></div></dl><div className="hire-protection"><ShieldCheck /><p><strong>{readiness.acceptingNewPayments ? 'Protected funding' : 'Founding-beta hold'}</strong>{readiness.acceptingNewPayments ? 'Stripe confirms payment; operator transfer follows accepted delivery.' : 'The work plan can be saved, but no new payment can be created yet.'}</p></div><ul><li><Check />Published price, not buyer-entered</li><li><Check />Delivery evidence retained</li><li><Check />Dispute review available</li></ul></aside></div>{error && <p className="form-error">{error}</p>}<footer className="modal-actions"><button type="button" className="button button--secondary" onClick={onClose}>Cancel</button><div><button className="button button--lime" disabled={submitting || title.length < 10 || scope.length < 100}>{submitting ? 'Creating…' : readiness.acceptingNewPayments ? 'Create contract' : 'Save founding work plan'}<ArrowRight /></button></div></footer></>}</form></Modal>
 }
 
 function ProposalModal({ job, onClose }: { job: Job; onClose: () => void }) {

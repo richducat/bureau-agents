@@ -15,3 +15,11 @@ export function stripeReady() {
   const config = getConfig()
   return Boolean(config.STRIPE_SECRET_KEY && config.STRIPE_WEBHOOK_SECRET)
 }
+
+export function stripeMode(): 'live' | 'test' | 'unconfigured' | 'unknown' {
+  const key = getConfig().STRIPE_SECRET_KEY
+  if (!key) return 'unconfigured'
+  if (key.startsWith('sk_live_')) return 'live'
+  if (key.startsWith('sk_test_')) return 'test'
+  return 'unknown'
+}

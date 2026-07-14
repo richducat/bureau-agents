@@ -5,6 +5,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2'
 import { z } from 'zod'
 import { getConfig } from '../config.js'
 import { execute, one, transaction } from '../db.js'
+import { signupPolicyAcceptances } from '../legal-policy.js'
 import { sendEmailVerification, sendPasswordReset } from '../mailer.js'
 import {
   asyncRoute,
@@ -72,6 +73,8 @@ authRouter.post('/signup', authLimiter, asyncRoute(async (req, res) => {
   const config = getConfig()
   const platformRole = config.adminEmails.has(input.email) ? 'admin' : 'user'
   const organizationPlan = input.accountType === 'client' ? 'client_starter' : 'operator_starter'
+  const ipHash = req.ip ? sha256(`${config.CSRF_SECRET}:${req.ip}`) : null
+  const userAgent = (req.get('user-agent') ?? '').slice(0, 500)
 
   await transaction(async (connection) => {
     await connection.execute(
@@ -87,6 +90,14 @@ authRouter.post('/signup', authLimiter, asyncRoute(async (req, res) => {
       `INSERT INTO organization_members (organization_id, user_id, member_role) VALUES (?, ?, 'owner')`,
       [organizationId, userId],
     )
+    for (const policy of signupPolicyAcceptances()) {
+      await connection.execute(
+        `INSERT INTO legal_acceptances
+         (id, user_id, organization_id, document, version, document_path, acceptance_surface, ip_hash, user_agent)
+         VALUES (?, ?, ?, ?, ?, ?, 'signup_clickwrap', ?, ?)`,
+        [randomUUID(), userId, organizationId, policy.document, policy.version, policy.path, ipHash, userAgent],
+      )
+    }
     await connection.execute(
       `INSERT INTO identity_tokens (token_hash, user_id, purpose, expires_at)
        VALUES (?, ?, 'verify_email', DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 24 HOUR))`,

@@ -24,6 +24,9 @@ import {
   calculateBureauCatalogQuote,
   normalizeUpworkJobUrl,
 } from '../upwork-quote.js'
+import { commercialReadiness } from '../commercial-readiness.js'
+import { directContractUsesPublishedPrice } from '../direct-contract.js'
+import { POLICY_VERSIONS } from '../legal-policy.js'
 
 type GenericRow = RowDataPacket
 
@@ -128,6 +131,11 @@ function publicCatalogPackage(service: NonNullable<ReturnType<typeof managedServ
     excludedScope: service.excludedScope,
   }
 }
+
+publicRouter.get('/readiness', (_req, res) => {
+  res.setHeader('cache-control', 'public, max-age=60, stale-while-revalidate=300')
+  res.json({ readiness: commercialReadiness() })
+})
 
 publicRouter.get('/pricing', (_req, res) => {
   res.json({
@@ -595,11 +603,11 @@ marketplaceRouter.post('/agents', asyncRoute(async (req, res) => {
     await connection.execute(
       `INSERT INTO agents
        (id, operator_org_id, slug, name, tagline, description, category, autonomy_level, pricing_model,
-        base_price_cents, hourly_rate_cents, endpoint_url, webhook_url, webhook_secret_ciphertext, status, terms_accepted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'review', UTC_TIMESTAMP(3))`,
+        base_price_cents, hourly_rate_cents, endpoint_url, webhook_url, webhook_secret_ciphertext, status, terms_accepted_at, terms_version)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'review', UTC_TIMESTAMP(3), ?)`,
       [agentId, input.organizationId, slug, input.name, input.tagline, input.description, input.category,
         input.autonomyLevel, input.pricingModel, input.basePriceCents ?? null, input.hourlyRateCents ?? null,
-        input.endpointUrl ?? null, safeWebhookUrl, webhookSecret ? encryptSecret(webhookSecret) : null],
+        input.endpointUrl ?? null, safeWebhookUrl, webhookSecret ? encryptSecret(webhookSecret) : null, POLICY_VERSIONS.operator_terms],
     )
     for (const capability of [...new Set(input.capabilities.map((item) => item.toLowerCase()))]) {
       await connection.execute('INSERT INTO agent_capabilities (agent_id, capability) VALUES (?, ?)', [agentId, capability])
@@ -675,12 +683,15 @@ marketplaceRouter.post('/agents/:agentId/contracts', asyncRoute(async (req, res)
   const clientMembership = membershipFor(req, input.clientOrganizationId, ['owner', 'admin', 'member'])
   if (clientMembership.kind !== 'client') throw new HttpError(400, 'A client organization is required.', 'invalid_organization_kind')
   const agent = await one<GenericRow>(
-    `SELECT a.operator_org_id, a.status, co.plan AS client_plan, oo.plan AS operator_plan
+    `SELECT a.operator_org_id, a.status, a.base_price_cents, co.plan AS client_plan, oo.plan AS operator_plan
      FROM agents a JOIN organizations co ON co.id = ? JOIN organizations oo ON oo.id = a.operator_org_id WHERE a.id = ?`,
     [input.clientOrganizationId, agentId],
   )
   if (!agent || agent.status !== 'active') throw new HttpError(409, 'This agent is not accepting contracts.', 'agent_not_available')
   const total = input.milestones.reduce((sum, milestone) => sum + milestone.amountCents, 0)
+  if (!directContractUsesPublishedPrice(total, agent.base_price_cents)) {
+    throw new HttpError(409, 'Direct hire must use the agent’s published package price. Post a job for bids when the scope needs custom pricing.', 'published_price_required')
+  }
   const fees = calculateFees(total, agent.client_plan as ClientPlan, agent.operator_plan as OperatorPlan)
   const contractId = randomUUID()
   await transaction(async (connection) => {

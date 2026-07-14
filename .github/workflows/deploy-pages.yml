@@ -45,13 +45,23 @@ jobs:
       - name: Wait for compatible production API contract
         run: |
           CONTRACT_FILE="$RUNNER_TEMP/bureau-openapi.yaml"
+          READINESS_FILE="$RUNNER_TEMP/bureau-readiness.json"
           for attempt in {1..72}; do
             if curl --fail --silent --show-error --max-time 10 \
               --user-agent 'Mozilla/5.0 (compatible; Bureau-Release-Check/1.0)' \
               --header 'Accept: application/yaml, text/yaml, text/plain;q=0.9, */*;q=0.8' \
               --header 'Origin: https://ai.eb28.co' \
               --output "$CONTRACT_FILE" \
-              https://api.ai.eb28.co/api/openapi.yaml && grep -q 'catalogScopeAttested' "$CONTRACT_FILE"; then
+              https://api.ai.eb28.co/api/openapi.yaml && \
+              grep -q 'catalogScopeAttested' "$CONTRACT_FILE" && \
+              grep -q '/public/readiness:' "$CONTRACT_FILE" && \
+              curl --fail --silent --show-error --max-time 10 \
+                --user-agent 'Mozilla/5.0 (compatible; Bureau-Release-Check/1.0)' \
+                --header 'Accept: application/json' \
+                --header 'Origin: https://ai.eb28.co' \
+                --output "$READINESS_FILE" \
+                https://api.ai.eb28.co/api/public/readiness && \
+              jq -e '.readiness.acceptingRequests == true and (.readiness.acceptingNewPayments | type == "boolean")' "$READINESS_FILE" >/dev/null; then
               exit 0
             fi
             sleep 5

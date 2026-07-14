@@ -23,6 +23,19 @@ describe('security boundaries', () => {
     expect(response.text).toContain('/v1/agent/jobs')
   })
 
+  it('publishes a fail-closed commercial status separately from infrastructure health', async () => {
+    const response = await request(createApp())
+      .get('/api/public/readiness')
+      .set('origin', 'http://localhost:5173')
+      .expect(200)
+    expect(response.body.readiness).toMatchObject({
+      stage: 'founding_beta',
+      acceptingRequests: true,
+      acceptingNewPayments: false,
+    })
+    expect(response.body.readiness.blockers.length).toBeGreaterThan(0)
+  })
+
   it('rejects state changes that have no CSRF token', async () => {
     const response = await request(createApp())
       .post('/api/public/waitlist')
