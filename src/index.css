@@ -8201,10 +8201,11 @@ select:focus-visible {
     min-width: 38px;
     width: 38px;
     overflow: hidden;
+    justify-content: center;
     padding: 0;
     color: transparent;
     gap: 0;
-    font-size: 0;
+    font-size: 0 !important;
   }
 
   .topbar__primary svg {

@@ -32,7 +32,7 @@ Bureau is understandable and usable for a nontechnical buyer who wants to hand o
 
 9. **Use the core experience on mobile — healthy.** Home, marketplace, jobs, intake, and signup were checked at 390 px. The pages had no horizontal overflow, form controls retained a 16 px text floor, and the launch banner remained fully readable.
 
-   ![Bureau marketplace on mobile after the final fixes](17-marketplace-mobile-after-fixes-local.png)
+   ![Bureau marketplace on mobile after the final fixes](19-marketplace-mobile-production.png)
 
 10. **Accessibility baseline — healthy, not a full WCAG conformance claim.** Core flows have keyboard-reachable controls, skip navigation, visible focus, semantic headings, named controls, 44 px action targets, focus-contained dialogs, native required consent, readable contrast, reduced-motion handling, and honest live regions. A formal assistive-technology and complete WCAG audit remains separate work.
 
