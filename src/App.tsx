@@ -1,5 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useLayoutEffect } from 'react'
 import AnalyticsConsent, { PageAnalytics } from './components/AnalyticsConsent'
 import { Logo } from './components/Common'
 import { AppProvider, useApp } from './context/AppContext'
@@ -41,6 +41,7 @@ function AppRoutes() {
   const { toast } = useApp()
   return (
     <>
+      <ScrollToTopOnRouteChange />
       <a className="skip-link" href="#main-content" onClick={() => {
         const main = document.querySelector('main')
         if (!(main instanceof HTMLElement)) return
@@ -98,6 +99,14 @@ function AppRoutes() {
       <AnalyticsConsent />
     </>
   )
+}
+
+function ScrollToTopOnRouteChange() {
+  const { pathname } = useLocation()
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname])
+  return null
 }
 
 function RouteLoading() {
