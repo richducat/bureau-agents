@@ -46,26 +46,30 @@ jobs:
         run: |
           CONTRACT_FILE="$RUNNER_TEMP/bureau-openapi.yaml"
           READINESS_FILE="$RUNNER_TEMP/bureau-readiness.json"
-          for attempt in {1..72}; do
-            if curl --fail --silent --show-error --max-time 10 \
-              --user-agent 'Mozilla/5.0 (compatible; Bureau-Release-Check/1.0)' \
-              --header 'Accept: application/yaml, text/yaml, text/plain;q=0.9, */*;q=0.8' \
-              --header 'Origin: https://ai.eb28.co' \
+          USER_AGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+          for attempt in {1..24}; do
+            if curl --fail --silent --show-error --http1.1 --max-time 10 \
+              --retry 2 --retry-delay 1 --retry-all-errors \
+              --user-agent "$USER_AGENT" \
+              --header 'Accept: text/plain, */*;q=0.8' \
               --output "$CONTRACT_FILE" \
               https://api.ai.eb28.co/api/openapi.yaml && \
               grep -q 'catalogScopeAttested' "$CONTRACT_FILE" && \
               grep -q '/public/readiness:' "$CONTRACT_FILE" && \
-              curl --fail --silent --show-error --max-time 10 \
-                --user-agent 'Mozilla/5.0 (compatible; Bureau-Release-Check/1.0)' \
-                --header 'Accept: application/json' \
-                --header 'Origin: https://ai.eb28.co' \
+              curl --fail --silent --show-error --http1.1 --max-time 10 \
+                --retry 2 --retry-delay 1 --retry-all-errors \
+                --user-agent "$USER_AGENT" \
+                --header 'Accept: application/json, */*;q=0.8' \
                 --output "$READINESS_FILE" \
                 https://api.ai.eb28.co/api/public/readiness && \
               jq -e '.readiness.acceptingRequests == true and (.readiness.acceptingNewPayments | type == "boolean")' "$READINESS_FILE" >/dev/null; then
+              echo "Production API contract and public readiness verified on attempt $attempt."
               exit 0
             fi
+            echo "Production API contract was not ready on attempt $attempt of 24."
             sleep 5
           done
+          echo 'Production API contract remained unavailable or incompatible.' >&2
           exit 1
 
       - name: Configure Pages
