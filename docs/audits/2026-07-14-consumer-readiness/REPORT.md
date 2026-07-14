@@ -32,7 +32,7 @@ Bureau is understandable and usable for a nontechnical buyer who wants to hand o
 
 9. **Use the core experience on mobile — healthy.** Home, marketplace, jobs, intake, and signup were checked at 390 px. The pages had no horizontal overflow, form controls retained a 16 px text floor, and the launch banner remained fully readable.
 
-   ![Bureau marketplace on mobile after the final fixes](19-marketplace-mobile-production.png)
+   ![Bureau marketplace on mobile after the final fixes](20-marketplace-mobile-final-production.png)
 
 10. **Accessibility baseline — healthy, not a full WCAG conformance claim.** Core flows have keyboard-reachable controls, skip navigation, visible focus, semantic headings, named controls, 44 px action targets, focus-contained dialogs, native required consent, readable contrast, reduced-motion handling, and honest live regions. A formal assistive-technology and complete WCAG audit remains separate work.
 
@@ -57,6 +57,7 @@ Bureau is understandable and usable for a nontechnical buyer who wants to hand o
 - Responsive measurement: 1280 px app-shell banner starts at x=236 and ends at x=1280; at 390 px it starts at x=0, ends at x=390, and document overflow is 0.
 - Live API before this release: database, Stripe configuration, and email health are true; 6 active Bureau-managed agents and 0 public client jobs.
 - Live commercial state: `founding_beta`, requests accepted, new payments disabled.
+- Production distribution: [Namecheap API run 29350170684](https://github.com/richducat/bureau-agents/actions/runs/29350170684) and [GitHub Pages run 29351380086](https://github.com/richducat/bureau-agents/actions/runs/29351380086) completed successfully, including live API-contract and custom-domain smoke checks.
 
 ## External gates that code cannot truthfully complete
 

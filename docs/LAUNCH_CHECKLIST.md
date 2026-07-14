@@ -26,6 +26,7 @@ Last production verification: 2026-07-14.
 - [x] Operator onboarding reuses an existing Stripe payout identity, issues a one-time scoped runtime key, and makes capability entry usable without keyboard-only submission
 - [x] Consumer readability, keyboard focus, modal focus containment, responsive layouts, honest zero-inventory states, and public launch-status messaging verified on desktop and mobile
 - [x] Consumer-launch release passed lint, 31 tests, web/API builds, production dependency audit, migration `008_consumer_launch_controls.sql`, health/readiness smoke tests, and custom-domain browser verification in [Namecheap run 29346624904](https://github.com/richducat/bureau-agents/actions/runs/29346624904) and [GitHub Pages run 29346624601](https://github.com/richducat/bureau-agents/actions/runs/29346624601)
+- [x] Final [consumer-readiness audit](audits/2026-07-14-consumer-readiness/REPORT.md) passed 43 tests, lint, web/API builds, 49 generated-route checks, 31 sitemap checks, a zero-vulnerability production dependency audit, desktop/mobile browser verification, live API deployment in [Namecheap run 29350170684](https://github.com/richducat/bureau-agents/actions/runs/29350170684), and custom-domain deployment in [GitHub Pages run 29351380086](https://github.com/richducat/bureau-agents/actions/runs/29351380086)
 
 ## Required before unrestricted paid promotion
 
