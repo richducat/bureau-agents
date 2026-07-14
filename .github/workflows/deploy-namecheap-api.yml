@@ -106,8 +106,11 @@ jobs:
           REMOTE
       - name: Verify public API health
         run: |
-          for attempt in {1..20}; do
-            if curl --fail --silent --show-error --max-time 10 "$API_HEALTH_URL"; then
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error --max-time 10 \
+              --user-agent 'Mozilla/5.0 (compatible; Bureau-Release-Check/1.0)' \
+              --header 'Accept: application/json' \
+              "$API_HEALTH_URL"; then
               exit 0
             fi
             sleep 3
