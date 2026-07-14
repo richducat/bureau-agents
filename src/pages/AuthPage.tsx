@@ -69,7 +69,7 @@ export default function AuthPage() {
           </>}
           <label className="field"><span>Work email</span><input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
           <label className="field"><span>Password</span><input required type="password" minLength={12} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} />{mode === 'signup' && <small>12+ characters with uppercase, lowercase, and a number.</small>}</label>
-          {mode === 'signup' && <label className="auth-consent"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /><span>I agree to the <Link to="/terms">Terms</Link>, <Link to="/privacy">Privacy Policy</Link>, and <Link to="/acceptable-use">Acceptable Use Policy</Link>.</span></label>}
+          {mode === 'signup' && <label className="auth-consent"><input type="checkbox" required checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /><span>I agree to the <Link to="/terms">Terms</Link>, <Link to="/privacy">Privacy Policy</Link>, and <Link to="/acceptable-use">Acceptable Use Policy</Link>.</span></label>}
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button button--lime button--large auth-submit" disabled={submitting}>{submitting ? 'Securing account…' : mode === 'login' ? 'Sign in' : 'Create free account'} <ArrowRight size={17} /></button>
           {mode === 'login' && <Link to="/forgot-password" className="auth-forgot">Forgot password?</Link>}

@@ -1,9 +1,10 @@
 import { ArrowRight, ArrowUpRight, Bot, BriefcaseBusiness, Check, ChevronDown, Heart, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState, type KeyboardEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AgentMark, Tag } from '../components/Common'
 import { agents as previewAgents, categories } from '../data'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import type { Category } from '../types'
 import type { Agent } from '../types'
 import { apiFetch } from '../lib/api'
@@ -19,8 +20,8 @@ function mapPublicAgent(agent: PublicAgent): Agent {
 export default function MarketplacePage() {
   const { readiness } = useCommercialReadiness()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [tab, setTab] = useState<'agents' | 'services'>('services')
-  const [category, setCategory] = useState<Category | 'All agents'>('All agents')
+  const navigate = useNavigate()
+  const [tab, setTab] = useState<'agents' | 'services'>('agents')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [availableOnly, setAvailableOnly] = useState(false)
   const [enterpriseOnly, setEnterpriseOnly] = useState(false)
@@ -29,7 +30,44 @@ export default function MarketplacePage() {
   const [marketAgents, setMarketAgents] = useState<Agent[]>(previewAgents)
   const [hasLiveAgents, setHasLiveAgents] = useState(false)
   const { savedAgents, toggleSavedAgent, setModal } = useApp()
+  const { user, loading: authLoading } = useAuth()
   const query = searchParams.get('q') ?? ''
+  const categoryParam = searchParams.get('category')
+  const category = (categories.some((item) => item.name === categoryParam) ? categoryParam : 'All agents') as Category | 'All agents'
+
+  const updateQuery = (value: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (value) next.set('q', value)
+    else next.delete('q')
+    setSearchParams(next, { replace: true })
+  }
+
+  const selectCategory = (value: Category | 'All agents') => {
+    const next = new URLSearchParams(searchParams)
+    if (value === 'All agents') next.delete('category')
+    else next.set('category', value)
+    setSearchParams(next, { replace: true })
+  }
+
+  const beginHire = (agent: Agent) => {
+    const nextPath = `/agents/${agent.slug ?? agent.id}?hire=1`
+    if (!user) { navigate(`/auth?mode=signup&type=client&next=${encodeURIComponent(nextPath)}`); return }
+    if (!user.emailVerified) {
+      window.localStorage.setItem('bureau-post-auth-next', nextPath)
+      navigate('/workspace')
+      return
+    }
+    setModal({ type: 'hire-agent', agent })
+  }
+
+  const hireAction = (agent: Agent, className: string, label: string) => {
+    if (authLoading) return <button className={className} disabled>Checking account…</button>
+    if (!user) {
+      const nextPath = `/agents/${agent.slug ?? agent.id}?hire=1`
+      return <Link className={className} to={`/auth?mode=signup&type=client&next=${encodeURIComponent(nextPath)}`}>Create free account to hire</Link>
+    }
+    return <button className={className} onClick={() => beginHire(agent)}>{user.emailVerified ? label : 'Verify email to hire'}</button>
+  }
 
   useEffect(() => {
     void apiFetch<{ agents: PublicAgent[] }>('/public/agents?limit=50').then((response) => {
@@ -106,7 +144,7 @@ export default function MarketplacePage() {
             <Search size={16} />
             <input
               value={query}
-              onChange={(event) => setSearchParams(event.target.value ? { q: event.target.value } : {})}
+              onChange={(event) => updateQuery(event.target.value)}
               placeholder="Search tasks or capabilities"
               aria-label="Search agents"
             />
@@ -114,7 +152,7 @@ export default function MarketplacePage() {
           <fieldset>
             <legend>Capability</legend>
             {categoryCounts.map((item) => (
-              <button key={item.name} className={category === item.name ? 'is-active' : ''} onClick={() => setCategory(item.name)}>
+              <button key={item.name} className={category === item.name ? 'is-active' : ''} onClick={() => selectCategory(item.name)}>
                 <span>{item.name}</span><small>{item.count}</small>
               </button>
             ))}
@@ -169,12 +207,12 @@ export default function MarketplacePage() {
                       onClick={() => toggleSavedAgent(agent.id)}
                       aria-label={savedAgents.includes(agent.id) ? `Remove ${agent.name} from saved` : `Save ${agent.name}`}
                     ><Heart size={18} fill={savedAgents.includes(agent.id) ? 'currentColor' : 'none'} /></button>
-                    {agent.live ? <button className="button button--secondary" onClick={() => setModal({ type: 'hire-agent', agent })}>Create contract</button> : <Link className="button button--secondary" to="/auth?mode=signup&type=client">Join to hire</Link>}
+                    {agent.live ? hireAction(agent, 'button button--secondary', 'Create contract') : <Link className="button button--secondary" to="/auth?mode=signup&type=client">Join to hire</Link>}
                     <Link to={`/agents/${agent.slug ?? agent.id}`} className="button button--dark">View profile <ArrowUpRight size={16} /></Link>
                   </div>
                 </article>
               ))}
-              {filteredAgents.length === 0 && <div className="no-results"><h3>No exact matches</h3><p>Remove a filter or search a broader capability.</p><button className="button button--secondary" onClick={() => { setCategory('All agents'); setVerifiedOnly(false); setAvailableOnly(false); setEnterpriseOnly(false); setSearchParams({}) }}>Clear filters</button></div>}
+              {filteredAgents.length === 0 && <div className="no-results"><h3>No exact matches</h3><p>Remove a filter or search a broader capability.</p><button className="button button--secondary" onClick={() => { setVerifiedOnly(false); setAvailableOnly(false); setEnterpriseOnly(false); setSearchParams({}) }}>Clear filters</button></div>}
             </div>
           ) : (
             <div className="service-results">
@@ -186,7 +224,7 @@ export default function MarketplacePage() {
                   </div>
                   <Link to={`/agents/${service.agent.slug ?? service.agent.id}`} className="service-result__title">{service.title}</Link>
                   <p>{service.description}</p>
-                  <div className="service-result__bottom"><span>{service.agent.live ? 'From' : 'Example'} <strong>${service.price}</strong></span><span>{service.delivery}</span>{service.agent.live ? <button className="button button--dark" onClick={() => setModal({ type: 'hire-agent', agent: service.agent })}>Create contract</button> : <Link className="button button--dark" to="/auth?mode=signup&type=client">Join to start</Link>}</div>
+                  <div className="service-result__bottom"><span>{service.agent.live ? 'From' : 'Example'} <strong>${service.price}</strong></span><span>{service.delivery}</span>{service.agent.live ? hireAction(service.agent, 'button button--dark', 'Create contract') : <Link className="button button--dark" to="/auth?mode=signup&type=client">Join to start</Link>}</div>
                 </article>
               ))}
             </div>

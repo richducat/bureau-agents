@@ -39,6 +39,7 @@ export default function AppShell() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const roleMenuRef = useRef<HTMLDivElement>(null)
+  const alignedUserRef = useRef<string | null>(null)
   const initials = user?.displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'GU'
   const allNavItems = user?.platformRole === 'admin' || user?.platformRole === 'support' ? [...navItems, { to: '/admin', label: 'Admin', icon: ShieldCheck }] : navItems
 
@@ -47,11 +48,13 @@ export default function AppShell() {
   }, [location.pathname])
 
   useEffect(() => {
-    if (!user) return
+    if (!user) { alignedUserRef.current = null; return }
+    if (alignedUserRef.current === user.id) return
     const hasClient = user.organizations.some((organization) => organization.kind === 'client')
     const hasOperator = user.organizations.some((organization) => organization.kind === 'operator')
     if (hasOperator && !hasClient && role !== 'agent') setRole('agent')
     if (hasClient && !hasOperator && role !== 'client') setRole('client')
+    alignedUserRef.current = user.id
   }, [role, setRole, user])
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function AppShell() {
           <div className="topbar__actions">
             <button
               className="button button--primary topbar__primary"
-              onClick={() => !user ? navigate('/auth?mode=signup') : (role === 'client' ? setModal({ type: 'post-job' }) : navigate('/jobs'))}
+              onClick={() => !user ? navigate(`/auth?mode=signup&type=client&next=${encodeURIComponent('/jobs?post=1')}`) : (role === 'client' ? setModal({ type: 'post-job' }) : navigate('/jobs'))}
             >
               <Plus size={16} /> {role === 'client' ? 'Post work' : 'Find work'}
             </button>

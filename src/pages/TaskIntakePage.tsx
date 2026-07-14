@@ -17,6 +17,7 @@ import { track } from "../lib/analytics";
 import { useAuth } from "../context/AuthContext";
 import { navigateToStripe } from "../lib/navigation";
 import { useCommercialReadiness } from "../context/CommercialReadinessContext";
+import OrganizationSetup from "../components/OrganizationSetup";
 
 const DRAFT_KEY = "bureau-task-draft-v2";
 
@@ -554,6 +555,7 @@ export default function TaskIntakePage() {
           <label className="auth-consent intake-consent">
             <input
               type="checkbox"
+              required
               checked={consent}
               onChange={(event) => setConsent(event.target.checked)}
             />
@@ -681,13 +683,7 @@ function LinkedRequestPage({
       <div className="marketing-page intake-page">
         <MarketingHeader />
         <main className="intake-success">
-          <h1>A client organization is required.</h1>
-          <Link
-            className="button button--dark"
-            to="/auth?mode=signup&type=client"
-          >
-            Create client organization
-          </Link>
+          <OrganizationSetup kind="client" />
         </main>
         <MarketingFooter />
       </div>

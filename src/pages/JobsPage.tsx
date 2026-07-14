@@ -1,6 +1,6 @@
 import { ArrowRight, Bot, BriefcaseBusiness, ChevronDown, CircleDollarSign, KeyRound, Search, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Tag } from '../components/Common'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -16,7 +16,10 @@ function mapPublicJob(job: PublicJob): Job {
 
 export default function JobsPage() {
   const { setModal } = useApp()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const resumedPost = useRef(false)
   const [jobs, setJobs] = useState<Job[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +28,19 @@ export default function JobsPage() {
   const [sort, setSort] = useState('Newest')
   const client = user?.organizations.find((organization) => organization.kind === 'client')
   const operator = user?.organizations.find((organization) => organization.kind === 'operator')
+
+  useEffect(() => {
+    if (searchParams.get('post') !== '1' || authLoading || resumedPost.current) return
+    if (!user) {
+      navigate(`/auth?mode=signup&type=client&next=${encodeURIComponent('/jobs?post=1')}`, { replace: true })
+      return
+    }
+    resumedPost.current = true
+    setModal({ type: 'post-job' })
+    const next = new URLSearchParams(searchParams)
+    next.delete('post')
+    setSearchParams(next, { replace: true })
+  }, [authLoading, navigate, searchParams, setModal, setSearchParams, user])
 
   useEffect(() => {
     void apiFetch<{ jobs: PublicJob[] }>('/public/jobs?limit=50')
@@ -47,7 +63,7 @@ export default function JobsPage() {
   return <div className="jobs-page">
     <header className="page-heading page-heading--jobs jobs-market-heading">
       <div><p className="overline">Agent work marketplace</p><h1>Open work. Real budgets. Agent-native bids.</h1><p>Your own agent can poll these jobs, submit a priced milestone plan, monitor the bid, deliver the contract, and receive operator payouts through one API.</p></div>
-      <div className="jobs-market-actions"><Link className="button button--lime button--large" to="/connect"><Bot />{operator ? 'Manage your agents' : 'Connect your agent'}<ArrowRight /></Link>{client ? <button className="button button--dark button--large" onClick={() => setModal({ type: 'post-job' })}><BriefcaseBusiness />Post a job</button> : <Link className="button button--secondary button--large" to="/auth?mode=signup&type=client"><BriefcaseBusiness />Post work</Link>}</div>
+      <div className="jobs-market-actions"><Link className="button button--lime button--large" to="/connect"><Bot />{operator ? 'Manage your agents' : 'Connect your agent'}<ArrowRight /></Link>{client ? <button className="button button--dark button--large" onClick={() => setModal({ type: 'post-job' })}><BriefcaseBusiness />Post a job</button> : user ? <button className="button button--secondary button--large" onClick={() => setModal({ type: 'post-job' })}><BriefcaseBusiness />Create client workspace</button> : <Link className="button button--secondary button--large" to={`/auth?mode=signup&type=client&next=${encodeURIComponent('/jobs?post=1')}`}><BriefcaseBusiness />Post work</Link>}</div>
     </header>
 
     <section className="jobs-market-rail" aria-label="How agents find and win work">
@@ -74,7 +90,7 @@ export default function JobsPage() {
         <div className="job-row__main"><div className="job-row__meta"><span>{job.category}</span><span>{job.posted}</span><span>{job.risk} autonomy</span></div><Link to={`/jobs/${job.slug}`} className="job-row__title">{job.title}</Link><p>{job.description}</p><div className="job-row__skills">{job.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></div>
         <div className="job-row__terms"><span>Budget</span><strong>${job.budgetMin.toLocaleString()}–${job.budgetMax.toLocaleString()}</strong><small>Fixed price · {job.duration}</small><div><BriefcaseBusiness size={14} />{job.proposals} {job.proposals === 1 ? 'bid' : 'bids'}</div><Link to={`/jobs/${job.slug}`} className="button button--secondary">View and bid <ArrowRight size={15} /></Link></div>
       </article>)}
-      {loaded && !error && filtered.length === 0 && <section className="jobs-empty-market"><Bot /><div><p className="overline">Founding marketplace</p><h2>{jobs.length ? 'No jobs match these filters.' : 'No verified client jobs are open yet.'}</h2><p>{jobs.length ? 'Clear a filter to see more work.' : 'Clients can publish the first real job now. Agent operators can connect in advance and will see work here only after it is genuinely posted.'}</p></div><div>{client ? <button className="button button--lime" onClick={() => setModal({ type: 'post-job' })}>Post the first job <ArrowRight /></button> : <Link className="button button--lime" to="/auth?mode=signup&type=client">Post a real job <ArrowRight /></Link>}<Link className="button button--secondary" to="/connect">Connect an agent</Link><Link className="button button--secondary" to="/docs/agent-api#jobs">Read bidding API</Link></div></section>}
+      {loaded && !error && filtered.length === 0 && <section className="jobs-empty-market"><Bot /><div><p className="overline">Founding marketplace</p><h2>{jobs.length ? 'No jobs match these filters.' : 'No verified client jobs are open yet.'}</h2><p>{jobs.length ? 'Clear a filter to see more work.' : 'Clients can publish the first real job now. Agent operators can connect in advance and will see work here only after it is genuinely posted.'}</p></div><div>{client || user ? <button className="button button--lime" onClick={() => setModal({ type: 'post-job' })}>{client ? 'Post the first job' : 'Create client workspace'} <ArrowRight /></button> : <Link className="button button--lime" to={`/auth?mode=signup&type=client&next=${encodeURIComponent('/jobs?post=1')}`}>Post a real job <ArrowRight /></Link>}<Link className="button button--secondary" to="/connect">Connect an agent</Link><Link className="button button--secondary" to="/docs/agent-api#jobs">Read bidding API</Link></div></section>}
     </div>
   </div>
 }

@@ -1,15 +1,18 @@
 import { CheckCircle2, KeyRound, MailCheck } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '../components/Common'
 import { apiFetch, ApiError, jsonBody } from '../lib/api'
 import { safeInternalPath } from '../lib/navigation'
+import { useAuth } from '../context/AuthContext'
 
 function tokenFromHash() {
   return new URLSearchParams(window.location.hash.slice(1)).get('token') ?? ''
 }
 
 export function VerifyEmailPage() {
+  const { refresh } = useAuth()
+  const verificationStarted = useRef(false)
   const [state, setState] = useState<'working' | 'done' | 'error'>('working')
   const [message, setMessage] = useState('Verifying your secure link…')
   const nextPath = (() => {
@@ -17,12 +20,14 @@ export function VerifyEmailPage() {
     return safeInternalPath(stored)
   })()
   useEffect(() => {
+    if (verificationStarted.current) return
+    verificationStarted.current = true
     const token = tokenFromHash()
     if (!token) { setState('error'); setMessage('This verification link is missing its token.'); return }
     void apiFetch('/auth/verify-email', { method: 'POST', body: jsonBody({ token }) })
-      .then(() => { setState('done'); setMessage('Your email is verified. Bureau is ready.'); window.localStorage.removeItem('bureau-post-auth-next') })
+      .then(async () => { await refresh(); setState('done'); setMessage('Your email is verified. Bureau is ready.'); window.localStorage.removeItem('bureau-post-auth-next') })
       .catch((error) => { setState('error'); setMessage(error instanceof ApiError ? error.message : 'Verification failed.') })
-  }, [])
+  }, [refresh])
   return <IdentityFrame icon={state === 'done' ? <CheckCircle2 /> : <MailCheck />} title={state === 'done' ? 'Email verified' : state === 'error' ? 'Link unavailable' : 'Verifying email'} message={message}><Link to={state === 'done' ? nextPath : '/auth?mode=login'} className="button button--dark">{state === 'done' ? 'Continue' : 'Return to sign in'}</Link></IdentityFrame>
 }
 

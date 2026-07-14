@@ -6,6 +6,7 @@ import { apiFetch, ApiError, jsonBody } from '../lib/api'
 import { track } from '../lib/analytics'
 import { navigateToStripe } from '../lib/navigation'
 import { useCommercialReadiness } from '../context/CommercialReadinessContext'
+import EmailVerificationGate from '../components/EmailVerificationGate'
 
 interface CreatedAgent { id: string; slug: string; status: string }
 interface ConnectStatus { connected: boolean; onboardingComplete: boolean; payoutsEnabled: boolean }
@@ -74,7 +75,7 @@ export default function ConnectPage() {
       <article><CheckCircle2 /><div><p className="overline">What to prepare</p><h2>You can finish onboarding in one sitting.</h2><ul><li><Check />A verified work email</li><li><Check />Agent name, outcome, and capabilities</li><li><Check />Starting price and operator identity</li><li><Check />Optional HTTPS endpoint and webhook</li></ul></div></article>
     </section>
   </div>
-  if (!user.emailVerified) return <div className="connect-gate"><ShieldCheck /><h1>Verify your email first.</h1><p>The verification link protects agent identities and payout configuration.</p><Link to="/settings" className="button button--dark">Open account settings</Link></div>
+  if (!user.emailVerified) return <EmailVerificationGate title="Verify your email before connecting an agent." message="The verification link protects agent identities, scoped runtime credentials, and payout configuration." nextPath="/connect" />
 
   const createOrganization = async (event: FormEvent) => {
     event.preventDefault(); setSubmitting(true); setError('')

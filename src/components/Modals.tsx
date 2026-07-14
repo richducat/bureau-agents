@@ -10,6 +10,8 @@ import { track } from '../lib/analytics'
 import type { Agent, Category, Job } from '../types'
 import { AgentMark, Tag } from './Common'
 import { useCommercialReadiness } from '../context/CommercialReadinessContext'
+import EmailVerificationGate from './EmailVerificationGate'
+import OrganizationSetup from './OrganizationSetup'
 
 export default function GlobalModals() {
   const { modal, setModal } = useApp()
@@ -39,6 +41,17 @@ function Modal({ children, title, onClose, wide = false }: { children: ReactNode
   return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}><motion.div ref={dialogRef} className={`modal ${wide ? 'modal--wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} initial={{ opacity: 0, y: 28, scale: .985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 14, scale: .99 }} transition={{ duration: .22, ease: [.2, .8, .2, 1] }} onMouseDown={(event) => event.stopPropagation()}><button className="modal__close icon-button" onClick={onClose} aria-label="Close"><X /></button>{children}</motion.div></motion.div>
 }
 
+function AccountGate({ accountType, nextPath, title, body }: { accountType: 'client' | 'operator'; nextPath: string; title: string; body: string }) {
+  const encodedNext = encodeURIComponent(nextPath)
+  return <section className="modal-account-gate">
+    <span><ShieldCheck aria-hidden="true" /></span>
+    <p className="overline">Free Bureau account</p>
+    <h2>{title}</h2>
+    <p>{body}</p>
+    <div><Link className="button button--dark button--large" to={`/auth?mode=signup&type=${accountType}&next=${encodedNext}`}>Create free account <ArrowRight /></Link><Link className="button button--secondary button--large" to={`/auth?mode=login&next=${encodedNext}`}>Sign in</Link></div>
+  </section>
+}
+
 function PostJobModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const { addJob, showToast } = useApp()
@@ -55,13 +68,16 @@ function PostJobModal({ onClose }: { onClose: () => void }) {
   const [deliverables, setDeliverables] = useState('Evidence-backed result\nSource or test record\nExecutive summary')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const postNextPath = '/jobs?post=1'
+  const client = user?.organizations.find((organization) => organization.kind === 'client')
+
+  if (!user) return <Modal title="Create a free client account" onClose={onClose}><AccountGate accountType="client" nextPath={postNextPath} title="Create your account before writing the job." body="Your scope will stay private until you intentionally publish it, and you will not have to retype work after signup." /></Modal>
+  if (!user.emailVerified) return <Modal title="Verify your email" onClose={onClose}><EmailVerificationGate variant="panel" title="Verify your email before posting work." message="We require a verified address before a public job or contract can be created." nextPath={postNextPath} /></Modal>
+  if (!client) return <Modal title="Create a client organization" onClose={onClose}><OrganizationSetup kind="client" compact /></Modal>
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (step < 3) { setStep((current) => current + 1); return }
-    if (!user) { onClose(); navigate('/auth?mode=signup&type=client'); return }
-    const client = user.organizations.find((organization) => organization.kind === 'client')
-    if (!client) { setError('A client organization is required to publish work.'); return }
     const parsedSkills = skills.split(',').map((item) => item.trim()).filter(Boolean).slice(0, 30)
     const parsedDeliverables = deliverables.split('\n').map((item) => item.trim()).filter(Boolean)
     setSubmitting(true); setError('')
@@ -97,12 +113,16 @@ function HireAgentModal({ agent, onClose }: { agent: Agent; onClose: () => void 
   })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const hireNextPath = `/agents/${agent.slug ?? agent.id}?hire=1`
+  const client = user?.organizations.find((organization) => organization.kind === 'client')
+
+  if (!user) return <Modal title={`Hire ${agent.name}`} onClose={onClose}><AccountGate accountType="client" nextPath={hireNextPath} title={`Create an account to hire ${agent.name}.`} body="Account setup is free. You will return to this exact agent before entering any contract details." /></Modal>
+  if (!user.emailVerified) return <Modal title="Verify your email" onClose={onClose}><EmailVerificationGate variant="panel" title={`Verify your email to hire ${agent.name}.`} message="This confirms who has authority to approve the work plan and any future checkout." nextPath={hireNextPath} /></Modal>
+  if (!client) return <Modal title="Create a client organization" onClose={onClose}><OrganizationSetup kind="client" compact /></Modal>
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!publishedPackage) { setError('This agent needs a published package before direct hire. Post a job for competitive bids instead.'); return }
-    if (!user) { onClose(); navigate('/auth?mode=signup&type=client'); return }
-    const client = user.organizations.find((organization) => organization.kind === 'client')
-    if (!client) { setError('A client organization is required.'); return }
     setSubmitting(true); setError('')
     try {
       const response = await apiFetch<{ contract: { id: string } }>(`/marketplace/agents/${agent.id}/contracts`, { method: 'POST', body: jsonBody({ clientOrganizationId: client.id, title, scope, milestones: [{ title: 'First delivery', description: scope, amountCents: Math.round(budget * 100), dueAt: new Date(`${due}T23:59:00Z`).toISOString() }] }) })

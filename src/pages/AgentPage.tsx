@@ -1,12 +1,13 @@
 import { ArrowLeft, ArrowRight, BadgeCheck, Check, Heart, LockKeyhole, ShieldCheck, Wrench } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AgentMark, Breadcrumbs, CheckItem, Metric, Tag } from '../components/Common'
 import { useApp } from '../context/AppContext'
 import { agents as previewAgents } from '../data'
 import { apiFetch } from '../lib/api'
 import { track } from '../lib/analytics'
 import type { Agent } from '../types'
+import { useAuth } from '../context/AuthContext'
 
 interface PublicAgent {
   id: string; slug: string; name: string; tagline: string; description: string; category: Agent['category'];
@@ -23,11 +24,15 @@ function mapAgent(agent: PublicAgent): Agent {
 
 export default function AgentPage() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const preview = previewAgents.find((item) => item.id === id)
   const [agent, setAgent] = useState<Agent | null>(preview ?? null)
   const [reviews, setReviews] = useState<PublicReview[]>([])
   const [loading, setLoading] = useState(!preview)
   const { savedAgents, toggleSavedAgent, setModal } = useApp()
+  const { user, loading: authLoading } = useAuth()
+  const hireOpened = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -38,9 +43,43 @@ export default function AgentPage() {
     return () => { cancelled = true }
   }, [id])
 
+  useEffect(() => {
+    if (searchParams.get('hire') !== '1' || loading || authLoading || !agent?.live || hireOpened.current) return
+    const nextPath = `/agents/${agent.slug ?? agent.id}?hire=1`
+    if (!user) {
+      navigate(`/auth?mode=signup&type=client&next=${encodeURIComponent(nextPath)}`, { replace: true })
+      return
+    }
+    if (!user.emailVerified) {
+      window.localStorage.setItem('bureau-post-auth-next', nextPath)
+      navigate('/workspace', { replace: true })
+      return
+    }
+    hireOpened.current = true
+    setModal({ type: 'hire-agent', agent })
+    const next = new URLSearchParams(searchParams)
+    next.delete('hire')
+    setSearchParams(next, { replace: true })
+  }, [agent, authLoading, loading, navigate, searchParams, setModal, setSearchParams, user])
+
   if (loading) return <div className="not-found"><h1>Loading agent…</h1></div>
   if (!agent) return <div className="not-found"><h1>Agent not found</h1><Link to="/marketplace" className="button button--dark">Back to marketplace</Link></div>
   const live = Boolean(agent.live)
   const verificationLabel = !live ? 'Illustrative profile' : agent.verificationLevel === 'production' ? 'Production verified' : agent.verificationLevel === 'capability' ? 'Capability verified' : agent.verificationLevel === 'identity' ? 'Operator identity verified' : 'Verification pending'
-  return <div className="agent-page"><Breadcrumbs items={[{ label: 'Agents', to: '/marketplace' }, { label: agent.category, to: `/marketplace?category=${agent.category}` }, { label: agent.name }]} /><section className="agent-hero"><div className="agent-hero__main"><AgentMark agent={agent} size="large" /><div><div className="agent-hero__title"><h1>{agent.name}</h1><span className="verified"><BadgeCheck />{verificationLabel}</span></div><p className="agent-hero__specialty">{agent.specialty}</p><div className="agent-hero__meta">{live ? <><span>{agent.reviews ? `${agent.rating.toFixed(2)} from ${agent.reviews} reviews` : 'No reviews yet'}</span><span>{agent.jobs} completed contracts</span></> : <><span>Preview data only</span><span>No live claims</span></>}</div></div></div><div className="agent-hero__actions"><button className={`icon-button icon-button--large ${savedAgents.includes(agent.id) ? 'is-saved' : ''}`} onClick={() => toggleSavedAgent(agent.id)}><Heart fill={savedAgents.includes(agent.id) ? 'currentColor' : 'none'} /></button>{live ? <button className="button button--dark button--large" onClick={() => setModal({ type: 'hire-agent', agent })}>Create contract <ArrowRight /></button> : <Link className="button button--dark button--large" to="/auth?mode=signup&type=client">Join to hire live agents <ArrowRight /></Link>}</div></section><section className="agent-metrics"><Metric value={live && agent.jobs ? `${agent.success}%` : '—'} label="Work accepted" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={live ? agent.jobs : '—'} label="Completed contracts" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={agent.hourlyRate ? `$${agent.hourlyRate}/hr` : 'Quote'} label="Starting economics" detail={live ? 'Operator listing' : 'Illustrative'} /><Metric value={live ? agent.responseTime : '—'} label="Response time" detail={live ? 'Operator report' : 'No preview claim'} /></section><div className="agent-profile-layout"><main><section className="profile-section"><div className="profile-section__heading"><h2>About this agent</h2><Tag tone={live ? 'lime' : undefined}>{live ? 'Production listing' : 'Illustrative launch preview'}</Tag></div><p className="profile-lead">{agent.description}</p><div className="profile-skills">{agent.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></section><section className="profile-section"><div className="profile-section__heading"><div><p className="overline">Evidence</p><h2>Delivery history</h2></div></div>{live && agent.jobs ? <p className="profile-lead">This agent has {agent.jobs} completed contracts. Artifact-level public evidence appears only when the contract parties authorize publication.</p> : <div className="empty-state"><h3>No public delivery evidence yet</h3><p>{live ? 'Evaluate the listing, operator, controls, and a small first milestone.' : 'Preview profiles do not claim fabricated runs or outcomes.'}</p></div>}</section>{live && reviews.length > 0 && <section className="profile-section profile-section--reviews"><div className="profile-section__heading"><h2>Verified contract reviews</h2></div>{reviews.map((review) => <blockquote key={review.id}>“{review.body}”<footer>{review.reviewer_name} · {review.rating}/5 · production contract</footer></blockquote>)}</section>}</main><aside className="agent-passport"><div className="passport-heading"><span><ShieldCheck /></span><div><strong>Agent passport</strong><small>{live ? 'Production record' : 'Preview record'}</small></div></div><div className="passport-status"><BadgeCheck /><div><strong>{verificationLabel}</strong><span>{live ? 'Point-in-time marketplace signal' : 'Not verified'}</span></div></div><dl><div><dt>Operator</dt><dd>{agent.operator}{live && <Check />}</dd></div><div><dt>Autonomy</dt><dd>{agent.guardrails[0]}</dd></div><div><dt>API identity</dt><dd>{live ? 'Scoped and revocable' : 'Preview only'}</dd></div></dl><div className="passport-group"><h3><Wrench />Capabilities</h3><ul>{agent.skills.slice(0, 8).map((skill) => <CheckItem key={skill}>{skill}</CheckItem>)}</ul></div><div className="passport-group"><h3><LockKeyhole />Accountability</h3><ul>{agent.guardrails.map((guardrail) => <CheckItem key={guardrail}>{guardrail}</CheckItem>)}</ul></div></aside></div><div className="back-link"><Link to="/marketplace"><ArrowLeft />Back to all agents</Link></div></div>
+  const beginHire = () => {
+    const nextPath = `/agents/${agent.slug ?? agent.id}?hire=1`
+    if (!user) { navigate(`/auth?mode=signup&type=client&next=${encodeURIComponent(nextPath)}`); return }
+    if (!user.emailVerified) {
+      window.localStorage.setItem('bureau-post-auth-next', nextPath)
+      navigate('/workspace')
+      return
+    }
+    setModal({ type: 'hire-agent', agent })
+  }
+  const hireControl = authLoading
+    ? <button className="button button--dark button--large" disabled>Checking account…</button>
+    : !user
+      ? <Link className="button button--dark button--large" to={`/auth?mode=signup&type=client&next=${encodeURIComponent(`/agents/${agent.slug ?? agent.id}?hire=1`)}`}>Create free account to hire <ArrowRight /></Link>
+      : <button className="button button--dark button--large" onClick={beginHire}>{user.emailVerified ? 'Create contract' : 'Verify email to hire'} <ArrowRight /></button>
+  return <div className="agent-page"><Breadcrumbs items={[{ label: 'Agents', to: '/marketplace' }, { label: agent.category, to: `/marketplace?category=${agent.category}` }, { label: agent.name }]} /><section className="agent-hero"><div className="agent-hero__main"><AgentMark agent={agent} size="large" /><div><div className="agent-hero__title"><h1>{agent.name}</h1><span className="verified"><BadgeCheck />{verificationLabel}</span></div><p className="agent-hero__specialty">{agent.specialty}</p><div className="agent-hero__meta">{live ? <><span>{agent.reviews ? `${agent.rating.toFixed(2)} from ${agent.reviews} reviews` : 'No reviews yet'}</span><span>{agent.jobs} completed contracts</span></> : <><span>Preview data only</span><span>No live claims</span></>}</div></div></div><div className="agent-hero__actions"><button className={`icon-button icon-button--large ${savedAgents.includes(agent.id) ? 'is-saved' : ''}`} onClick={() => toggleSavedAgent(agent.id)} aria-label={savedAgents.includes(agent.id) ? `Remove ${agent.name} from saved` : `Save ${agent.name}`}><Heart fill={savedAgents.includes(agent.id) ? 'currentColor' : 'none'} /></button>{live ? hireControl : <Link className="button button--dark button--large" to="/auth?mode=signup&type=client">Join to hire live agents <ArrowRight /></Link>}</div></section><section className="agent-metrics"><Metric value={live && agent.jobs ? `${agent.success}%` : '—'} label="Work accepted" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={live ? agent.jobs : '—'} label="Completed contracts" detail={live ? 'Production ledger' : 'No preview claim'} /><Metric value={agent.hourlyRate ? `$${agent.hourlyRate}/hr` : 'Quote'} label="Starting economics" detail={live ? 'Operator listing' : 'Illustrative'} /><Metric value={live ? agent.responseTime : '—'} label="Response time" detail={live ? 'Operator report' : 'No preview claim'} /></section><div className="agent-profile-layout"><main><section className="profile-section"><div className="profile-section__heading"><h2>About this agent</h2><Tag tone={live ? 'lime' : undefined}>{live ? 'Production listing' : 'Illustrative launch preview'}</Tag></div><p className="profile-lead">{agent.description}</p><div className="profile-skills">{agent.skills.map((skill) => <Tag key={skill}>{skill}</Tag>)}</div></section><section className="profile-section"><div className="profile-section__heading"><div><p className="overline">Evidence</p><h2>Delivery history</h2></div></div>{live && agent.jobs ? <p className="profile-lead">This agent has {agent.jobs} completed contracts. Artifact-level public evidence appears only when the contract parties authorize publication.</p> : <div className="empty-state"><h3>No public delivery evidence yet</h3><p>{live ? 'Evaluate the listing, operator, controls, and a small first milestone.' : 'Preview profiles do not claim fabricated runs or outcomes.'}</p></div>}</section>{live && reviews.length > 0 && <section className="profile-section profile-section--reviews"><div className="profile-section__heading"><h2>Verified contract reviews</h2></div>{reviews.map((review) => <blockquote key={review.id}>“{review.body}”<footer>{review.reviewer_name} · {review.rating}/5 · production contract</footer></blockquote>)}</section>}</main><aside className="agent-passport"><div className="passport-heading"><span><ShieldCheck /></span><div><strong>Agent passport</strong><small>{live ? 'Production record' : 'Preview record'}</small></div></div><div className="passport-status"><BadgeCheck /><div><strong>{verificationLabel}</strong><span>{live ? 'Point-in-time marketplace signal' : 'Not verified'}</span></div></div><dl><div><dt>Operator</dt><dd>{agent.operator}{live && <Check />}</dd></div><div><dt>Autonomy</dt><dd>{agent.guardrails[0]}</dd></div><div><dt>API identity</dt><dd>{live ? 'Scoped and revocable' : 'Preview only'}</dd></div></dl><div className="passport-group"><h3><Wrench />Capabilities</h3><ul>{agent.skills.slice(0, 8).map((skill) => <CheckItem key={skill}>{skill}</CheckItem>)}</ul></div><div className="passport-group"><h3><LockKeyhole />Accountability</h3><ul>{agent.guardrails.map((guardrail) => <CheckItem key={guardrail}>{guardrail}</CheckItem>)}</ul></div></aside></div><div className="back-link"><Link to="/marketplace"><ArrowLeft />Back to all agents</Link></div></div>
 }
