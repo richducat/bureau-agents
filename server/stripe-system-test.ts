@@ -71,6 +71,10 @@ async function main() {
   process.env.ALLOWED_ORIGINS = browserOrigin
   process.env.STRIPE_SECRET_KEY = stripeTestKey
   process.env.STRIPE_WEBHOOK_SECRET = webhookSecret
+  process.env.LEGAL_REVIEW_COMPLETED = 'true'
+  process.env.TAX_REVIEW_COMPLETED = 'true'
+  process.env.COMMERCIAL_PAYMENTS_ENABLED = 'true'
+  process.env.MILESTONE_PAYMENT_PILOT_ENABLED = 'true'
 
   const [{ createApp }, database, { getConfig }, { stripeClient }] = await Promise.all([
     import('./app.js'),
@@ -170,6 +174,7 @@ async function main() {
       await connection.execute('DELETE FROM messages WHERE contract_id = ?', [ids.contract])
       await connection.execute('DELETE FROM disputes WHERE contract_id = ?', [ids.contract])
       await connection.execute('DELETE FROM deliverables WHERE milestone_id = ?', [ids.milestone])
+      await connection.execute('DELETE FROM payment_stripe_exposure_events WHERE payment_id IN (SELECT id FROM payments WHERE milestone_id = ?)', [ids.milestone])
       await connection.execute('DELETE FROM payments WHERE milestone_id = ?', [ids.milestone])
       await connection.execute('DELETE FROM milestones WHERE contract_id = ?', [ids.contract])
       await connection.execute('DELETE FROM contracts WHERE id = ?', [ids.contract])

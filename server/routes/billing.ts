@@ -4,12 +4,14 @@ import { Router } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import type Stripe from 'stripe'
 import type { RowDataPacket } from 'mysql2'
+import type { PoolConnection } from 'mysql2/promise'
 import { z } from 'zod'
 import { getConfig } from '../config.js'
 import { execute, one, rows, transaction } from '../db.js'
 import { calculateFees } from '../fees.js'
 import { fundingMustFailClosed } from '../funding-safety.js'
-import { requireCommercialPayments } from '../commercial-readiness.js'
+import { commercialReadiness, requireMilestonePayments } from '../commercial-readiness.js'
+import { assertPilotReservation, lockAndReadPilotUsage } from '../payment-pilot.js'
 import {
   asyncRoute,
   HttpError,
@@ -34,6 +36,58 @@ const paymentLimiter = rateLimit({
 
 function toDate(unixSeconds: number | null | undefined) {
   return unixSeconds ? new Date(unixSeconds * 1000) : null
+}
+
+function checkoutCustomerId(session: Stripe.Checkout.Session) {
+  if (typeof session.customer === 'string') return session.customer
+  return session.customer?.id ?? null
+}
+
+function checkoutUrlMatches(url: string | null | undefined, pathname: string) {
+  if (!url) return false
+  try {
+    const candidate = new URL(url)
+    const app = new URL(getConfig().APP_ORIGIN)
+    return candidate.origin === app.origin && candidate.pathname === pathname
+  } catch {
+    return false
+  }
+}
+
+async function disabledBureauCheckoutKind(session: Stripe.Checkout.Session): Promise<'subscription' | 'agent_verification' | null> {
+  const metadata = session.metadata
+  const customerId = checkoutCustomerId(session)
+  if (!metadata || !customerId) return null
+
+  if (
+    metadata.kind === 'subscription'
+    && metadata.organization_id
+    && ['operator_pro', 'client_scale'].includes(metadata.plan ?? '')
+    && checkoutUrlMatches(session.success_url, '/settings/billing')
+    && checkoutUrlMatches(session.cancel_url, '/pricing')
+  ) {
+    const organization = await one<GenericRow>(
+      'SELECT id FROM organizations WHERE id = ? AND stripe_customer_id = ?',
+      [metadata.organization_id, customerId],
+    )
+    return organization ? 'subscription' : null
+  }
+
+  if (metadata.kind === 'agent_verification' && metadata.agent_id && metadata.organization_id) {
+    const agent = await one<GenericRow>(
+      `SELECT a.slug FROM agents a
+       JOIN organizations o ON o.id = a.operator_org_id
+       WHERE a.id = ? AND a.operator_org_id = ? AND o.stripe_customer_id = ?`,
+      [metadata.agent_id, metadata.organization_id, customerId],
+    )
+    if (
+      agent
+      && checkoutUrlMatches(session.success_url, `/agents/${agent.slug}`)
+      && checkoutUrlMatches(session.cancel_url, `/agents/${agent.slug}`)
+    ) return 'agent_verification'
+  }
+
+  return null
 }
 
 async function ensureCustomer(organization: GenericRow, email: string) {
@@ -102,30 +156,13 @@ billingRouter.get('/connect/:organizationId/status', asyncRoute(async (req, res)
   res.json({ connected: true, onboardingComplete, payoutsEnabled, requirements: 'requirements' in account ? account.requirements : undefined })
 }))
 
-billingRouter.post('/subscriptions/checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
-  const input = z.object({ organizationId: uuid, plan: z.enum(['operator_pro', 'client_scale']) }).parse(req.body)
-  const membership = membershipFor(req, input.organizationId, ['owner', 'admin', 'billing'])
-  if ((input.plan === 'operator_pro' && membership.kind !== 'operator') || (input.plan === 'client_scale' && membership.kind !== 'client')) {
-    throw new HttpError(400, 'That plan does not apply to this organization.', 'invalid_plan')
-  }
-  const config = getConfig()
-  const price = input.plan === 'operator_pro' ? config.STRIPE_PRICE_OPERATOR_PRO : config.STRIPE_PRICE_CLIENT_SCALE
-  if (!price) throw new HttpError(503, 'Subscription price is not configured.', 'payments_not_configured')
-  const organization = await one<GenericRow>('SELECT * FROM organizations WHERE id = ?', [input.organizationId])
-  if (!organization) throw new HttpError(404, 'Organization not found.', 'organization_not_found')
-  const customer = await ensureCustomer(organization, req.authUser!.email)
-  const session = await stripeClient().checkout.sessions.create({
-    mode: 'subscription',
-    customer,
-    line_items: [{ price, quantity: 1 }],
-    allow_promotion_codes: true,
-    success_url: `${config.APP_ORIGIN}/settings/billing?checkout=success`,
-    cancel_url: `${config.APP_ORIGIN}/pricing?checkout=cancelled`,
-    metadata: { kind: 'subscription', organization_id: input.organizationId, plan: input.plan },
-    subscription_data: { metadata: { bureau_organization_id: input.organizationId, bureau_plan: input.plan } },
-  }, { idempotencyKey: `subscription_${input.organizationId}_${input.plan}_${req.get('idempotency-key') ?? randomUUID()}` })
-  res.status(201).json({ checkoutUrl: session.url })
-}))
+billingRouter.post('/subscriptions/checkout', (_req, _res, next) => {
+  next(new HttpError(
+    503,
+    'New Bureau subscriptions are not included in the milestone-payment pilot. Existing subscriptions can still be managed without changing any Stripe product.',
+    'subscription_checkout_disabled',
+  ))
+})
 
 billingRouter.post('/subscriptions/portal', asyncRoute(async (req, res) => {
   const { organizationId } = z.object({ organizationId: uuid }).parse(req.body)
@@ -139,30 +176,15 @@ billingRouter.post('/subscriptions/portal', asyncRoute(async (req, res) => {
   res.json({ portalUrl: portal.url })
 }))
 
-billingRouter.post('/agents/:agentId/verification-checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
-  const agentId = uuid.parse(req.params.agentId)
-  const config = getConfig()
-  if (!config.STRIPE_PRICE_VERIFIED_AGENT) throw new HttpError(503, 'Verification checkout is not configured.', 'payments_not_configured')
-  const agent = await one<GenericRow>(
-    `SELECT a.*, o.name AS organization_name, o.stripe_customer_id FROM agents a JOIN organizations o ON o.id = a.operator_org_id WHERE a.id = ?`,
-    [agentId],
-  )
-  if (!agent) throw new HttpError(404, 'Agent not found.', 'agent_not_found')
-  membershipFor(req, String(agent.operator_org_id), ['owner', 'admin', 'billing'])
-  const organization = { id: agent.operator_org_id, name: agent.organization_name, stripe_customer_id: agent.stripe_customer_id } as GenericRow
-  const customer = await ensureCustomer(organization, req.authUser!.email)
-  const session = await stripeClient().checkout.sessions.create({
-    mode: 'payment',
-    customer,
-    line_items: [{ price: config.STRIPE_PRICE_VERIFIED_AGENT, quantity: 1 }],
-    success_url: `${config.APP_ORIGIN}/agents/${agent.slug}?verification=purchased`,
-    cancel_url: `${config.APP_ORIGIN}/agents/${agent.slug}?verification=cancelled`,
-    metadata: { kind: 'agent_verification', agent_id: agentId, organization_id: String(agent.operator_org_id) },
-  }, { idempotencyKey: `verification_${agentId}` })
-  res.status(201).json({ checkoutUrl: session.url })
-}))
+billingRouter.post('/agents/:agentId/verification-checkout', (_req, _res, next) => {
+  next(new HttpError(
+    503,
+    'Paid agent verification is not included in the milestone-payment pilot. Agent onboarding and evidence review remain available without a verification purchase.',
+    'verification_checkout_disabled',
+  ))
+})
 
-billingRouter.post('/milestones/:milestoneId/checkout', requireCommercialPayments, asyncRoute(async (req, res) => {
+billingRouter.post('/milestones/:milestoneId/checkout', requireMilestonePayments, asyncRoute(async (req, res) => {
   const milestoneId = uuid.parse(req.params.milestoneId)
   const idempotencyKey = (req.get('idempotency-key') ?? '').trim()
   if (!/^[a-zA-Z0-9:_-]{12,200}$/.test(idempotencyKey)) {
@@ -212,30 +234,35 @@ billingRouter.post('/milestones/:milestoneId/checkout', requireCommercialPayment
   const clientTotalCents = workValueCents + clientFeeCents
   const operatorNetCents = workValueCents - operatorFeeCents
   const paymentId = randomUUID()
-  const customer = await ensureCustomer({
-    id: milestone.client_org_id,
-    name: milestone.client_name,
-    stripe_customer_id: milestone.stripe_customer_id,
-  } as GenericRow, req.authUser!.email)
 
   try {
-    await execute(
-      `INSERT INTO payments
-       (id, milestone_id, client_org_id, operator_org_id, idempotency_key, work_value_cents, client_fee_cents,
-        operator_fee_cents, client_total_cents, operator_net_cents, bureau_gross_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [paymentId, milestoneId, milestone.client_org_id, milestone.operator_org_id, idempotencyKey,
-        workValueCents, clientFeeCents, operatorFeeCents, clientTotalCents, operatorNetCents, clientFeeCents + operatorFeeCents],
-    )
+    await transaction(async (connection) => {
+      const usage = await lockAndReadPilotUsage(connection)
+      assertPilotReservation(usage, clientTotalCents)
+      await connection.execute(
+        `INSERT INTO payments
+         (id, milestone_id, client_org_id, operator_org_id, idempotency_key, work_value_cents, client_fee_cents,
+          operator_fee_cents, client_total_cents, operator_net_cents, bureau_gross_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [paymentId, milestoneId, milestone.client_org_id, milestone.operator_org_id, idempotencyKey,
+          workValueCents, clientFeeCents, operatorFeeCents, clientTotalCents, operatorNetCents, clientFeeCents + operatorFeeCents],
+      )
+    })
   } catch (error) {
     if ((error as { code?: string }).code === 'ER_DUP_ENTRY') throw new HttpError(409, 'Milestone funding is already in progress.', 'funding_in_progress')
     throw error
   }
   try {
     const config = getConfig()
+    const customer = await ensureCustomer({
+      id: milestone.client_org_id,
+      name: milestone.client_name,
+      stripe_customer_id: milestone.stripe_customer_id,
+    } as GenericRow, req.authUser!.email)
     const session = await stripeClient().checkout.sessions.create({
       mode: 'payment',
       customer,
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: { currency: 'usd', unit_amount: workValueCents, product_data: { name: String(milestone.title), description: `Protected milestone funding for ${milestone.contract_title}` } },
@@ -248,6 +275,7 @@ billingRouter.post('/milestones/:milestoneId/checkout', requireCommercialPayment
       ],
       success_url: `${config.APP_ORIGIN}/contracts/${milestone.contract_id}?funding=success`,
       cancel_url: `${config.APP_ORIGIN}/contracts/${milestone.contract_id}?funding=cancelled`,
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
       metadata: { kind: 'milestone_funding', payment_id: paymentId, milestone_id: milestoneId, contract_id: String(milestone.contract_id) },
       payment_intent_data: {
         transfer_group: `bureau_contract_${milestone.contract_id}`,
@@ -343,13 +371,65 @@ async function markSubscription(subscription: Stripe.Subscription) {
   })
 }
 
+async function upsertExposureEvent(
+  connection: PoolConnection,
+  paymentId: string,
+  stripeObjectId: string,
+  eventKind: 'refund_principal' | 'dispute_principal' | 'additional_fee',
+  amountCents: number,
+  currency: string,
+) {
+  if (!Number.isSafeInteger(amountCents) || amountCents <= 0) return
+  await connection.execute(
+    `INSERT INTO payment_stripe_exposure_events
+       (payment_id, stripe_object_id, event_kind, amount_cents, currency)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE amount_cents = GREATEST(amount_cents, VALUES(amount_cents)), updated_at = UTC_TIMESTAMP(3)`,
+    [paymentId, stripeObjectId, eventKind, amountCents, currency.toUpperCase().slice(0, 3)],
+  )
+}
+
+async function recordDisputeExposure(dispute: Stripe.Dispute) {
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge.id
+  const payment = await one<GenericRow>('SELECT id FROM payments WHERE stripe_charge_id = ?', [chargeId])
+  if (!payment) return
+  const additionalFeeCents = Array.isArray(dispute.balance_transactions)
+    ? dispute.balance_transactions.reduce((sum, balanceTransaction) => sum + Math.max(0, Number(balanceTransaction.fee ?? 0)), 0)
+    : 0
+  await transaction(async (connection) => {
+    await connection.execute(`UPDATE payments SET status = 'disputed' WHERE id = ?`, [payment.id])
+    await upsertExposureEvent(connection, String(payment.id), dispute.id, 'dispute_principal', Number(dispute.amount ?? 0), dispute.currency ?? 'usd')
+    await upsertExposureEvent(connection, String(payment.id), dispute.id, 'additional_fee', additionalFeeCents, dispute.currency ?? 'usd')
+  })
+}
+
+async function recordRefundExposure(charge: Stripe.Charge) {
+  const payment = await one<GenericRow>('SELECT id, milestone_id FROM payments WHERE stripe_charge_id = ?', [charge.id])
+  if (!payment) return
+  await transaction(async (connection) => {
+    await connection.execute(`UPDATE payments SET status = 'refunded', refunded_at = UTC_TIMESTAMP(3) WHERE id = ?`, [payment.id])
+    await connection.execute(
+      `UPDATE milestones SET status = 'refunded' WHERE id = ? AND status IN ('unfunded','funding','funded')`,
+      [payment.milestone_id],
+    )
+    await upsertExposureEvent(connection, String(payment.id), charge.id, 'refund_principal', Number(charge.amount_refunded ?? 0), charge.currency ?? 'usd')
+  })
+}
+
 async function processCheckout(session: Stripe.Checkout.Session) {
   if (session.metadata?.kind === 'agent_verification' && session.payment_status === 'paid') {
-    await execute(`UPDATE agents SET status = 'review' WHERE id = ?`, [session.metadata.agent_id])
+    if (await disabledBureauCheckoutKind(session) !== 'agent_verification') return
+    const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
+    if (!paymentIntentId) throw new Error('Disabled verification checkout has no PaymentIntent to refund')
+    const refund = await stripeClient().refunds.create({
+      payment_intent: paymentIntentId,
+      reason: 'requested_by_customer',
+      metadata: { kind: 'disabled_agent_verification_refund', agent_id: session.metadata.agent_id },
+    }, { idempotencyKey: `bureau_disabled_verification_${session.id}` })
     await execute(
       `INSERT INTO audit_log (organization_id, action, target_type, target_id, metadata)
-       VALUES (?, 'agent.verification_purchased', 'agent', ?, ?)`,
-      [session.metadata.organization_id, session.metadata.agent_id, JSON.stringify({ checkoutSessionId: session.id })],
+       VALUES (?, 'agent.verification_checkout_refunded', 'agent', ?, ?)`,
+      [session.metadata.organization_id, session.metadata.agent_id, JSON.stringify({ checkoutSessionId: session.id, refundId: refund.id })],
     )
     return
   }
@@ -374,7 +454,8 @@ async function processCheckout(session: Stripe.Checkout.Session) {
   if (String(fundingGate.milestone_id) !== session.metadata!.milestone_id || String(fundingGate.contract_id) !== session.metadata!.contract_id) {
     throw new Error('Paid checkout metadata does not match its Bureau payment record')
   }
-  const blockedFunding = fundingMustFailClosed(fundingGate.contract_status, fundingGate.legacy_unverified_source)
+  const commercialGateClosed = !commercialReadiness().acceptingNewPayments
+  const blockedFunding = commercialGateClosed || fundingMustFailClosed(fundingGate.contract_status, fundingGate.legacy_unverified_source)
   if (blockedFunding) {
     await transaction(async (connection) => {
       await connection.execute(
@@ -396,7 +477,7 @@ async function processCheckout(session: Stripe.Checkout.Session) {
       metadata: {
         bureau_payment_id: session.metadata!.payment_id,
         bureau_contract_id: String(fundingGate!.contract_id),
-        reason: Number(fundingGate.legacy_unverified_source) > 0 ? 'legacy_unverified_quote_blocked' : 'cancelled_contract_blocked',
+        reason: commercialGateClosed ? 'milestone_pilot_disabled' : Number(fundingGate.legacy_unverified_source) > 0 ? 'legacy_unverified_quote_blocked' : 'cancelled_contract_blocked',
       },
     }, { idempotencyKey: `bureau_blocked_funding_${session.metadata!.payment_id}` })
     const refunded = refund.status === 'succeeded'
@@ -465,6 +546,22 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
       case 'checkout.session.async_payment_succeeded':
         await processCheckout(event.data.object as Stripe.Checkout.Session)
         break
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session
+        if (session.metadata?.kind === 'milestone_funding' && session.metadata.payment_id && session.metadata.milestone_id) {
+          await transaction(async (connection) => {
+            await connection.execute(
+              `UPDATE payments SET status = 'failed' WHERE id = ? AND paid_at IS NULL AND status IN ('created','checkout_open')`,
+              [session.metadata!.payment_id],
+            )
+            await connection.execute(
+              `UPDATE milestones SET status = 'unfunded' WHERE id = ? AND status = 'funding'`,
+              [session.metadata!.milestone_id],
+            )
+          })
+        }
+        break
+      }
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
@@ -489,22 +586,14 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
         }
         break
       }
-      case 'charge.dispute.created': {
-        const dispute = event.data.object as Stripe.Dispute
-        const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge.id
-        await execute(`UPDATE payments SET status = 'disputed' WHERE stripe_charge_id = ?`, [chargeId])
+      case 'charge.dispute.created':
+      case 'charge.dispute.updated':
+      case 'charge.dispute.closed': {
+        await recordDisputeExposure(event.data.object as Stripe.Dispute)
         break
       }
       case 'charge.refunded': {
-        const charge = event.data.object as Stripe.Charge
-        await transaction(async (connection) => {
-          await connection.execute(`UPDATE payments SET status = 'refunded', refunded_at = UTC_TIMESTAMP(3) WHERE stripe_charge_id = ?`, [charge.id])
-          await connection.execute(
-            `UPDATE milestones m JOIN payments p ON p.milestone_id = m.id
-             SET m.status = 'refunded' WHERE p.stripe_charge_id = ? AND m.status IN ('unfunded','funding','funded')`,
-            [charge.id],
-          )
-        })
+        await recordRefundExposure(event.data.object as Stripe.Charge)
         break
       }
       default:
@@ -522,35 +611,59 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
   }
 }
 
-export async function expireBlockedQuoteCheckoutSessions() {
-  const blockedPayments = await rows<GenericRow>(
-    `SELECT p.id, p.stripe_checkout_session_id, p.status, m.id AS milestone_id
+export async function reconcileBureauCheckoutSessions() {
+  const readiness = commercialReadiness()
+  const openPayments = await rows<GenericRow>(
+    `SELECT p.id, p.stripe_checkout_session_id, p.status, m.id AS milestone_id, c.status AS contract_status
      FROM payments p JOIN milestones m ON m.id = p.milestone_id JOIN contracts c ON c.id = m.contract_id
      WHERE p.stripe_checkout_session_id IS NOT NULL
        AND p.status IN ('created','checkout_open','refund_pending')
-       AND c.status = 'cancelled'
      ORDER BY p.created_at ASC LIMIT 500`,
   )
-  for (const payment of blockedPayments) {
+  let reconciled = 0
+  for (const payment of openPayments) {
     try {
       const session = await stripeClient().checkout.sessions.retrieve(String(payment.stripe_checkout_session_id))
-      if (session.status === 'open') {
+      if (session.status === 'open' && (payment.contract_status === 'cancelled' || !readiness.acceptingNewPayments)) {
         await stripeClient().checkout.sessions.expire(session.id)
         await transaction(async (connection) => {
           await connection.execute(`UPDATE payments SET status = 'failed' WHERE id = ? AND status IN ('created','checkout_open')`, [payment.id])
           await connection.execute(`UPDATE milestones SET status = 'unfunded' WHERE id = ? AND status = 'funding'`, [payment.milestone_id])
         })
+        reconciled += 1
       } else if (session.status === 'complete' && session.payment_status === 'paid') {
         await processCheckout(session)
+        reconciled += 1
       } else if (session.status === 'expired') {
         await transaction(async (connection) => {
           await connection.execute(`UPDATE payments SET status = 'failed' WHERE id = ? AND status IN ('created','checkout_open')`, [payment.id])
           await connection.execute(`UPDATE milestones SET status = 'unfunded' WHERE id = ? AND status = 'funding'`, [payment.milestone_id])
         })
+        reconciled += 1
       }
     } catch (error) {
-      console.error(`[billing-cleanup] Could not close blocked checkout ${payment.stripe_checkout_session_id}:`, error instanceof Error ? error.message : 'unknown error')
+      console.error(`[billing-cleanup] Could not reconcile Bureau checkout ${payment.stripe_checkout_session_id}:`, error instanceof Error ? error.message : 'unknown error')
     }
   }
-  return blockedPayments.length
+
+  // These session kinds are Bureau-specific, but intentionally have no new
+  // checkout endpoint during the pilot. Expiring a stale link does not alter
+  // its Stripe product or any existing subscription.
+  let startingAfter: string | undefined
+  for (let page = 0; page < 5; page += 1) {
+    const sessions = await stripeClient().checkout.sessions.list({ status: 'open', limit: 100, starting_after: startingAfter })
+    for (const session of sessions.data) {
+      const disabledKind = await disabledBureauCheckoutKind(session)
+      if (!disabledKind) continue
+      try {
+        await stripeClient().checkout.sessions.expire(session.id)
+        reconciled += 1
+      } catch (error) {
+        console.error(`[billing-cleanup] Could not expire disabled Bureau ${disabledKind} checkout ${session.id}:`, error instanceof Error ? error.message : 'unknown error')
+      }
+    }
+    if (!sessions.has_more || !sessions.data.length) break
+    startingAfter = sessions.data.at(-1)!.id
+  }
+  return reconciled
 }

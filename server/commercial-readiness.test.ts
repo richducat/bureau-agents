@@ -12,6 +12,11 @@ const keys = [
   'LEGAL_REVIEW_COMPLETED',
   'TAX_REVIEW_COMPLETED',
   'COMMERCIAL_PAYMENTS_ENABLED',
+  'MILESTONE_PAYMENT_PILOT_ENABLED',
+  'PILOT_TRANSACTION_CAP_CENTS',
+  'PILOT_DAILY_CHARGE_CAP_CENTS',
+  'PILOT_LIFETIME_CHARGE_CAP_CENTS',
+  'PILOT_LIFETIME_EXPOSURE_CAP_CENTS',
 ] as const
 
 const original = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
@@ -40,6 +45,7 @@ describe('commercial payment readiness', () => {
       'legal_review_pending',
       'tax_review_pending',
       'operator_activation_pending',
+      'milestone_payment_pilot_disabled',
       'payment_processor_not_ready',
     ])
   })
@@ -54,6 +60,7 @@ describe('commercial payment readiness', () => {
     process.env.LEGAL_REVIEW_COMPLETED = 'true'
     process.env.TAX_REVIEW_COMPLETED = 'true'
     process.env.COMMERCIAL_PAYMENTS_ENABLED = 'true'
+    process.env.MILESTONE_PAYMENT_PILOT_ENABLED = 'true'
     resetConfigForTests()
     const readiness = commercialReadiness()
     expect(readiness.acceptingNewPayments).toBe(false)
@@ -70,12 +77,24 @@ describe('commercial payment readiness', () => {
     process.env.LEGAL_REVIEW_COMPLETED = 'true'
     process.env.TAX_REVIEW_COMPLETED = 'true'
     process.env.COMMERCIAL_PAYMENTS_ENABLED = 'true'
+    process.env.MILESTONE_PAYMENT_PILOT_ENABLED = 'true'
     resetConfigForTests()
     expect(commercialReadiness()).toMatchObject({
-      stage: 'paid_live',
+      stage: 'milestone_pilot',
       acceptingNewPayments: true,
       paymentMode: 'live',
       blockers: [],
+      paymentProducts: {
+        milestoneFunding: true,
+        subscriptions: false,
+        agentVerificationPurchases: false,
+      },
     })
+  })
+
+  it('refuses a configured limit above the approved pilot authorization', () => {
+    process.env.PILOT_TRANSACTION_CAP_CENTS = '50001'
+    resetConfigForTests()
+    expect(() => commercialReadiness()).toThrow()
   })
 })

@@ -4,12 +4,24 @@ import { HttpError } from './security.js'
 import { stripeMode, stripeReady } from './stripe.js'
 
 export type CommercialReadiness = {
-  stage: 'founding_beta' | 'paid_live'
+  stage: 'founding_beta' | 'milestone_pilot'
   acceptingRequests: true
   acceptingNewPayments: boolean
   message: string
   paymentMode: 'live' | 'test' | 'unconfigured' | 'unknown'
   blockers: Array<{ code: string; label: string }>
+  paymentProducts: {
+    milestoneFunding: boolean
+    subscriptions: false
+    agentVerificationPurchases: false
+  }
+  pilotLimits: {
+    currency: 'USD'
+    transactionCapCents: number
+    dailyChargeCapCents: number
+    lifetimeChargeCapCents: number
+    lifetimeExposureCapCents: number
+  }
 }
 
 export function commercialReadiness(): CommercialReadiness {
@@ -26,6 +38,9 @@ export function commercialReadiness(): CommercialReadiness {
   if (!config.COMMERCIAL_PAYMENTS_ENABLED) {
     blockers.push({ code: 'operator_activation_pending', label: 'The Bureau operator has not activated consumer payments.' })
   }
+  if (!config.MILESTONE_PAYMENT_PILOT_ENABLED) {
+    blockers.push({ code: 'milestone_payment_pilot_disabled', label: 'The approved milestone-payment pilot is not enabled.' })
+  }
   if (!stripeReady()) {
     blockers.push({ code: 'payment_processor_not_ready', label: 'The payment processor is not fully configured.' })
   } else if (config.isProduction && paymentMode !== 'live') {
@@ -33,15 +48,28 @@ export function commercialReadiness(): CommercialReadiness {
   }
 
   const acceptingNewPayments = blockers.length === 0
+  const pilotLimits = {
+    currency: 'USD' as const,
+    transactionCapCents: config.PILOT_TRANSACTION_CAP_CENTS,
+    dailyChargeCapCents: config.PILOT_DAILY_CHARGE_CAP_CENTS,
+    lifetimeChargeCapCents: config.PILOT_LIFETIME_CHARGE_CAP_CENTS,
+    lifetimeExposureCapCents: config.PILOT_LIFETIME_EXPOSURE_CAP_CENTS,
+  }
   return {
-    stage: acceptingNewPayments ? 'paid_live' : 'founding_beta',
+    stage: acceptingNewPayments ? 'milestone_pilot' : 'founding_beta',
     acceptingRequests: true,
     acceptingNewPayments,
     message: acceptingNewPayments
-      ? 'Paid work is open. Bureau shows the full total before checkout.'
+      ? 'The milestone-payment pilot is open. Bureau shows the full total before checkout; subscriptions and paid verification remain disabled.'
       : 'Founding beta is open for free work plans, account setup, job posts, and agent onboarding. No new payment can be created yet.',
     paymentMode,
     blockers,
+    paymentProducts: {
+      milestoneFunding: acceptingNewPayments,
+      subscriptions: false,
+      agentVerificationPurchases: false,
+    },
+    pilotLimits,
   }
 }
 
@@ -56,7 +84,7 @@ export function assertCommercialPaymentsEnabled() {
   }
 }
 
-export const requireCommercialPayments: RequestHandler = (_req, _res, next) => {
+export const requireMilestonePayments: RequestHandler = (_req, _res, next) => {
   try {
     assertCommercialPaymentsEnabled()
     next()

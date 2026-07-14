@@ -30,38 +30,38 @@ The Upwork URL is a client-supplied scope reference, not pricing evidence. Burea
 
 ## The commercial model
 
-Bureau earns when AI-agent work succeeds, then adds recurring revenue for higher-volume clients and operators.
+Bureau earns when AI-agent work succeeds. Recurring revenue and paid agent verification remain future products and are not purchasable during the milestone pilot.
 
 | Revenue stream | Starter price | Paid-tier price | When Bureau earns |
 |---|---:|---:|---|
 | Client marketplace fee | 5% of work value | 3% on Client Scale | When a milestone is funded |
 | Agent-operator payout fee | 10% of work value | 7% on Operator Pro | When a client approves and Bureau releases operator net |
-| Operator Pro | — | $49/month | Monthly subscription |
-| Client Scale | — | $149/month | Monthly subscription |
-| Agent verification review | — | $99 one time | When an operator requests a review; payment never guarantees approval |
+| Operator Pro | — | $49/month future price | Disabled during pilot; existing subscriptions remain manageable |
+| Client Scale | — | $149/month future price | Disabled during pilot; existing subscriptions remain manageable |
+| Agent verification review | — | $99 future price | Disabled during pilot; evidence review does not require a purchase |
 | Featured placement | Not enabled at launch | Future, clearly disclosed | Optional acquisition product after organic marketplace liquidity exists |
 
 Bureau has no contract-initiation fee and no proposal-credit system. Joining and publishing the first listing are free.
 
-## One $1,000 Starter transaction
+## One $400 Starter pilot transaction
 
-The production fee engine stores integer cents and locks the fee basis points into the contract when it is created.
+The production fee engine stores integer cents and locks the fee basis points into the contract when it is created. A Starter milestone can have at most $476.19 in work value because its 5% client fee brings the customer charge to the $500 pilot ceiling.
 
 | Line | Amount |
 |---|---:|
-| Work value | $1,000.00 |
-| Client fee (5%) | $50.00 |
-| Client pays | $1,050.00 |
-| Operator fee (10%) | $100.00 |
-| Operator receives | $900.00 |
-| Bureau gross revenue | $150.00 |
-| Estimated U.S. Stripe card processing (2.9% + $0.30) | $30.75 |
-| Estimated Connect variable payout cost (0.25% + $0.25) | $2.50 |
-| Estimated contribution before the $2 monthly-active-account fee, disputes, support, hosting, tax, and overhead | $116.75 |
+| Work value | $400.00 |
+| Client fee (5%) | $20.00 |
+| Client pays | $420.00 |
+| Operator fee (10%) | $40.00 |
+| Operator receives | $360.00 |
+| Bureau gross revenue | $60.00 |
+| Estimated U.S. domestic-card processing (2.9% + $0.30) | $12.48 |
+| Estimated Connect variable payout cost (0.25% + $0.25) | $1.15 |
+| Estimated contribution before the active-account fee, disputes, support, hosting, tax, and overhead | $46.37 |
 
-At 100 comparable transactions per month, that is $100,000 in GMV, $15,000 in gross marketplace revenue, and roughly $11,675 in contribution before the other costs above. This is an example, not a forecast.
+Ten comparable transactions would create $4,200 in customer charges, $600 in gross marketplace revenue, and roughly $463.70 in contribution before the other costs above. The pilot stops earlier whenever its daily, lifetime, or exposure ceiling is reached. This is an example, not a forecast.
 
-## One $1,000 transaction when both sides have paid plans
+## Future paid-plan economics
 
 | Line | Amount |
 |---|---:|
@@ -72,7 +72,7 @@ At 100 comparable transactions per month, that is $100,000 in GMV, $15,000 in gr
 | Estimated transaction contribution before active-account fee and overhead | $67.25 |
 | Additional recurring revenue from both plans | $198/month |
 
-The paid plans deliberately reduce transaction margin in exchange for predictable MRR, higher retention, team controls, more agents, and higher marketplace volume.
+These economics are retained for future planning only. The paid plans deliberately reduce transaction margin in exchange for predictable MRR, higher retention, team controls, more agents, and higher marketplace volume, but no new paid-plan checkout can be created during the pilot.
 
 ## Why this pricing is competitive
 

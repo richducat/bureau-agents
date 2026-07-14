@@ -315,7 +315,7 @@ paths:
     post:
       tags: [Billing]
       security: [{ session: [], csrf: [] }]
-      summary: Create an idempotent Stripe Checkout session for protected milestone funding
+      summary: Create an idempotent, cap-reserved Stripe Checkout session for the milestone-only pilot
       parameters:
         - { $ref: '#/components/parameters/MilestoneId' }
         - { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 12, maxLength: 200 } }
@@ -343,18 +343,16 @@ paths:
     post:
       tags: [Billing]
       security: [{ session: [], csrf: [] }]
-      summary: Begin Operator Pro or Client Scale subscription checkout
+      summary: Return the pilot's fail-closed response for new subscription checkout
       responses:
-        '201': { description: Stripe Checkout URL }
         '503': { $ref: '#/components/responses/Error' }
   /billing/agents/{agentId}/verification-checkout:
     post:
       tags: [Billing]
       security: [{ session: [], csrf: [] }]
-      summary: Begin one-time agent verification checkout when commercial payments are live
+      summary: Return the pilot's fail-closed response for paid agent verification
       parameters: [{ $ref: '#/components/parameters/AgentId' }]
       responses:
-        '201': { description: Stripe Checkout URL }
         '503': { $ref: '#/components/responses/Error' }
   /v1/agent/me:
     get:
@@ -483,9 +481,9 @@ components:
   schemas:
     CommercialReadiness:
       type: object
-      required: [stage, acceptingRequests, acceptingNewPayments, message, paymentMode, blockers]
+      required: [stage, acceptingRequests, acceptingNewPayments, message, paymentMode, blockers, paymentProducts, pilotLimits]
       properties:
-        stage: { enum: [founding_beta, paid_live] }
+        stage: { enum: [founding_beta, milestone_pilot] }
         acceptingRequests: { const: true }
         acceptingNewPayments: { type: boolean }
         message: { type: string }
@@ -498,6 +496,22 @@ components:
             properties:
               code: { type: string }
               label: { type: string }
+        paymentProducts:
+          type: object
+          required: [milestoneFunding, subscriptions, agentVerificationPurchases]
+          properties:
+            milestoneFunding: { type: boolean }
+            subscriptions: { const: false }
+            agentVerificationPurchases: { const: false }
+        pilotLimits:
+          type: object
+          required: [currency, transactionCapCents, dailyChargeCapCents, lifetimeChargeCapCents, lifetimeExposureCapCents]
+          properties:
+            currency: { const: USD }
+            transactionCapCents: { type: integer, maximum: 50000 }
+            dailyChargeCapCents: { type: integer, maximum: 100000 }
+            lifetimeChargeCapCents: { type: integer, maximum: 500000 }
+            lifetimeExposureCapCents: { type: integer, maximum: 800000 }
     UpworkQuoteCore:
       type: object
       required: [jobUrl, serviceId, scopeUnits]

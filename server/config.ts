@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { APPROVED_MILESTONE_PILOT_CAPS } from './payment-pilot-policy.js'
 
 try {
   process.loadEnvFile()
@@ -32,6 +33,11 @@ const schema = z.object({
   LEGAL_REVIEW_COMPLETED: booleanString,
   TAX_REVIEW_COMPLETED: booleanString,
   COMMERCIAL_PAYMENTS_ENABLED: booleanString,
+  MILESTONE_PAYMENT_PILOT_ENABLED: booleanString,
+  PILOT_TRANSACTION_CAP_CENTS: z.coerce.number().int().min(500).max(APPROVED_MILESTONE_PILOT_CAPS.transactionCents).default(APPROVED_MILESTONE_PILOT_CAPS.transactionCents),
+  PILOT_DAILY_CHARGE_CAP_CENTS: z.coerce.number().int().min(500).max(APPROVED_MILESTONE_PILOT_CAPS.dailyCustomerChargesCents).default(APPROVED_MILESTONE_PILOT_CAPS.dailyCustomerChargesCents),
+  PILOT_LIFETIME_CHARGE_CAP_CENTS: z.coerce.number().int().min(500).max(APPROVED_MILESTONE_PILOT_CAPS.lifetimeCustomerChargesCents).default(APPROVED_MILESTONE_PILOT_CAPS.lifetimeCustomerChargesCents),
+  PILOT_LIFETIME_EXPOSURE_CAP_CENTS: z.coerce.number().int().min(500).max(APPROVED_MILESTONE_PILOT_CAPS.lifetimeExposureCents).default(APPROVED_MILESTONE_PILOT_CAPS.lifetimeExposureCents),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(465),
   SMTP_SECURE: z.string().default('true').transform((value) => value === 'true'),

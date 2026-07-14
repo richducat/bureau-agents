@@ -44,14 +44,20 @@ No task may be counted toward the ten-task gate if it is fabricated, complimenta
 
 ## Financial controls
 
-- `LEGAL_REVIEW_COMPLETED`, `TAX_REVIEW_COMPLETED`, and `COMMERCIAL_PAYMENTS_ENABLED` remain `false` until the corresponding dated evidence is retained. The operator-activation flag is set last.
+- The operator approved the Bureau milestone-payment pilot on Inspector Gadgets LLC on 2026-07-14 with hard ceilings of $500 per customer charge, $1,000 in daily customer charges, $5,000 in lifetime customer charges, and $8,000 in maximum lifetime principal-plus-Stripe fee/refund/dispute/chargeback exposure.
+- `LEGAL_REVIEW_COMPLETED`, `TAX_REVIEW_COMPLETED`, `COMMERCIAL_PAYMENTS_ENABLED`, and `MILESTONE_PAYMENT_PILOT_ENABLED` remain `false` until the corresponding dated evidence is retained. The two activation flags are set last.
 - Production paid status additionally requires a live Stripe secret key and webhook configuration. Test credentials can never satisfy production commercial readiness.
-- The public `/api/public/readiness` endpoint is the customer-facing source of truth; the API blocks new milestone, subscription, and verification checkouts when readiness is false.
+- The public `/api/public/readiness` endpoint is the customer-facing source of truth. It reports the four pilot caps and product availability.
+- New subscriptions and paid agent-verification purchases are not authorized for this pilot. Their endpoints always fail closed, stale Bureau checkout links are expired, and existing Stripe products or existing subscription-management access are not modified.
+- Every open milestone Checkout Session reserves its full customer total against the daily and lifetime caps. A serialized database lock prevents concurrent checkouts from overcommitting either cap.
+- Refunded and disputed customer principal is never subtracted from lifetime usage. Each open or completed payment also reserves $300 of the exposure ceiling for Stripe processing, Connect, refund, dispute, chargeback, and rare network overhead; observed Bureau-attributable fees replace the reserve if they are higher.
+- Checkout accepts USD cards only and expires after 30 minutes. An expired or failed session releases only its open reservation; a completed charge remains in lifetime usage permanently.
 - Buyers fund only through Stripe-hosted checkout.
 - Operator payouts occur only through the idempotent milestone-approval route.
 - Refunds, reversals, and split outcomes occur only through the restricted dispute route.
 - Payment state is reconciled to Stripe before retrying any financial action.
 - Bureau describes the workflow as protected milestone funding, not escrow.
+- Bureau does not automatically counter Stripe disputes. Any response that could create a new countered-dispute or network fee requires its own specific financial authorization.
 
 ## Incident stop rule
 

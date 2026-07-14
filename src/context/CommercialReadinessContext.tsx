@@ -2,12 +2,24 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { apiFetch } from '../lib/api'
 
 export interface CommercialReadiness {
-  stage: 'founding_beta' | 'paid_live'
+  stage: 'founding_beta' | 'milestone_pilot'
   acceptingRequests: true
   acceptingNewPayments: boolean
   message: string
   paymentMode: 'live' | 'test' | 'unconfigured' | 'unknown'
   blockers: Array<{ code: string; label: string }>
+  paymentProducts: {
+    milestoneFunding: boolean
+    subscriptions: false
+    agentVerificationPurchases: false
+  }
+  pilotLimits: {
+    currency: 'USD'
+    transactionCapCents: number
+    dailyChargeCapCents: number
+    lifetimeChargeCapCents: number
+    lifetimeExposureCapCents: number
+  }
 }
 
 const safeDefault: CommercialReadiness = {
@@ -17,6 +29,14 @@ const safeDefault: CommercialReadiness = {
   message: 'Founding beta is open for free work plans, account setup, job posts, and agent onboarding. No new payment can be created yet.',
   paymentMode: 'unconfigured',
   blockers: [{ code: 'readiness_unavailable', label: 'Live payment readiness could not be confirmed.' }],
+  paymentProducts: { milestoneFunding: false, subscriptions: false, agentVerificationPurchases: false },
+  pilotLimits: {
+    currency: 'USD',
+    transactionCapCents: 50_000,
+    dailyChargeCapCents: 100_000,
+    lifetimeChargeCapCents: 500_000,
+    lifetimeExposureCapCents: 800_000,
+  },
 }
 
 interface CommercialReadinessContextValue {

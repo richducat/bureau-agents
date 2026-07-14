@@ -3,6 +3,8 @@ import type { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { execute, one, transaction } from './db.js'
 import { calculateFees, type ClientPlan } from './fees.js'
 import { MANAGED_CATALOG, type ManagedCatalogDefinition } from './managed-catalog.js'
+import { getConfig } from './config.js'
+import { splitWorkValueForPilot } from './payment-pilot-policy.js'
 import { HttpError } from './security.js'
 
 type GenericRow = RowDataPacket
@@ -39,7 +41,8 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
   const workValueCents = Number(request.quote_work_value_cents)
   const fees = calculateFees(workValueCents, clientPlan, agent.operator_plan)
   const contractId = randomUUID()
-  const milestoneId = randomUUID()
+  const milestoneValues = splitWorkValueForPilot(workValueCents, fees.clientFeeBasisPoints, getConfig().PILOT_TRANSACTION_CAP_CENTS)
+  const milestoneIds = milestoneValues.map(() => randomUUID())
   const contractScope = request.quote_basis === 'catalog' && request.quote_summary
     ? `${request.quote_summary}\n\nBuyer-provided context (does not expand the package inclusions, quantity, or automatic quote):\n${request.details}`
     : String(request.details)
@@ -49,11 +52,15 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [contractId, clientOrgId, agent.operator_org_id, agent.id, request.title, contractScope, workValueCents, fees.clientFeeBasisPoints, fees.operatorFeeBasisPoints],
   )
-  await connection.execute(
-    `INSERT INTO milestones (id, contract_id, sequence_number, title, description, work_value_cents, due_at)
-     VALUES (?, ?, 1, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 7 DAY))`,
-    [milestoneId, contractId, 'Complete managed delivery', request.quote_summary || 'Deliver the approved scope with relevant evidence and a completion record.', workValueCents],
-  )
+  for (const [index, milestoneValueCents] of milestoneValues.entries()) {
+    const partLabel = milestoneValues.length > 1 ? ` — part ${index + 1} of ${milestoneValues.length}` : ''
+    await connection.execute(
+      `INSERT INTO milestones (id, contract_id, sequence_number, title, description, work_value_cents, due_at)
+       VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 7 DAY))`,
+      [milestoneIds[index], contractId, index + 1, `Complete managed delivery${partLabel}`,
+        request.quote_summary || 'Deliver the approved scope with relevant evidence and a completion record.', milestoneValueCents],
+    )
+  }
   await connection.execute(
     `UPDATE task_requests SET contract_id = ?, client_org_id = ?, user_id = COALESCE(user_id, ?), status = 'payment_ready', accepted_at = UTC_TIMESTAMP(3)
      WHERE id = ?`,
@@ -62,9 +69,9 @@ async function createContract(connection: PoolConnection, request: GenericRow, c
   await connection.execute(
     `INSERT INTO audit_log (actor_user_id, organization_id, action, target_type, target_id, metadata)
      VALUES (?, ?, 'managed_request.accepted', 'task_request', ?, ?)`,
-    [actorUserId, clientOrgId, request.id, JSON.stringify({ contractId, milestoneId, assignedAgentId: agent.id })],
+    [actorUserId, clientOrgId, request.id, JSON.stringify({ contractId, milestoneIds, assignedAgentId: agent.id })],
   )
-  return { contractId, milestoneId, fees }
+  return { contractId, milestoneId: milestoneIds[0], milestoneIds, fees }
 }
 
 export async function acceptManagedRequest(requestId: string, clientOrgId: string, actorUserId: string, clientPlan: ClientPlan) {

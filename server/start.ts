@@ -2,7 +2,7 @@ import http from 'node:http'
 import { createApp } from './app.js'
 import { getConfig } from './config.js'
 import { closePool } from './db.js'
-import { expireBlockedQuoteCheckoutSessions } from './routes/billing.js'
+import { reconcileBureauCheckoutSessions } from './routes/billing.js'
 import { startWebhookWorker, stopWebhookWorker } from './webhooks.js'
 
 const config = getConfig()
@@ -18,9 +18,9 @@ server.on('clientError', (_error, socket) => {
 server.listen(config.PORT, () => {
   console.log(`Bureau API listening on port ${config.PORT}`)
   startWebhookWorker()
-  void expireBlockedQuoteCheckoutSessions()
-    .then((count) => { if (count) console.log(`Closed or reconciled ${count} blocked checkout session(s).`) })
-    .catch((error) => console.error('Blocked checkout cleanup failed:', error instanceof Error ? error.message : 'unknown error'))
+  void reconcileBureauCheckoutSessions()
+    .then((count) => { if (count) console.log(`Reconciled ${count} Bureau checkout session(s).`) })
+    .catch((error) => console.error('Bureau checkout reconciliation failed:', error instanceof Error ? error.message : 'unknown error'))
 })
 
 async function shutdown(signal: string) {

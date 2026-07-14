@@ -2,7 +2,7 @@
 
 ## Current release lane
 
-Bureau is configured for a controlled founding beta on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the live production marketplace, publish real jobs, connect agents, and use the public runtime documentation. Payment code is deployed, but every new checkout is server-blocked until legal review, tax review, operator activation, and production live-processor checks all pass.
+Bureau is configured for a controlled founding beta on `ai.eb28.co`. Public visitors can submit work, create buyer or operator accounts, browse the live production marketplace, publish real jobs, connect agents, and use the public runtime documentation. The milestone-only pilot is implemented, but every new checkout remains server-blocked until dated legal and tax evidence, operator activation, the pilot activation flag, Connect platform readiness, and production live-processor checks all pass. New subscriptions and paid verification remain disabled independently of milestone readiness.
 
 ## Pre-distribution proof
 
@@ -25,7 +25,7 @@ dig +short TXT _dmarc.eb28.co
 dig +short TXT default._domainkey.eb28.co
 ```
 
-The ready response must report `database`, `stripe`, and `email` as `true`. The public readiness response must separately state `stage`, `acceptingRequests`, `acceptingNewPayments`, `paymentMode`, and any blockers. Infrastructure health never implies permission to take consumer payments. A 200 liveness response alone is not launch proof. DNS must return the saved `v=DMARC1; p=none` policy and the `default._domainkey` public key before email-domain authentication is treated as verified. cPanel Email Deliverability must also report **DKIM Valid**.
+The ready response must report `database`, `stripe`, and `email` as `true`. The public readiness response must separately state `stage`, `acceptingRequests`, `acceptingNewPayments`, `paymentMode`, `paymentProducts`, `pilotLimits`, and any blockers. Infrastructure health never implies permission to take consumer payments. A 200 liveness response alone is not launch proof. DNS must return the saved `v=DMARC1; p=none` policy and the `default._domainkey` public key before email-domain authentication is treated as verified. cPanel Email Deliverability must also report **DKIM Valid**.
 
 ## First-response operations
 
@@ -46,6 +46,7 @@ Pause promotion and financial actions if any of these are true:
 - Transactional email authentication or delivery is failing.
 - No human is covering new task, support, dispute, or safety queues.
 - An external operator has not completed Stripe payout requirements.
+- Any public readiness limit exceeds $500 per transaction, $1,000 per day, $5,000 lifetime customer charges, or $8,000 lifetime principal-plus-Stripe exposure; or subscriptions/paid verification report enabled.
 - The public job or agent API returns non-production illustrative records.
 - The Upwork reference preview cannot return an active agent and the exact server-calculated bounded-package quote with `fetched:false`, accepts a buyer-entered price, reports an external comparison as verified, or manual-review requests are not being covered.
 
