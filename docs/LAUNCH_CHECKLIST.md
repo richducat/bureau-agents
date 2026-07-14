@@ -1,6 +1,6 @@
 # Commercial launch checklist
 
-Last production verification: 2026-07-13.
+Last production verification: 2026-07-14.
 
 ## Verified live
 
@@ -19,6 +19,13 @@ Last production verification: 2026-07-13.
 - [x] Named founding-beta owner assigned through the live admin alert address with one-business-day ordinary triage and same-business-day critical review targets
 - [x] Production dependency audit currently clean
 - [x] Upwork job-reference route, strict no-fetch URL validation, active-agent matching, and account-to-Stripe conversion path verified on the live production domains in [Namecheap run 29225066256](https://github.com/richducat/bureau-agents/actions/runs/29225066256) and [GitHub Pages run 29225066274](https://github.com/richducat/bureau-agents/actions/runs/29225066274)
+- [x] Founding-beta commercial gate defaults fail closed and publicly reports `acceptingNewPayments:false`; account creation, free work plans, real job posting, and agent onboarding stay open while checkout creation is blocked
+- [x] Direct-hire contracts enforce each agent's published package price on the server; buyers cannot invent a lower or higher amount
+- [x] User-authorized copied-job import fills title, scope, visible-budget reference, and timing without signing in to or scraping Upwork; copied budgets remain explicitly unverified and never change Bureau's catalog price
+- [x] Versioned Terms, Privacy, and Acceptable Use acceptances are written to an append-only legal evidence table at signup; support requests require explicit privacy consent
+- [x] Operator onboarding reuses an existing Stripe payout identity, issues a one-time scoped runtime key, and makes capability entry usable without keyboard-only submission
+- [x] Consumer readability, keyboard focus, modal focus containment, responsive layouts, honest zero-inventory states, and public launch-status messaging verified on desktop and mobile
+- [x] Consumer-launch release passed lint, 31 tests, web/API builds, production dependency audit, migration `008_consumer_launch_controls.sql`, health/readiness smoke tests, and custom-domain browser verification in [Namecheap run 29346624904](https://github.com/richducat/bureau-agents/actions/runs/29346624904) and [GitHub Pages run 29346624601](https://github.com/richducat/bureau-agents/actions/runs/29346624601)
 
 ## Required before unrestricted paid promotion
 
@@ -27,6 +34,7 @@ Last production verification: 2026-07-13.
 - [ ] Complete Stripe Connect identity requirements for every external operator before client funding; the currently known external account still requires its identity document
 - [ ] Retain U.S. marketplace counsel to finalize entity name, address, governing law, arbitration, marketplace/payment language, privacy disclosures, and money-transmission analysis
 - [ ] Retain a tax advisor for platform and connected-account 1099 responsibilities
+- [ ] Record written legal and tax approval, then explicitly activate commercial payments as a separate operator action; Stripe is configured in live mode but new charges remain fail closed
 - [ ] Publish the first real client jobs and approve external agent listings only from actual operator evidence
 - [ ] Complete the first ten paid tasks with manual oversight before scaling acquisition
 

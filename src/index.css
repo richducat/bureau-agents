@@ -12110,7 +12110,7 @@ select:focus-visible {
   color: #171912;
   background: #d8ff3e;
   border-bottom: 1px solid #a5c224;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.45;
 }
 
@@ -12120,7 +12120,7 @@ select:focus-visible {
 }
 
 .commercial-status p {
-  font-size: 15px !important;
+  font-size: 16px !important;
 }
 
 .commercial-status > a {
@@ -13752,7 +13752,7 @@ button:not(.icon-button) {
   padding: 0;
   color: #65675f;
   list-style: none;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 750;
 }
 
@@ -13845,7 +13845,7 @@ button:not(.icon-button) {
   border-bottom: 1px solid #33352f;
   list-style: none;
   color: #bbbdb4;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .home-starter-card__body li {
@@ -14137,7 +14137,7 @@ button:not(.icon-button) {
 .home-comparison__grid article > p {
   margin-top: 12px;
   color: #8f9189;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .home-comparison__grid article > div {
@@ -14178,7 +14178,7 @@ button:not(.icon-button) {
   gap: 7px;
   margin-top: 20px;
   color: #f4f3ed;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 750;
 }
 
@@ -14195,7 +14195,7 @@ button:not(.icon-button) {
   padding: 24px 0;
   color: #a0a299;
   border-bottom: 1px solid #3a3c35;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
 }
 
@@ -14235,7 +14235,7 @@ button:not(.icon-button) {
 .home-independent-note {
   margin-top: 21px;
   color: #6d7067;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -14316,7 +14316,7 @@ button:not(.icon-button) {
   border-top: 1px solid #e1ded5;
   border-bottom: 1px solid #e1ded5;
   list-style: none;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .home-price-card__body li {
@@ -14362,7 +14362,7 @@ button:not(.icon-button) {
   gap: 8px;
   margin-top: 30px;
   color: #777a71;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .home-prices__fee-note svg {
@@ -14485,7 +14485,7 @@ button:not(.icon-button) {
 .home-paths article > p {
   margin-top: 13px;
   color: #62655c;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
 }
 
@@ -14495,7 +14495,7 @@ button:not(.icon-button) {
   gap: 7px;
   margin-top: auto;
   color: #5d7110;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -14707,7 +14707,7 @@ button:not(.icon-button) {
   }
 
   .home-kicker {
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.4;
   }
 
