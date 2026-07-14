@@ -59,6 +59,14 @@ jobs:
       APP_ROOT: ${{ vars.NAMECHEAP_APP_ROOT }}
       NODE_VERSION: ${{ vars.NAMECHEAP_NODE_VERSION }}
       API_HEALTH_URL: ${{ vars.NAMECHEAP_API_HEALTH_URL }}
+      BUREAU_LEGAL_REVIEW_COMPLETED: ${{ vars.BUREAU_LEGAL_REVIEW_COMPLETED }}
+      BUREAU_TAX_REVIEW_COMPLETED: ${{ vars.BUREAU_TAX_REVIEW_COMPLETED }}
+      BUREAU_COMMERCIAL_PAYMENTS_ENABLED: ${{ vars.BUREAU_COMMERCIAL_PAYMENTS_ENABLED }}
+      BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED: ${{ vars.BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED }}
+      BUREAU_PILOT_TRANSACTION_CAP_CENTS: ${{ vars.BUREAU_PILOT_TRANSACTION_CAP_CENTS }}
+      BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS: ${{ vars.BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS }}
+      BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS: ${{ vars.BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS }}
+      BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS: ${{ vars.BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS }}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -80,6 +88,18 @@ jobs:
           [[ "$APP_ROOT" =~ ^[A-Za-z0-9_./-]+$ ]]
           [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]
           [[ "$API_HEALTH_URL" =~ ^https://[A-Za-z0-9.-]+/health/ready$ ]]
+          [[ "$BUREAU_LEGAL_REVIEW_COMPLETED" =~ ^(true|false)$ ]]
+          [[ "$BUREAU_TAX_REVIEW_COMPLETED" =~ ^(true|false)$ ]]
+          [[ "$BUREAU_COMMERCIAL_PAYMENTS_ENABLED" =~ ^(true|false)$ ]]
+          [[ "$BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED" =~ ^(true|false)$ ]]
+          [[ "$BUREAU_PILOT_TRANSACTION_CAP_CENTS" =~ ^[0-9]+$ ]]
+          [[ "$BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS" =~ ^[0-9]+$ ]]
+          [[ "$BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS" =~ ^[0-9]+$ ]]
+          [[ "$BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS" =~ ^[0-9]+$ ]]
+          (( BUREAU_PILOT_TRANSACTION_CAP_CENTS >= 500 && BUREAU_PILOT_TRANSACTION_CAP_CENTS <= 50000 ))
+          (( BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS >= 500 && BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS <= 100000 ))
+          (( BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS >= 500 && BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS <= 500000 ))
+          (( BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS >= 500 && BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS <= 800000 ))
       - name: Configure SSH
         run: |
           install -d -m 700 ~/.ssh
@@ -92,10 +112,37 @@ jobs:
           rsync -az --checksum -e "ssh -p $SSH_PORT" release/server-dist release/server.js release/package.json release/package-lock.json "$SSH_USER@$SSH_HOST:$APP_ROOT/"
       - name: Install, migrate, and restart
         run: |
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' bash -s" <<'REMOTE'
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "APP_ROOT='$APP_ROOT' NODE_VERSION='$NODE_VERSION' \
+            BUREAU_LEGAL_REVIEW_COMPLETED='$BUREAU_LEGAL_REVIEW_COMPLETED' \
+            BUREAU_TAX_REVIEW_COMPLETED='$BUREAU_TAX_REVIEW_COMPLETED' \
+            BUREAU_COMMERCIAL_PAYMENTS_ENABLED='$BUREAU_COMMERCIAL_PAYMENTS_ENABLED' \
+            BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED='$BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED' \
+            BUREAU_PILOT_TRANSACTION_CAP_CENTS='$BUREAU_PILOT_TRANSACTION_CAP_CENTS' \
+            BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS='$BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS' \
+            BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS='$BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS' \
+            BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS='$BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS' bash -s" <<'REMOTE'
           # CloudLinux's Node activation script reads optional unset variables.
           set -eo pipefail
           cd "$APP_ROOT"
+          test -f .env
+          set_env() {
+            key="$1"
+            value="$2"
+            if grep -q "^${key}=" .env; then
+              sed -i "s|^${key}=.*|${key}=${value}|" .env
+            else
+              printf '%s=%s\n' "$key" "$value" >> .env
+            fi
+          }
+          set_env LEGAL_REVIEW_COMPLETED "$BUREAU_LEGAL_REVIEW_COMPLETED"
+          set_env TAX_REVIEW_COMPLETED "$BUREAU_TAX_REVIEW_COMPLETED"
+          set_env COMMERCIAL_PAYMENTS_ENABLED "$BUREAU_COMMERCIAL_PAYMENTS_ENABLED"
+          set_env MILESTONE_PAYMENT_PILOT_ENABLED "$BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED"
+          set_env PILOT_TRANSACTION_CAP_CENTS "$BUREAU_PILOT_TRANSACTION_CAP_CENTS"
+          set_env PILOT_DAILY_CHARGE_CAP_CENTS "$BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS"
+          set_env PILOT_LIFETIME_CHARGE_CAP_CENTS "$BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS"
+          set_env PILOT_LIFETIME_EXPOSURE_CAP_CENTS "$BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS"
           VENV="$HOME/nodevenv/$APP_ROOT/$NODE_VERSION"
           test -f "$VENV/bin/activate"
           source "$VENV/bin/activate"
@@ -120,7 +167,33 @@ jobs:
         run: |
           API_ORIGIN="${API_HEALTH_URL%/health/ready}"
           curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/pricing" >/dev/null
-          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/readiness" | jq -e '.readiness.acceptingRequests == true and (.readiness.acceptingNewPayments | type == "boolean") and (.readiness.stage == "founding_beta" or .readiness.stage == "milestone_pilot") and (.readiness.paymentMode | type == "string")' >/dev/null
+          EXPECTED_ACCEPTING_NEW_PAYMENTS=false
+          if [[ "$BUREAU_LEGAL_REVIEW_COMPLETED" == true \
+            && "$BUREAU_TAX_REVIEW_COMPLETED" == true \
+            && "$BUREAU_COMMERCIAL_PAYMENTS_ENABLED" == true \
+            && "$BUREAU_MILESTONE_PAYMENT_PILOT_ENABLED" == true ]]; then
+            EXPECTED_ACCEPTING_NEW_PAYMENTS=true
+          fi
+          curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/readiness" | jq -e \
+            --argjson expected "$EXPECTED_ACCEPTING_NEW_PAYMENTS" \
+            --argjson transactionCap "$BUREAU_PILOT_TRANSACTION_CAP_CENTS" \
+            --argjson dailyCap "$BUREAU_PILOT_DAILY_CHARGE_CAP_CENTS" \
+            --argjson lifetimeChargeCap "$BUREAU_PILOT_LIFETIME_CHARGE_CAP_CENTS" \
+            --argjson lifetimeExposureCap "$BUREAU_PILOT_LIFETIME_EXPOSURE_CAP_CENTS" '
+            .readiness.acceptingRequests == true and
+            .readiness.acceptingNewPayments == $expected and
+            .readiness.stage == (if $expected then "milestone_pilot" else "founding_beta" end) and
+            .readiness.paymentMode == "live" and
+            (if $expected then .readiness.blockers == [] else (.readiness.blockers | length) > 0 end) and
+            .readiness.paymentProducts.milestoneFunding == $expected and
+            .readiness.paymentProducts.subscriptions == false and
+            .readiness.paymentProducts.agentVerificationPurchases == false and
+            .readiness.pilotLimits.currency == "USD" and
+            .readiness.pilotLimits.transactionCapCents == $transactionCap and
+            .readiness.pilotLimits.dailyChargeCapCents == $dailyCap and
+            .readiness.pilotLimits.lifetimeChargeCapCents == $lifetimeChargeCap and
+            .readiness.pilotLimits.lifetimeExposureCapCents == $lifetimeExposureCap
+          ' >/dev/null
           curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/jobs?limit=1" >/dev/null
           curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/public/agents?limit=1" >/dev/null
           curl --fail --silent --show-error --max-time 10 "$API_ORIGIN/api/openapi.yaml" | grep -q 'Bureau API'
