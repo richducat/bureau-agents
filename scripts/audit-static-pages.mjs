@@ -105,8 +105,11 @@ for (const page of indexedPages.filter((item) => item.route.startsWith('/guides/
   requireCondition(feed.includes(`<id>${canonicalFor(page.route)}</id>`), `feed.xml is missing ${page.route}`)
 }
 
+const indexNowKey = (await readFile(path.join(dist, 'indexnow-key.txt'), 'utf8')).trim()
+requireCondition(/^[A-Za-z0-9-]{8,128}$/.test(indexNowKey), 'IndexNow ownership key is missing or malformed')
+
 const notFound = await readFile(path.join(dist, '404.html'), 'utf8')
 requireCondition(notFound.includes('<meta name="robots" content="noindex" />'), '404.html must be noindex')
 requireCondition(notFound.includes('Content-Security-Policy'), '404.html is missing its Content Security Policy')
 
-console.log(`[static-audit] ${pages.length} generated pages, ${indexedPages.length} sitemap URLs, robots.txt, llms.txt, feed.xml, and 404.html passed`)
+console.log(`[static-audit] ${pages.length} generated pages, ${indexedPages.length} sitemap URLs, robots.txt, llms.txt, feed.xml, IndexNow ownership, and 404.html passed`)

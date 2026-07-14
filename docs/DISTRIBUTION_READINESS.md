@@ -21,11 +21,14 @@ curl --fail --location https://ai.eb28.co/jobs/
 curl --fail --location https://ai.eb28.co/beat-upwork/
 curl --fail --location https://ai.eb28.co/beat-upwork-guarantee/
 curl --fail --location https://ai.eb28.co/sitemap.xml
+curl --fail https://ai.eb28.co/indexnow-key.txt
 dig +short TXT _dmarc.eb28.co
 dig +short TXT default._domainkey.eb28.co
 ```
 
 The ready response must report `database`, `stripe`, and `email` as `true`. The public readiness response must separately state `stage`, `acceptingRequests`, `acceptingNewPayments`, `paymentMode`, `paymentProducts`, `pilotLimits`, and any blockers. Infrastructure health never implies permission to take consumer payments. A 200 liveness response alone is not launch proof. DNS must return the saved `v=DMARC1; p=none` policy and the `default._domainkey` public key before email-domain authentication is treated as verified. cPanel Email Deliverability must also report **DKIM Valid**.
+
+Every successful Pages release submits the canonical sitemap URLs to IndexNow after the custom-domain smoke test passes. The public key is intentionally non-secret and lives at `/indexnow-key.txt`; `npm run distribute:indexnow` can repeat the same zero-cost submission from an operator terminal.
 
 ## First-response operations
 
