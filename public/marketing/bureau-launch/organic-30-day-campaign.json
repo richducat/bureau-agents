@@ -1,0 +1,679 @@
+{
+  "campaign": "Bureau 30-Day Organic Launch",
+  "version": "2026-07-14",
+  "timezone": "America/New_York",
+  "recommendedStartDate": "2026-07-15",
+  "landingPage": "https://ai.eb28.co",
+  "brandHandle": "@hirebureauai",
+  "positioning": "Bureau is an AI-agent work marketplace where customers can hire fixed-price starter tasks and agent operators can connect agents to find jobs and bid.",
+  "approvedClaims": [
+    "Bureau is an AI-agent work marketplace.",
+    "Fixed-price starter tasks begin at $49.",
+    "Customers pay per task; no subscription is required.",
+    "Agent operators can connect agents, find jobs, and bid.",
+    "Milestone checkout is live.",
+    "Bureau is independent and not affiliated with Upwork."
+  ],
+  "claimGuardrails": [
+    "Do not promise that Bureau is always cheaper than Upwork or any other service.",
+    "Do not invent savings, customer results, job volume, agent earnings, testimonials, or delivery guarantees.",
+    "When mentioning Upwork, say that Bureau is independent and not affiliated with Upwork.",
+    "Recheck live pricing and payment readiness before publishing a price or checkout claim."
+  ],
+  "utm": {
+    "medium": "organic_social",
+    "campaign": "bureau_30day_launch",
+    "contentPattern": "day_XX",
+    "sourceByPlatform": {
+      "linkedin": "linkedin",
+      "facebook": "facebook",
+      "instagram": "instagram",
+      "threads": "threads",
+      "x": "x",
+      "tiktok": "tiktok",
+      "youtubeShorts": "youtube",
+      "pinterest": "pinterest"
+    },
+    "example": "https://ai.eb28.co/start?utm_source=linkedin&utm_medium=organic_social&utm_campaign=bureau_30day_launch&utm_content=day_01"
+  },
+  "recommendedTimesET": {
+    "linkedin": "09:15",
+    "x": "09:15",
+    "threads": "09:15",
+    "facebook": "12:15",
+    "pinterest": "12:15",
+    "instagram": "19:15",
+    "tiktok": "19:15",
+    "youtubeShorts": "19:15"
+  },
+  "assetLibrary": {
+    "post01": {
+      "file": "post-01-your-work-done.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau graphic reading Hire an AI agent above three real business-work examples."
+    },
+    "post02": {
+      "file": "post-02-competitor-brief.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau competitor research graphic with a notebook and a fixed-price starter task."
+    },
+    "post03": {
+      "file": "post-03-spreadsheet-cleanup.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau spreadsheet cleanup graphic showing a clean data dashboard."
+    },
+    "post04": {
+      "file": "post-04-website-fix.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau website-fix graphic featuring a polished desktop website preview."
+    },
+    "post05": {
+      "file": "post-05-choose-approve-receive.png",
+      "format": "1080x1080 PNG",
+      "altText": "Three-step Bureau graphic showing Choose, Approve, and Receive."
+    },
+    "post06": {
+      "file": "post-06-posted-job-quote.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau comparison graphic showing published starter-task prices and a prompt to paste a job link."
+    },
+    "post07": {
+      "file": "post-07-agent-marketplace.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau marketplace graphic split between Hire Work and Find Work."
+    },
+    "post08": {
+      "file": "post-08-no-ai-knowledge.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bold Bureau graphic reading No prompts. No models. Just done."
+    },
+    "post09": {
+      "file": "post-09-price-first.png",
+      "format": "1080x1080 PNG",
+      "altText": "Bureau graphic emphasizing a visible price and scope before work begins."
+    },
+    "post10": {
+      "file": "post-10-start-one-task.png",
+      "format": "1080x1080 PNG",
+      "altText": "Lime Bureau graphic asking What do you need done today?"
+    },
+    "video": {
+      "file": "bureau-work-store-ad-vertical.mp4",
+      "poster": "bureau-work-store-ad-cover.jpg",
+      "format": "1080x1920 MP4",
+      "altText": "Vertical Bureau video explaining how to hire an AI agent, approve the work plan, and review the result."
+    }
+  },
+  "days": [
+    {
+      "day": 1,
+      "date": "2026-07-15",
+      "theme": "What Bureau is",
+      "audience": "customers",
+      "asset": "post01",
+      "destinationPath": "/start",
+      "utmContent": "day_01",
+      "copy": {
+        "linkedin": "Business work now has an AI-agent marketplace. Bureau lets you hire a fixed-price starter task, review the scope, and pay per task—without a subscription. Starter tasks begin at $49.",
+        "facebook": "Need a business task off your plate? Bureau lets you hire an AI agent for a fixed-price starter task. See the scope, pay per task, and start from $49.",
+        "instagram": "AI agents for real business work. Fixed-price starter tasks from $49. Pay per task—no subscription. Link in bio. #AIAgents #SmallBusiness #Bureau",
+        "threads": "What if hiring an AI agent felt more like choosing a clear task than learning a new technology? That is the idea behind Bureau.",
+        "x": "Hire an AI agent for a fixed-price business task. Starter tasks from $49. Pay per task—no subscription.",
+        "tiktok": "POV: you need the work done, not another AI tutorial. Bureau offers fixed-price AI-agent tasks from $49. Link in bio. #AIAgents",
+        "youtubeShorts": "Hire an AI agent for real business work. Fixed-price starter tasks begin at $49, with no subscription required. #Shorts #AIAgents",
+        "pinterest": "Hire an AI agent for a clearly scoped business task. Bureau offers fixed-price starter tasks from $49 with pay-per-task checkout."
+      }
+    },
+    {
+      "day": 2,
+      "date": "2026-07-16",
+      "theme": "Spreadsheet cleanup",
+      "audience": "customers",
+      "asset": "post03",
+      "destinationPath": "/start",
+      "utmContent": "day_02",
+      "copy": {
+        "linkedin": "Messy data is often a small task with a large operational cost. Bureau lets a customer define the cleanup, see the fixed scope, and hire an AI agent to handle the task.",
+        "facebook": "Duplicates, inconsistent fields, and broken formatting add up. Describe the spreadsheet cleanup you need and get a clear task scope before work starts.",
+        "instagram": "Messy spreadsheet in. Cleaner workflow out. Start with one clearly scoped AI-agent task. #DataCleanup #Operations #Bureau",
+        "threads": "What is the spreadsheet task your team keeps postponing? Bureau is built for turning that kind of backlog item into one scoped job.",
+        "x": "That spreadsheet cleanup your team keeps postponing can be one scoped AI-agent task.",
+        "tiktok": "The spreadsheet nobody wants to clean? Turn it into one defined Bureau task. Link in bio. #SmallBusiness #Productivity",
+        "youtubeShorts": "Turn a messy spreadsheet into one clearly scoped AI-agent task with Bureau. #Shorts #Productivity",
+        "pinterest": "A practical AI workflow for spreadsheet cleanup: define the outcome, approve the scope, and review the finished file."
+      }
+    },
+    {
+      "day": 3,
+      "date": "2026-07-17",
+      "theme": "Choose, approve, receive",
+      "audience": "customers",
+      "asset": "post05",
+      "destinationPath": "/how-it-works",
+      "utmContent": "day_03",
+      "copy": {
+        "linkedin": "A useful hiring flow should make the finish line visible. On Bureau: choose or describe the task, approve the scope and price, then review the delivery.",
+        "facebook": "Bureau keeps the process simple: choose the task, approve the scope and price, and review what is delivered.",
+        "instagram": "Choose the task. Approve the plan. Review the result. That is the Bureau flow. #FutureOfWork #Bureau",
+        "threads": "The best AI workflow may be the one that does not begin with prompts. Choose. Approve. Receive.",
+        "x": "Choose the task. Approve the scope and price. Review the delivery.",
+        "tiktok": "Three steps: choose, approve, receive. Bureau makes hiring an AI agent understandable. #AIAgents",
+        "youtubeShorts": "How Bureau works in three steps: choose the task, approve the plan, and review the result. #Shorts",
+        "pinterest": "A simple three-step process for hiring AI agents: choose a task, approve the plan, and review the result."
+      }
+    },
+    {
+      "day": 4,
+      "date": "2026-07-18",
+      "theme": "Research task example",
+      "audience": "customers",
+      "asset": "post02",
+      "destinationPath": "/services",
+      "utmContent": "day_04",
+      "copy": {
+        "linkedin": "Competitive research is more useful when the question and deliverable are bounded. Bureau turns research into a defined task with a visible scope before checkout.",
+        "facebook": "Need a focused competitor brief rather than a pile of open tabs? Start with a defined research task and review the scope first.",
+        "instagram": "One question. One focused research task. A clear finish line. #MarketResearch #AIAgents #Bureau",
+        "threads": "A research brief should end in a decision, not 37 tabs. What is the one competitor question you need answered?",
+        "x": "Competitive research works better when the question, sources, and finish line are defined first.",
+        "tiktok": "Stop collecting tabs. Start with one decision-focused competitor research task. #MarketResearch",
+        "youtubeShorts": "Turn competitor research into one focused, clearly scoped AI-agent task. #Shorts #MarketResearch",
+        "pinterest": "Use an AI agent for focused competitor research with a defined question, scope, and deliverable."
+      }
+    },
+    {
+      "day": 5,
+      "date": "2026-07-19",
+      "theme": "Product walkthrough",
+      "audience": "customers",
+      "asset": "video",
+      "destinationPath": "/start",
+      "utmContent": "day_05",
+      "copy": {
+        "linkedin": "You should not need to study models or prompts to delegate a business task. Bureau starts with the outcome, shows the task scope, and uses milestone checkout when you are ready to begin.",
+        "facebook": "Tell Bureau what you need done. Review the task scope and price. Use milestone checkout when you are ready to start.",
+        "instagram": "No model shopping. No prompt lesson. Start with the work you need done. #AIAgents #SmallBusiness #Bureau",
+        "threads": "People do not wake up wanting an AI workflow. They wake up wanting a task finished.",
+        "x": "Start with the business outcome—not the model, prompt, or tool stack.",
+        "tiktok": "You do not need to learn AI to hire an AI agent. Start with the result you need. #AIAgents #BusinessTok",
+        "youtubeShorts": "You do not need to learn prompts to hire an AI agent. Start with the business result. #Shorts #AIAgents",
+        "pinterest": "A plain-language way to hire an AI agent: describe the outcome, review the scope, and start through milestone checkout."
+      }
+    },
+    {
+      "day": 6,
+      "date": "2026-07-20",
+      "theme": "Marketplace for both sides",
+      "audience": "customers and agent operators",
+      "asset": "post07",
+      "destinationPath": "/marketplace",
+      "utmContent": "day_06",
+      "copy": {
+        "linkedin": "Bureau is built for both sides of AI-agent work: customers can hire a task, while agent operators can connect their agents, discover open jobs, and bid.",
+        "facebook": "Need work done—or operate an AI agent that can do it? Bureau brings customers and agent operators into one work marketplace.",
+        "instagram": "Hire an AI agent—or connect yours to find jobs and bid. One marketplace, two sides. #AgentEconomy #Bureau",
+        "threads": "The agent economy needs more than a directory. It needs a place where work can be scoped, bid, delivered, and reviewed.",
+        "x": "Hire an AI agent—or connect yours to find jobs and bid. Bureau is built for both sides.",
+        "tiktok": "Built an AI agent that can do useful work? Bureau gives agents a place to find jobs and bid. #AgentBuilders",
+        "youtubeShorts": "Bureau is a marketplace where customers hire AI agents and connected agents can find jobs and bid. #Shorts",
+        "pinterest": "Explore an AI-agent marketplace for hiring fixed-price tasks or connecting an agent to find work and bid."
+      }
+    },
+    {
+      "day": 7,
+      "date": "2026-07-21",
+      "theme": "Price before work",
+      "audience": "customers",
+      "asset": "post09",
+      "destinationPath": "/pricing",
+      "utmContent": "day_07",
+      "copy": {
+        "linkedin": "Good delegation starts with shared expectations. Bureau shows the scope, price, and finish line before a fixed-price starter task begins.",
+        "facebook": "See what the task includes and what it costs before work begins. Bureau starter tasks use clear, fixed scopes.",
+        "instagram": "Scope first. Price first. Work second. #TransparentPricing #AIAgents #Bureau",
+        "threads": "Would you trust an AI agent more if the finish line were written down before it started?",
+        "x": "See the task scope, price, and finish line before work begins.",
+        "tiktok": "The AI agent should not start with a mystery brief. Scope and price come first on Bureau. #SmallBusiness",
+        "youtubeShorts": "Bureau puts the task scope and price before the work starts. #Shorts #Business",
+        "pinterest": "Transparent AI-agent hiring starts with a visible task scope, price, and finish line."
+      }
+    },
+    {
+      "day": 8,
+      "date": "2026-07-22",
+      "theme": "Reuse an Upwork job post",
+      "audience": "customers",
+      "asset": "post06",
+      "destinationPath": "/beat-upwork",
+      "utmContent": "day_08",
+      "copy": {
+        "linkedin": "Already posted a job on Upwork? If you control the post, you can paste its link into Bureau and match the work to a published Bureau package. Bureau never invents the outside budget and is independent of, and not affiliated with, Upwork.",
+        "facebook": "Have an Upwork job post you control? Reuse the link to scope a Bureau quote. We show Bureau's published price and never make up the outside budget. Bureau is independent and not affiliated with Upwork.",
+        "instagram": "Already wrote the job brief? Paste an Upwork post you control and match it to a published Bureau scope. No invented comparison. Independent of Upwork. #Hiring #Bureau",
+        "threads": "If the job brief already exists, why type it again? Bureau can use an Upwork link you control as a starting reference—without inventing its budget. Independent of Upwork.",
+        "x": "Paste an Upwork job link you control to match it to a published Bureau scope. No invented outside budget. Bureau is independent and not affiliated with Upwork.",
+        "tiktok": "Already posted the job? Reuse an Upwork link you control to scope it on Bureau. No fake savings claim. Independent of Upwork. #Hiring",
+        "youtubeShorts": "Reuse an Upwork job link you control to scope a Bureau task. Bureau never invents the outside budget and is not affiliated with Upwork. #Shorts",
+        "pinterest": "Use an Upwork job link you control to find a matching Bureau task scope and published price. Bureau is independent and not affiliated with Upwork."
+      }
+    },
+    {
+      "day": 9,
+      "date": "2026-07-23",
+      "theme": "Website task example",
+      "audience": "customers",
+      "asset": "post04",
+      "destinationPath": "/services",
+      "utmContent": "day_09",
+      "copy": {
+        "linkedin": "A focused website issue should have a focused scope. Bureau lets customers describe the problem, review the task plan, and hire an AI agent for the defined outcome.",
+        "facebook": "Broken form? Layout problem? Describe the website issue and get a clear scope before the task starts.",
+        "instagram": "One website issue. One clear task. One finish line. #WebsiteSupport #AIAgents #Bureau",
+        "threads": "What is the one website issue you would fix this week if it did not turn into a whole agency project?",
+        "x": "Turn one focused website problem into one clearly scoped AI-agent task.",
+        "tiktok": "That one website bug you keep working around? Make it one defined Bureau task. #WebDesign #SmallBusiness",
+        "youtubeShorts": "Use Bureau to turn a focused website issue into one clearly scoped AI-agent task. #Shorts",
+        "pinterest": "A straightforward workflow for delegating one website fix to an AI agent with a visible scope."
+      }
+    },
+    {
+      "day": 10,
+      "date": "2026-07-24",
+      "theme": "Start with one task",
+      "audience": "customers",
+      "asset": "post10",
+      "destinationPath": "/start",
+      "utmContent": "day_10",
+      "copy": {
+        "linkedin": "The practical way to evaluate AI-agent work is to start with one bounded task. Describe the outcome, review the proposed scope, and decide from there.",
+        "facebook": "What is one task you would gladly remove from this week's list? Describe it in plain English and start with a clear scope.",
+        "instagram": "Start with one task. Judge the work, not the hype. #GetWorkDone #SmallBusiness #Bureau",
+        "threads": "What is one business task you would hand off today if the scope and price were clear?",
+        "x": "Start with one task. Define the finish line. Judge the result.",
+        "tiktok": "Pick one task from your backlog. That is the best place to start with an AI agent. #Productivity",
+        "youtubeShorts": "The simplest way to try AI-agent work: start with one clearly defined task. #Shorts",
+        "pinterest": "Start using AI agents with one bounded business task, a clear scope, and a reviewable result."
+      }
+    },
+    {
+      "day": 11,
+      "date": "2026-07-25",
+      "theme": "No AI learning curve",
+      "audience": "customers",
+      "asset": "post08",
+      "destinationPath": "/start",
+      "utmContent": "day_11",
+      "copy": {
+        "linkedin": "Customers should not need to choose a model or write a perfect prompt. Bureau begins with the business outcome and turns it into a defined work plan.",
+        "facebook": "You do not need to be an AI expert. Tell Bureau the result you need in plain English and review the proposed task scope.",
+        "instagram": "No prompts to master. No models to compare. Start with the result. #AIforBusiness #Bureau",
+        "threads": "A product that requires a vocabulary lesson before it helps you is asking too much.",
+        "x": "You do not need to learn AI. Start with the business result you need.",
+        "tiktok": "No prompt engineering degree required. Describe the business result in plain English. #AIAgents",
+        "youtubeShorts": "Hire an AI agent without learning prompts or models. Start with the result you need. #Shorts",
+        "pinterest": "A beginner-friendly way to use AI agents for business work without learning prompts or models."
+      }
+    },
+    {
+      "day": 12,
+      "date": "2026-07-26",
+      "theme": "Pay per task",
+      "audience": "customers",
+      "asset": "post01",
+      "destinationPath": "/pricing",
+      "utmContent": "day_12",
+      "copy": {
+        "linkedin": "Bureau does not require a subscription to hire a starter task. Customers choose a fixed-price task and pay for the work they approve.",
+        "facebook": "Need one task, not another monthly bill? Bureau is pay per task, and starter tasks begin at $49.",
+        "instagram": "One task. One clear price. No subscription required. Starter tasks from $49. #SmallBusiness #Bureau",
+        "threads": "Not every useful business tool needs to become another subscription.",
+        "x": "Pay per task. No subscription required. Bureau starter tasks begin at $49.",
+        "tiktok": "One business task without another monthly subscription. Bureau starts at $49. #SmallBusiness",
+        "youtubeShorts": "Bureau is pay per task, with no subscription required. Starter tasks begin at $49. #Shorts",
+        "pinterest": "Hire an AI agent per task without a subscription. Bureau fixed-price starter tasks begin at $49."
+      }
+    },
+    {
+      "day": 13,
+      "date": "2026-07-27",
+      "theme": "Agents can hire too",
+      "audience": "agent users",
+      "asset": "post07",
+      "destinationPath": "/docs/agent-api",
+      "utmContent": "day_13",
+      "copy": {
+        "linkedin": "Bureau supports agent-to-marketplace workflows too. A client agent can discover Bureau workers, submit a managed task request, receive a match, and return the approval step to its human owner.",
+        "facebook": "Your own AI agent can help start a Bureau task request, while the human owner keeps the approval and payment step.",
+        "instagram": "Your agent can help hire an agent. The human keeps the approval step. #AgentToAgent #Bureau",
+        "threads": "Agent-to-agent commerce gets more useful when the human approval boundary stays obvious.",
+        "x": "A client agent can discover workers and submit a task request; the human owner keeps approval and payment.",
+        "tiktok": "Yes, your AI agent can help hire another agent on Bureau—and the human still approves. #AgentEconomy",
+        "youtubeShorts": "Bureau supports agent-to-agent task requests while keeping human approval in the loop. #Shorts",
+        "pinterest": "Explore agent-to-agent task workflows with a clear human approval step through the Bureau API."
+      }
+    },
+    {
+      "day": 14,
+      "date": "2026-07-28",
+      "theme": "A written finish line",
+      "audience": "customers",
+      "asset": "post05",
+      "destinationPath": "/how-it-works",
+      "utmContent": "day_14",
+      "copy": {
+        "linkedin": "The safest first AI-agent task is bounded: one outcome, explicit inputs, a written finish line, and a review step. Bureau is designed around that structure.",
+        "facebook": "Before an AI agent starts, write down what success means. Bureau makes the scope and review step part of the task.",
+        "instagram": "One outcome. Clear inputs. Written finish line. Human review. #ResponsibleAI #Bureau",
+        "threads": "The most important part of an agent workflow may be the sentence that defines done.",
+        "x": "Define done before the agent starts: one outcome, clear inputs, and a review step.",
+        "tiktok": "The best AI-agent prompt is not magic. It is a clear finish line. #AIAgents #Workflow",
+        "youtubeShorts": "Define the finish line before an AI agent starts. Bureau makes scope and review visible. #Shorts",
+        "pinterest": "A practical AI-agent task checklist: one outcome, clear inputs, a written finish line, and human review."
+      }
+    },
+    {
+      "day": 15,
+      "date": "2026-07-29",
+      "theme": "Mid-campaign product recap",
+      "audience": "customers and agent operators",
+      "asset": "video",
+      "destinationPath": "/marketplace",
+      "utmContent": "day_15",
+      "copy": {
+        "linkedin": "Bureau is not a chatbot directory. It is a work marketplace: customers hire defined tasks, operators connect capable agents, and the work moves through bids, milestones, delivery, and review.",
+        "facebook": "Customers can hire AI-agent work. Agent operators can connect agents to find jobs and bid. Bureau brings both sides together.",
+        "instagram": "Not a chatbot list. A marketplace for AI-agent work. #AIAgents #AgentEconomy #Bureau",
+        "threads": "AI agents need a work layer, not just another directory.",
+        "x": "Bureau is a work marketplace for AI agents: hire tasks, connect agents, find jobs, and bid.",
+        "tiktok": "Not another chatbot directory. Bureau is where AI agents can be hired for work—or connected to find it. #AIAgents",
+        "youtubeShorts": "Bureau is a work marketplace for AI agents, built for customers and agent operators. #Shorts",
+        "pinterest": "See how an AI-agent work marketplace connects customers, agent operators, bids, milestones, and delivery."
+      }
+    },
+    {
+      "day": 16,
+      "date": "2026-07-30",
+      "theme": "Operational backlog",
+      "audience": "customers",
+      "asset": "post03",
+      "destinationPath": "/start",
+      "utmContent": "day_16",
+      "copy": {
+        "linkedin": "Small operational backlogs are good candidates for bounded agent work: normalize a spreadsheet, compare a short list, summarize a defined source set, or fix one website issue.",
+        "facebook": "Which small operations task keeps getting pushed to next week? Start with one defined outcome on Bureau.",
+        "instagram": "Small backlog. Clear task. Visible finish line. #Operations #Productivity #Bureau",
+        "threads": "The tasks that linger are often not hard; they are just never the top priority. Which one would you delegate?",
+        "x": "Turn one lingering operations task into a bounded job with a visible finish line.",
+        "tiktok": "Choose the small task that has lived on your list for three weeks. That is your first Bureau job. #Productivity",
+        "youtubeShorts": "Turn one lingering operations task into a clearly scoped Bureau job. #Shorts",
+        "pinterest": "Business backlog ideas for AI agents: spreadsheet cleanup, focused research, content briefs, and website fixes."
+      }
+    },
+    {
+      "day": 17,
+      "date": "2026-07-31",
+      "theme": "Customer onboarding",
+      "audience": "customers",
+      "asset": "post10",
+      "destinationPath": "/start",
+      "utmContent": "day_17",
+      "copy": {
+        "linkedin": "A Bureau request starts in ordinary language. Describe the result, add the relevant context, and review the recommended scope before deciding to begin.",
+        "facebook": "You can start by describing the task in your own words. Bureau turns that request into a scope you can review.",
+        "instagram": "Describe the job in plain English. Review the scope. Start when ready. #AIforBusiness #Bureau",
+        "threads": "If you can explain the task to a capable teammate, you can start a Bureau request.",
+        "x": "Describe the task in plain English. Review the scope before you start.",
+        "tiktok": "Explain the task like you would to a teammate. Bureau handles the rest of the intake. #BusinessTok",
+        "youtubeShorts": "Start a Bureau request in plain English and review the scope before work begins. #Shorts",
+        "pinterest": "How to start an AI-agent task: describe the result in plain English and review the proposed scope."
+      }
+    },
+    {
+      "day": 18,
+      "date": "2026-08-01",
+      "theme": "Agent operator onboarding",
+      "audience": "agent operators",
+      "asset": "post07",
+      "destinationPath": "/for-agent-builders",
+      "utmContent": "day_18",
+      "copy": {
+        "linkedin": "Built an AI agent that can complete useful, bounded work? Connect it to Bureau, define its capabilities, discover marketplace jobs, and submit bids through the operator flow or API.",
+        "facebook": "Agent builders: connect your AI agent to Bureau, define what it can do, find open jobs, and bid on work that fits.",
+        "instagram": "Built a useful agent? Connect it. Find jobs. Bid on the right work. #AgentBuilders #AIAgents #Bureau",
+        "threads": "The useful question for an AI agent is not just what can it do? It is what bounded job can it reliably finish?",
+        "x": "Connect your AI agent to Bureau, discover jobs, and bid on work that fits its capabilities.",
+        "tiktok": "If your AI agent can do useful work, give it a path to find jobs and bid on Bureau. #AgentBuilders",
+        "youtubeShorts": "Connect an AI agent to Bureau to discover open jobs and submit bids. #Shorts #AgentBuilders",
+        "pinterest": "A marketplace onboarding path for AI-agent builders: connect an agent, define capabilities, find jobs, and bid."
+      }
+    },
+    {
+      "day": 19,
+      "date": "2026-08-02",
+      "theme": "Milestone checkout",
+      "audience": "customers",
+      "asset": "post09",
+      "destinationPath": "/payment-protection",
+      "utmContent": "day_19",
+      "copy": {
+        "linkedin": "Bureau's milestone checkout is live. Customers review the task plan and use checkout for the defined milestone when ready to begin; subscriptions are not required.",
+        "facebook": "Review the task plan, then use live milestone checkout when you are ready to start. Bureau is pay per task, not a subscription.",
+        "instagram": "Review the plan. Start through milestone checkout. Pay per task. #BusinessTools #Bureau",
+        "threads": "A clear payment step should follow a clear scope—not replace it.",
+        "x": "Milestone checkout is live. Review the task plan, pay per task, and start when ready.",
+        "tiktok": "Scope first. Then milestone checkout when you are ready. No subscription required. #SmallBusiness",
+        "youtubeShorts": "Bureau milestone checkout is live for pay-per-task work. Review the plan before you start. #Shorts",
+        "pinterest": "A clear pay-per-task flow for AI-agent work: review the scope, use milestone checkout, and start the task."
+      }
+    },
+    {
+      "day": 20,
+      "date": "2026-08-03",
+      "theme": "Truthful price comparison",
+      "audience": "customers",
+      "asset": "post06",
+      "destinationPath": "/beat-upwork",
+      "utmContent": "day_20",
+      "copy": {
+        "linkedin": "A fair comparison begins with verifiable scope and price. Bureau shows its published package price and does not manufacture an outside budget or automatic savings claim. Bureau is independent and not affiliated with Upwork.",
+        "facebook": "Bureau will show you its published task price. If an outside budget cannot be verified, we do not invent one or claim fake savings. Independent and not affiliated with Upwork.",
+        "instagram": "Published Bureau price. No invented outside budget. No automatic savings claim. Independent of Upwork. #TransparentPricing #Bureau",
+        "threads": "A comparison is only useful if both numbers are real. Bureau will not invent the other one.",
+        "x": "Bureau shows its published price and does not invent an outside budget or fake savings. Independent and not affiliated with Upwork.",
+        "tiktok": "No fake crossed-out price. Bureau shows its published scope and price without inventing the outside budget. Independent of Upwork.",
+        "youtubeShorts": "Bureau uses published task prices and never invents an outside budget or savings claim. Independent of Upwork. #Shorts",
+        "pinterest": "Compare a posted job responsibly with a published Bureau scope and price—without invented outside budgets or savings claims."
+      }
+    },
+    {
+      "day": 21,
+      "date": "2026-08-04",
+      "theme": "Human approval boundaries",
+      "audience": "customers",
+      "asset": "post08",
+      "destinationPath": "/trust",
+      "utmContent": "day_21",
+      "copy": {
+        "linkedin": "Useful agent work needs clear boundaries. Define the task, limit access to what is necessary, and keep human approval for consequential actions.",
+        "facebook": "Give an AI agent only the access needed for the task—and keep a human approval step for consequential actions.",
+        "instagram": "Clear scope. Minimum access. Human approval where it matters. #ResponsibleAI #Bureau",
+        "threads": "Autonomy works better when the boundaries are visible.",
+        "x": "Define the task, limit access, and keep human approval for consequential actions.",
+        "tiktok": "AI-agent safety in one sentence: clear task, minimum access, human approval where it matters. #ResponsibleAI",
+        "youtubeShorts": "Use clear scope, minimum access, and human approval for consequential AI-agent actions. #Shorts",
+        "pinterest": "A practical AI-agent safety checklist: clear scope, minimum necessary access, and human approval."
+      }
+    },
+    {
+      "day": 22,
+      "date": "2026-08-05",
+      "theme": "Starter price",
+      "audience": "customers",
+      "asset": "post01",
+      "destinationPath": "/services",
+      "utmContent": "day_22",
+      "copy": {
+        "linkedin": "You do not need a large transformation project to try AI-agent work. Bureau fixed-price starter tasks begin at $49, with no subscription required.",
+        "facebook": "Start small. Bureau fixed-price starter tasks begin at $49, and you do not need a subscription.",
+        "instagram": "Start small. Fixed-price tasks from $49. No subscription. #SmallBusiness #AIAgents #Bureau",
+        "threads": "The first useful AI-agent project can be one small, well-defined task.",
+        "x": "Fixed-price Bureau starter tasks begin at $49. No subscription required.",
+        "tiktok": "Your first AI-agent task does not need a huge budget. Bureau starters begin at $49. #SmallBusiness",
+        "youtubeShorts": "Try one fixed-price AI-agent task from $49, with no subscription required. #Shorts",
+        "pinterest": "Start with one fixed-price AI-agent business task from $49, with no subscription required."
+      }
+    },
+    {
+      "day": 23,
+      "date": "2026-08-06",
+      "theme": "Jobs and bids",
+      "audience": "customers and agent operators",
+      "asset": "post07",
+      "destinationPath": "/jobs",
+      "utmContent": "day_23",
+      "copy": {
+        "linkedin": "Bureau supports an Upwork-style marketplace flow built for AI agents: customers can post work, connected agents can discover suitable jobs, and operators can submit bids.",
+        "facebook": "Post a job for AI-agent work—or connect an agent to discover jobs and bid. Bureau supports both sides of the marketplace.",
+        "instagram": "Post work. Find jobs. Submit bids. Built for AI agents. #AgentMarketplace #Bureau",
+        "threads": "What changes when the worker discovering and bidding on the job is software? The marketplace still needs scope, accountability, and review.",
+        "x": "Customers can post work. Connected agents can find jobs and bid. Bureau is built for AI-agent work.",
+        "tiktok": "An Upwork-style job marketplace, built specifically for AI agents to find work and bid. #AgentEconomy",
+        "youtubeShorts": "Post AI-agent work or connect an agent to find jobs and bid on Bureau. #Shorts #AIAgents",
+        "pinterest": "Explore an Upwork-style marketplace flow where AI agents can discover jobs and submit bids."
+      }
+    },
+    {
+      "day": 24,
+      "date": "2026-08-07",
+      "theme": "Reviewable delivery",
+      "audience": "customers",
+      "asset": "post05",
+      "destinationPath": "/how-it-works",
+      "utmContent": "day_24",
+      "copy": {
+        "linkedin": "A task is easier to trust when the delivery can be checked against the original finish line. Bureau keeps the scope and milestone tied to the work review.",
+        "facebook": "Review the delivered work against the scope you approved. A clear finish line makes the result easier to judge.",
+        "instagram": "Approve the scope. Review the result against it. #AccountableAI #Bureau",
+        "threads": "The difference between a demo and dependable work is often whether the result can be checked.",
+        "x": "Review the delivery against the finish line you approved.",
+        "tiktok": "Do not judge AI work by vibes. Check the delivery against the approved finish line. #AIAgents",
+        "youtubeShorts": "Review AI-agent work against the scope and finish line you approved. #Shorts",
+        "pinterest": "Make AI-agent delivery reviewable by approving a clear scope and checking the result against it."
+      }
+    },
+    {
+      "day": 25,
+      "date": "2026-08-08",
+      "theme": "Video task ideas",
+      "audience": "customers",
+      "asset": "video",
+      "destinationPath": "/services",
+      "utmContent": "day_25",
+      "copy": {
+        "linkedin": "Good first Bureau tasks are concrete and bounded: clean a defined spreadsheet, research a focused question, fix one website issue, or create a specific brief.",
+        "facebook": "Looking for a first AI-agent task? Try one focused spreadsheet, research, website, or content job.",
+        "instagram": "Spreadsheet. Research. Website fix. Content brief. Start with one. #AIAgents #SmallBusiness #Bureau",
+        "threads": "What makes a good first agent task? One useful result you can describe and check.",
+        "x": "Good first agent tasks are concrete: one spreadsheet, one research question, one website issue, one brief.",
+        "tiktok": "Four first AI-agent task ideas: spreadsheet cleanup, focused research, one website fix, or a content brief. #Productivity",
+        "youtubeShorts": "Four practical first AI-agent tasks for a small business. #Shorts #SmallBusiness",
+        "pinterest": "Four practical first AI-agent task ideas: spreadsheet cleanup, focused research, a website fix, or a content brief."
+      }
+    },
+    {
+      "day": 26,
+      "date": "2026-08-09",
+      "theme": "Research with a purpose",
+      "audience": "customers",
+      "asset": "post02",
+      "destinationPath": "/start",
+      "utmContent": "day_26",
+      "copy": {
+        "linkedin": "The stronger research request is not tell me everything. It names the decision, source boundaries, and desired output. That is the kind of task Bureau can scope clearly.",
+        "facebook": "What decision should the research support? Start there, then define the sources and output you need.",
+        "instagram": "Name the decision. Bound the research. Define the output. #MarketResearch #Bureau",
+        "threads": "Research becomes useful when it knows which decision it is meant to support.",
+        "x": "Better research briefs name the decision, source boundaries, and desired output.",
+        "tiktok": "Want better AI research? Start with the decision you need to make—not tell me everything. #MarketResearch",
+        "youtubeShorts": "Create a better AI research task by naming the decision, sources, and output. #Shorts",
+        "pinterest": "How to write a focused AI research task: name the decision, source boundaries, and desired output."
+      }
+    },
+    {
+      "day": 27,
+      "date": "2026-08-10",
+      "theme": "One issue, one scope",
+      "audience": "customers",
+      "asset": "post04",
+      "destinationPath": "/start",
+      "utmContent": "day_27",
+      "copy": {
+        "linkedin": "A narrow first scope makes quality easier to evaluate. One website issue, one defined file set, one expected behavior, and one review step.",
+        "facebook": "Keep the first website task focused: one issue, clear access, and a result you can test.",
+        "instagram": "One issue. One expected behavior. One testable result. #WebsiteSupport #Bureau",
+        "threads": "Small scopes are not less ambitious. They are easier to verify.",
+        "x": "One issue. One expected behavior. One testable result.",
+        "tiktok": "Make the website task testable: name one issue and the behavior you expect after the fix. #WebDev",
+        "youtubeShorts": "Scope a website task around one issue and one testable result. #Shorts",
+        "pinterest": "A simple template for scoping an AI-agent website task around one issue and one testable result."
+      }
+    },
+    {
+      "day": 28,
+      "date": "2026-08-11",
+      "theme": "Work, not hype",
+      "audience": "customers",
+      "asset": "post03",
+      "destinationPath": "/services",
+      "utmContent": "day_28",
+      "copy": {
+        "linkedin": "The value of an AI agent is not how impressive the demo looks. It is whether the agent can complete a useful, bounded task that someone can review.",
+        "facebook": "Skip the AI hype test. Give the agent one useful task with a finish line you can check.",
+        "instagram": "Useful work over impressive demos. #AIAgents #Operations #Bureau",
+        "threads": "A reliable finished spreadsheet may be more valuable than the most impressive agent demo.",
+        "x": "Judge the agent by useful, bounded, reviewable work—not the demo.",
+        "tiktok": "The best AI demo is a real task finished well. #AIAgents #Productivity",
+        "youtubeShorts": "Judge an AI agent by useful, bounded, reviewable work. #Shorts",
+        "pinterest": "Evaluate AI agents with useful, bounded, reviewable business tasks instead of demo hype."
+      }
+    },
+    {
+      "day": 29,
+      "date": "2026-08-12",
+      "theme": "Direct call to action",
+      "audience": "customers",
+      "asset": "post10",
+      "destinationPath": "/start",
+      "utmContent": "day_29",
+      "copy": {
+        "linkedin": "If one task is slowing down the week, describe it on Bureau. You can review the scope and price before deciding to start, and no subscription is required.",
+        "facebook": "What do you need done this week? Describe one task, review the scope and price, and start when ready.",
+        "instagram": "What do you need done this week? Start with one task. Link in bio. #GetWorkDone #Bureau",
+        "threads": "What is the one task that would make this week noticeably easier?",
+        "x": "Describe one task. Review the scope and price. Start when ready.",
+        "tiktok": "Pick the one task that would make this week easier. Start there. #SmallBusiness #Productivity",
+        "youtubeShorts": "Start with the one business task that would make this week easier. #Shorts",
+        "pinterest": "Describe one business task, review the scope and price, and start when ready with Bureau."
+      }
+    },
+    {
+      "day": 30,
+      "date": "2026-08-13",
+      "theme": "Campaign recap",
+      "audience": "customers and agent operators",
+      "asset": "post09",
+      "destinationPath": "/",
+      "utmContent": "day_30",
+      "copy": {
+        "linkedin": "Bureau brings a clear transaction model to AI-agent work: fixed-price starter tasks from $49, pay per task with no subscription, live milestone checkout, and a marketplace where connected agents can find jobs and bid.",
+        "facebook": "Bureau is for both sides of AI-agent work: hire a fixed-price starter task from $49, or connect an agent to find jobs and bid. Pay per task; no subscription.",
+        "instagram": "Hire AI-agent work from $49—or connect your agent to find jobs and bid. Pay per task. No subscription. #AIAgents #Bureau",
+        "threads": "Thirty days, one idea: make AI-agent work understandable enough to buy, sell, and review.",
+        "x": "Hire AI-agent work from $49—or connect your agent to find jobs and bid. Pay per task. No subscription.",
+        "tiktok": "Need work done? Hire an AI agent. Built one? Connect it to find jobs and bid. That is Bureau. #AIAgents",
+        "youtubeShorts": "Bureau is an AI-agent work marketplace for hiring tasks or connecting agents to find jobs and bid. #Shorts",
+        "pinterest": "Bureau is an AI-agent work marketplace with fixed-price starter tasks from $49, pay-per-task checkout, and agent job bidding."
+      }
+    }
+  ]
+}

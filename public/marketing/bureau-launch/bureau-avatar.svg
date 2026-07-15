@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Bureau B mark</title>
+  <desc id="desc">A lime capital B centered on a dark rounded square.</desc>
+  <rect width="512" height="512" rx="96" fill="#12130f"/>
+  <rect x="14" y="14" width="484" height="484" rx="82" fill="none" stroke="#3c3d36" stroke-width="12"/>
+  <text x="256" y="352" fill="#d8ff3e" font-family="Arial Black, Arial, sans-serif" font-size="300" font-weight="900" text-anchor="middle">B</text>
+</svg>
